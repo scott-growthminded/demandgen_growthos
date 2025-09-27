@@ -119,176 +119,48 @@ export default function BlvdApiTest() {
     try {
       toast({
         title: "Generating Report",
-        description: "Fetching utilization data for all locations...",
+        description: "Fetching real appointment data for all locations...",
       });
 
-      // Get availability data from our service
-      const availabilityData = await getBlvdAvailability(serverConfig?.hasApiKey ? undefined : config);
-      
-      if (!availabilityData.success) {
-        throw new Error("Failed to fetch availability data");
-      }
-
-      // Get all locations data
-      const locationsData = await queryBlvdLocations(serverConfig?.hasApiKey ? undefined : config);
-      
-      if (!locationsData.data?.locations?.edges) {
-        throw new Error("Failed to fetch locations data");
-      }
-
-      // Use allLocations if available (includes all locations), otherwise fall back to availableLocations
-      const allLocationData = availabilityData.allLocations || availabilityData.availableLocations;
-      
-      // Create utilization report for ALL locations using the backend data
-      const reportData = allLocationData.map((locationData: any) => {
-        const utilizationPercent = 100 - locationData.availabilityPercent;
-        return {
-          locationName: locationData.locationName,
-          locationId: locationData.locationId,
-          availabilityPercent: locationData.availabilityPercent.toFixed(2),
-          utilizationPercent: utilizationPercent.toFixed(2),
-          totalAppointments: locationData.totalAppointments,
-          bookedAppointments: locationData.bookedAppointments,
-          status: locationData.availabilityPercent >= 25 ? "Available" : "High Utilization"
-        };
+      // Get real Glowbar-style CSV report directly from backend 
+      const response = await fetch('/api/blvd/availability-csv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
       });
 
-      // Sort by utilization percentage (highest first)
-      reportData.sort((a: any, b: any) => parseFloat(b.utilizationPercent) - parseFloat(a.utilizationPercent));
+      if (!response.ok) {
+        throw new Error(`Failed to generate CSV report: ${response.status}`);
+      }
 
-      // Generate CSV report
-      const headers = ["Location Name", "Availability %", "Utilization %", "Total Slots", "Booked Slots", "Status"];
-      const csvContent = [
-        headers.join(","),
-        ...reportData.map((row: any) => [
-          `"${row.locationName}"`,
-          row.availabilityPercent,
-          row.utilizationPercent,
-          row.totalAppointments,
-          row.bookedAppointments,
-          `"${row.status}"`
-        ].join(","))
-      ].join("\n");
-
-      // Generate hour-by-hour mock data for each location (simulating realistic patterns)
-      const generateHourlyData = (location: any) => {
-        const hours = ["8:00 AM","9:00 AM","10:00 AM","11:00 AM","12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM","5:00 PM","6:00 PM","7:00 PM","8:00 PM","9:00 PM"];
-        const hourlyData = [];
-        const totalHourlySlots = Math.floor(location.totalAppointments / 13); // Distribute across 13 hours
-        
-        for (let i = 0; i < hours.length; i++) {
-          // Create realistic booking patterns (busier midday, lighter evenings)
-          let multiplier = 1.0;
-          if (i >= 3 && i <= 7) multiplier = 1.3; // Busier 11 AM - 3 PM
-          if (i >= 8 && i <= 10) multiplier = 1.1; // Moderately busy 4-6 PM  
-          if (i <= 1 || i >= 12) multiplier = 0.6; // Lighter early/late hours
-          
-          const hourSlots = Math.max(1, Math.floor(totalHourlySlots * multiplier));
-          const utilization = parseFloat(location.utilizationPercent) / 100;
-          const bookedInHour = Math.floor(hourSlots * utilization);
-          const availableInHour = Math.max(0, hourSlots - bookedInHour);
-          
-          hourlyData.push(availableInHour.toFixed(1));
-        }
-        return hourlyData;
-      };
-
-      // Generate Glowbar-style CSV report
-      const glowbarHeaders = [
-        "", "", "", "", "", "", "", "", "", "Studio", "Date", "Day", "Schedule", "Booked", "Available", "Goal",
-        "8:00 AM","9:00 AM","10:00 AM","11:00 AM","12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM","5:00 PM","6:00 PM","7:00 PM","8:00 PM","9:00 PM"
-      ];
+      // Get the CSV data
+      const csvData = await response.text();
       
-      const tomorrow = new Date(availabilityData.date);
-      const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-      const dayOfWeek = `(${tomorrow.getDay()}) ${dayNames[tomorrow.getDay()]}`;
-      
-      const glowbarRows = [
-        // Header rows (matching Glowbar format)
-        [
-          "", "", "", "", "", "", "", "", "", "AVAILABLE APPOINTMENTS", "", "", "", "", "", "",
-          "", "", "", "", "", "", "", "", "", "", "", "", "", ""
-        ],
-        [
-          "", "Date Range", "", "", availabilityData.date, availabilityData.date, "", "", "", "Studio", "Date", "Day", "Schedule", "Booked", "Available", "Goal",
-          "8:00 AM","9:00 AM","10:00 AM","11:00 AM","12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM","5:00 PM","6:00 PM","7:00 PM","8:00 PM","9:00 PM"
-        ],
-        // Data rows for each location
-        ...reportData.map((location: any) => {
-          const hourlyData = generateHourlyData(location);
-          const goalUtilization = Math.floor(60 + Math.random() * 20); // Random goal 60-80%
-          return [
-            "", "", "", "", "", "", "", "", "", 
-            location.locationName,
-            availabilityData.date,
-            dayOfWeek,
-            location.totalAppointments,
-            location.bookedAppointments,
-            (location.totalAppointments - location.bookedAppointments),
-            goalUtilization,
-            ...hourlyData
-          ];
-        })
-      ];
-
-      const glowbarCsv = [
-        glowbarHeaders.join(","),
-        ...glowbarRows.map(row => row.join(","))
-      ].join("\n");
-
-      // Generate standard summary report
-      const totalLocations = reportData.length;
-      const availableLocations = reportData.filter((loc: any) => parseFloat(loc.availabilityPercent) >= 25).length;
-      const avgUtilization = reportData.reduce((sum: number, loc: any) => sum + parseFloat(loc.utilizationPercent), 0) / totalLocations;
-
-      const summaryReport = `BOULEVARD UTILIZATION REPORT
-Generated: ${new Date().toLocaleString()}
-Report Date: ${availabilityData.date}
-
-SUMMARY:
-- Total Locations: ${totalLocations}
-- Available Locations (≥25% availability): ${availableLocations}
-- High Utilization Locations: ${totalLocations - availableLocations}
-- Average Utilization: ${avgUtilization.toFixed(2)}%
-
-LOCATION DETAILS:
-${headers.join(" | ")}
-${reportData.map((row: any) => 
-  `${row.locationName.padEnd(20)} | ${row.availabilityPercent.padStart(12)} | ${row.utilizationPercent.padStart(13)} | ${String(row.totalAppointments).padStart(11)} | ${String(row.bookedAppointments).padStart(12)} | ${row.status}`
-).join("\n")}
-
-NOTES:
-- Availability % = Available appointment slots / Total appointment slots * 100
-- Utilization % = 100 - Availability %
-- Status "Available" = ≥25% availability threshold
-- Data source: Boulevard Admin API with simulated appointment data
-`;
-
-      // Create and download both reports
-      const summaryBlob = new Blob([summaryReport], { type: 'text/plain' });
-      const summaryUrl = URL.createObjectURL(summaryBlob);
-      const summaryLink = document.createElement('a');
-      summaryLink.href = summaryUrl;
-      summaryLink.download = `boulevard-utilization-summary-${availabilityData.date}.txt`;
-      document.body.appendChild(summaryLink);
-      summaryLink.click();
-      document.body.removeChild(summaryLink);
-      URL.revokeObjectURL(summaryUrl);
-
-      // Download Glowbar-style CSV
-      const csvBlob = new Blob([glowbarCsv], { type: 'text/csv' });
+      // Create and download the Glowbar-style CSV with real appointment data
+      const csvBlob = new Blob([csvData], { type: 'text/csv' });
       const csvUrl = URL.createObjectURL(csvBlob);
       const csvLink = document.createElement('a');
       csvLink.href = csvUrl;
-      csvLink.download = `boulevard-glowbar-style-${availabilityData.date}.csv`;
+      
+      const today = new Date().toISOString().split('T')[0];
+      csvLink.download = `glowbar-availability-report-${today}.csv`;
+      
       document.body.appendChild(csvLink);
       csvLink.click();
       document.body.removeChild(csvLink);
       URL.revokeObjectURL(csvUrl);
 
+      // Also get availability data for summary info
+      const availabilityData = await getBlvdAvailability(serverConfig?.hasApiKey ? undefined : config);
+      
+      const totalLocations = availabilityData.allLocations?.length || 0;
+      const availableLocations = availabilityData.availableLocationsCount || 0;
+
       toast({
-        title: "Report Generated",
-        description: `Utilization report for ${totalLocations} locations downloaded successfully`,
+        title: "Real Data Report Generated!",
+        description: `Glowbar-style CSV with real Boulevard appointment data for ${totalLocations} locations downloaded successfully`,
       });
 
     } catch (error) {
