@@ -9,6 +9,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return {
       apiUrl: process.env.BLVD_ADMIN_API_URL || "",
       apiKey: process.env.BLVD_API_KEY || "",
+      secretKey: process.env.BLVD_SECRET_KEY || "",
       businessId: process.env.BLVD_BUSINESS_ID || "",
     };
   };
@@ -28,7 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use server-side config if available, otherwise fall back to request body
       const serverConfig = getServerConfig();
-      const hasServerConfig = serverConfig.apiUrl && serverConfig.apiKey && serverConfig.businessId;
+      const hasServerConfig = serverConfig.apiUrl && serverConfig.apiKey && serverConfig.secretKey && serverConfig.businessId;
       
       console.log('Server config available:', hasServerConfig);
       console.log('Server config:', {
@@ -63,7 +64,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use server-side config if available, otherwise fall back to request body
       const serverConfig = getServerConfig();
-      const hasServerConfig = serverConfig.apiUrl && serverConfig.apiKey && serverConfig.businessId;
+      const hasServerConfig = serverConfig.apiUrl && serverConfig.apiKey && serverConfig.secretKey && serverConfig.businessId;
       
       console.log('Query locations - server config available:', hasServerConfig);
       

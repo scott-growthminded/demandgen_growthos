@@ -4,6 +4,7 @@ import { z } from "zod";
 export const blvdConfigSchema = z.object({
   apiUrl: z.string().url(),
   apiKey: z.string().min(1),
+  secretKey: z.string().min(1),
   businessId: z.string().min(1),
 });
 

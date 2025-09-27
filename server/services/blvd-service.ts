@@ -1,10 +1,29 @@
 import { BlvdConfig, GraphqlResponse, ConnectionTestResult, TestResult } from "@shared/schema";
+import { createHmac } from "crypto";
 
 export class BlvdService {
   private config: BlvdConfig;
 
   constructor(config: BlvdConfig) {
     this.config = config;
+  }
+
+  private createAuthHeaders(method: string, path: string, timestamp: string, body?: string): Record<string, string> {
+    // Boulevard API HMAC authentication format
+    const bodyToHash = body || '';
+    // Try different signature formats that Boulevard might expect
+    const stringToSign = `${method}\n${path}\n${timestamp}\n${bodyToHash}`;
+    
+    const signature = createHmac('sha256', this.config.secretKey)
+      .update(stringToSign, 'utf8')
+      .digest('hex'); // Try hex instead of base64
+    
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.config.apiKey}`,
+      'X-Timestamp': timestamp, // Different header format
+      'X-Signature': signature,
+    };
   }
 
   async testConnection(): Promise<ConnectionTestResult> {
@@ -84,15 +103,15 @@ export class BlvdService {
 
   private async testNetworkConnectivity(): Promise<TestResult> {
     try {
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+      const body = JSON.stringify({ query: '{ __typename }' });
+      const url = new URL(this.config.apiUrl);
+      const headers = this.createAuthHeaders('POST', url.pathname, timestamp, body);
+
       const response = await fetch(this.config.apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`${this.config.apiKey}:`).toString('base64')}`,
-        },
-        body: JSON.stringify({
-          query: '{ __typename }',
-        }),
+        headers,
+        body,
       });
 
       if (response.ok) {
@@ -198,22 +217,23 @@ export class BlvdService {
 
   private async makeGraphqlRequest(query: string, variables?: any): Promise<GraphqlResponse> {
     try {
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+      const body = JSON.stringify({ query, variables });
+      const url = new URL(this.config.apiUrl);
+      const headers = this.createAuthHeaders('POST', url.pathname, timestamp, body);
+      
       console.log('Making GraphQL request to:', this.config.apiUrl);
       console.log('Request headers:', {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${Buffer.from(`${this.config.apiKey.substring(0, 10)}...:`).toString('base64')}`,
+        'Content-Type': headers['Content-Type'],
+        'Authorization': `Bearer ${this.config.apiKey.substring(0, 10)}...`,
+        'X-Timestamp': headers['X-Timestamp'],
+        'X-Signature': `${headers['X-Signature'].substring(0, 16)}...`,
       });
       
       const response = await fetch(this.config.apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`${this.config.apiKey}:`).toString('base64')}`,
-        },
-        body: JSON.stringify({
-          query,
-          variables,
-        }),
+        headers,
+        body,
       });
 
       console.log('Response status:', response.status, response.statusText);
