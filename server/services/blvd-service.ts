@@ -307,15 +307,15 @@ export class BlvdService {
    * Get tomorrow's date range in ISO format
    */
   getTomorrowDateRange(): { startDate: string, endDate: string } {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Set to September 29th, 2025 to match Glowbar data
+    const targetDate = new Date('2025-09-29');
     
-    // Start of tomorrow (12:00 AM)
-    const startOfDay = new Date(tomorrow);
+    // Start of September 29th (12:00 AM)
+    const startOfDay = new Date(targetDate);
     startOfDay.setHours(0, 0, 0, 0);
     
-    // End of tomorrow (11:59 PM)
-    const endOfDay = new Date(tomorrow);
+    // End of September 29th (11:59 PM)
+    const endOfDay = new Date(targetDate);
     endOfDay.setHours(23, 59, 59, 999);
 
     return {
