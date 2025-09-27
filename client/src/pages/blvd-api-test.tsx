@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ChartScatter, Link, Circle, Loader2 } from "lucide-react";
+import { ChartScatter, Link, Circle, Loader2, Calendar } from "lucide-react";
 import { BlvdConfig } from "@shared/schema";
 import { ConfigurationPanel } from "@/components/configuration-panel";
 import { TestingPanel } from "@/components/testing-panel";
@@ -116,6 +119,12 @@ export default function BlvdApiTest() {
   };
 
   const [availabilityResults, setAvailabilityResults] = useState<any>(null);
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    // Default to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  });
 
   const handleTestReportExport = async () => {
     try {
@@ -125,7 +134,7 @@ export default function BlvdApiTest() {
       });
 
       // Get availability data with real appointment data
-      const availabilityData = await getBlvdAvailability(serverConfig?.hasApiKey ? undefined : config);
+      const availabilityData = await getBlvdAvailability(serverConfig?.hasApiKey ? undefined : config, selectedDate);
       
       if (!availabilityData.success) {
         throw new Error("Failed to fetch availability data");
@@ -284,6 +293,39 @@ fetchLocations();`;
           <div className="lg:col-span-2">
             <TestingPanel config={config} />
           </div>
+        </div>
+
+        {/* Date Selector */}
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Select Date for Availability Testing
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 max-w-sm">
+                  <Label htmlFor="date-selector" className="text-sm font-medium">
+                    Test Date
+                  </Label>
+                  <Input
+                    id="date-selector"
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="mt-1"
+                    data-testid="input-date-selector"
+                  />
+                </div>
+                <div className="text-sm text-muted-foreground pt-6">
+                  Choose a date to test availability against your dashboard forecast
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Quick Actions */}

@@ -525,6 +525,26 @@ export class BlvdService {
   }
 
   /**
+   * Get date range for a specific date in ISO format
+   */
+  getDateRange(dateString: string): { startDate: string, endDate: string } {
+    const date = new Date(dateString);
+    
+    // Start of day (12:00 AM)
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    // End of day (11:59 PM)
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return {
+      startDate: startOfDay.toISOString(),
+      endDate: endOfDay.toISOString()
+    };
+  }
+
+  /**
    * Generate Glowbar-style CSV report with real appointment data
    */
   generateGlowbarCSVReport(availabilityResults: any[]): string {
@@ -608,9 +628,9 @@ export class BlvdService {
   }
 
   /**
-   * Find locations with 25% or more availability for tomorrow
+   * Find locations with 25% or more availability for a specific date
    */
-  async getAvailableLocations(minAvailabilityPercent: number = 25): Promise<any> {
+  async getAvailableLocations(minAvailabilityPercent: number = 25, date?: string): Promise<any> {
     try {
       // Step 1: Get all locations
       const locationsResponse = await this.executeLocationsQuery();
@@ -620,7 +640,7 @@ export class BlvdService {
       }
 
       const locations = (locationsResponse.data as any).locations.edges.map((edge: any) => edge.node);
-      const { startDate, endDate } = this.getTomorrowDateRange();
+      const { startDate, endDate } = date ? this.getDateRange(date) : this.getTomorrowDateRange();
       
       // Step 2: Check availability for each location
       const availabilityResults: any[] = [];
@@ -686,7 +706,7 @@ export class BlvdService {
 
       return {
         success: true,
-        date: startDate.split('T')[0],
+        date: date || startDate.split('T')[0], // Use provided date or format the calculated date
         minAvailabilityPercent,
         totalLocationsChecked: locations.filter((loc: any) => !loc.isRemote).length,
         availableLocationsCount: availableLocations.length,

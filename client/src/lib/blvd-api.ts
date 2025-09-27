@@ -16,8 +16,12 @@ export async function queryBlvdLocations(config?: BlvdConfig): Promise<GraphqlRe
   return response.json();
 }
 
-export async function getBlvdAvailability(config?: BlvdConfig) {
-  const response = await apiRequest("POST", "/api/blvd/availability", config || {});
+export async function getBlvdAvailability(config?: BlvdConfig, date?: string) {
+  const payload = {
+    ...(config || {}),
+    ...(date && { date })
+  };
+  const response = await apiRequest("POST", "/api/blvd/availability", payload);
   return response.json();
 }
 

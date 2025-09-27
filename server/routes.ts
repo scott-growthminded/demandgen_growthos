@@ -269,10 +269,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Parse request body for parameters
       const minAvailabilityPercent = req.body.minAvailability || 25;
+      const date = req.body.date; // Optional date parameter
       
-      console.log(`Checking availability for locations with ${minAvailabilityPercent}% or more availability`);
+      console.log(`Checking availability for locations with ${minAvailabilityPercent}% or more availability${date ? ` for date ${date}` : ' for tomorrow'}`);
       
-      const result = await blvdService.getAvailableLocations(minAvailabilityPercent);
+      const result = await blvdService.getAvailableLocations(minAvailabilityPercent, date);
       res.json(result);
       
     } catch (error) {
