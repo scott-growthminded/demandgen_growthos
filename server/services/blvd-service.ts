@@ -287,7 +287,7 @@ export class BlvdService {
     }
   }
 
-  private async makeGraphqlRequest(query: string, variables?: any): Promise<GraphqlResponse> {
+  async makeGraphqlRequest(query: string, variables?: any): Promise<GraphqlResponse> {
     try {
       const body = JSON.stringify({ query, variables });
       const headers = this.createAuthHeaders();

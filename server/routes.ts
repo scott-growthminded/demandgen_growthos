@@ -218,6 +218,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generic GraphQL query endpoint for exploration and testing
+  app.post("/api/blvd/graphql-query", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const hasServerConfig = serverConfig.apiUrl && serverConfig.apiKey && serverConfig.secretKey && serverConfig.businessId;
+      
+      if (!hasServerConfig) {
+        return res.status(500).json({
+          error: "Server configuration missing"
+        });
+      }
+      
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { query, variables } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({
+          error: "Missing required field: query"
+        });
+      }
+      
+      const result = await blvdService.makeGraphqlRequest(query, variables || {});
+      res.json(result);
+      
+    } catch (error) {
+      console.error('GraphQL query error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "GraphQL query failed"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
