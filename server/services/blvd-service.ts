@@ -181,16 +181,49 @@ export class BlvdService {
    * Get real appointment data from Boulevard Admin API for a specific location and date range
    */
   async getLocationAppointments(locationId: string, startDate: string, endDate: string): Promise<GraphqlResponse> {
-    // Try to get real appointment data from Boulevard Admin API
-    const query = `
-      query GetLocationAppointments($locationId: ID!, $startTime: DateTime!, $endTime: DateTime!) {
-        appointments(
-          filter: {
-            locationId: $locationId
-            startTime: { gte: $startTime, lt: $endTime }
-          }
-          first: 100
-        ) {
+    // Try to get real appointment data from Boulevard Client API
+    console.log(`Querying real appointments via Client API for ${locationId} on ${startDate.split('T')[0]}`);
+    
+    try {
+      // Try Client API approach - get all appointments for the date range and filter by location
+      const response = await this.queryClientAPIAppointments(locationId, startDate, endDate);
+      
+      if ((response.data as any)?.appointments || (response.data as any)?.myAppointments) {
+        console.log(`Found real appointment data via Client API`);
+        return response;
+      } else if (response.errors) {
+        console.log('Client API query failed, trying alternative approach...', response.errors[0]?.message);
+        return await this.tryAlternativeAppointmentsQuery(locationId, startDate, endDate);
+      } else {
+        console.log('No appointment data returned from Client API, trying alternative...');
+        return await this.tryAlternativeAppointmentsQuery(locationId, startDate, endDate);
+      }
+    } catch (error) {
+      console.log('Client API error, falling back...', error);
+      return await this.tryAlternativeAppointmentsQuery(locationId, startDate, endDate);
+    }
+  }
+
+  async queryClientAPIAppointments(locationId: string, startDate: string, endDate: string): Promise<GraphqlResponse> {
+    // First, try GraphQL introspection to discover the schema
+    console.log('Using GraphQL introspection to discover Client API schema...');
+    
+    try {
+      const introspectionResponse = await this.introspectClientAPISchema();
+      if (introspectionResponse?.data?.__schema) {
+        console.log('Client API schema discovered! Available root queries:', 
+          introspectionResponse.data.__schema.queryType?.fields?.map((f: any) => f.name) || []);
+      }
+    } catch (error) {
+      console.log('Introspection failed, proceeding with known queries:', error);
+    }
+
+    // Try the documented myAppointments query pattern
+    console.log('Trying myAppointments query for Client API...');
+    
+    const myAppointmentsQuery = `
+      query GetMyAppointments($first: Int, $query: String) {
+        myAppointments(first: $first, query: $query) {
           edges {
             node {
               id
@@ -199,8 +232,11 @@ export class BlvdService {
               duration
               state
               cancelled
-              cancelledAt
               location {
+                id
+                name
+              }
+              client {
                 id
                 name
               }
@@ -214,30 +250,147 @@ export class BlvdService {
       }
     `;
 
+    const startFormatted = new Date(startDate).toISOString();
+    const endFormatted = new Date(endDate).toISOString();
+    
     const variables = {
-      locationId: locationId,
-      startTime: startDate,
-      endTime: endDate
+      first: 200,
+      query: `startAt >= '${startFormatted}' AND startAt < '${endFormatted}' AND locationId = '${locationId}'`
     };
 
-    console.log(`Querying real appointments for ${locationId} on ${startDate.split('T')[0]}`);
+    const response = await this.makeClientAPIRequest(myAppointmentsQuery, variables);
     
-    try {
-      const response = await this.makeGraphqlRequest(query, variables);
-      
-      if ((response.data as any)?.appointments) {
-        console.log(`Found ${(response.data as any).appointments.edges?.length || 0} real appointments for location`);
-        return response;
-      } else if (response.errors) {
-        console.log('Appointments query failed, trying alternative query...', response.errors[0]?.message);
-        return await this.tryAlternativeAppointmentsQuery(locationId, startDate, endDate);
-      } else {
-        console.log('No appointment data returned, trying alternative query...');
-        return await this.tryAlternativeAppointmentsQuery(locationId, startDate, endDate);
+    if (response.errors) {
+      console.log('myAppointments query failed, trying alternative approaches...');
+      // Try other potential query patterns
+      return await this.tryAlternativeClientQueries(locationId, startDate, endDate);
+    }
+    
+    return response;
+  }
+
+  async introspectClientAPISchema(): Promise<GraphqlResponse> {
+    // GraphQL introspection query to discover available schema
+    const introspectionQuery = `
+      query IntrospectionQuery {
+        __schema {
+          queryType {
+            name
+            fields {
+              name
+              description
+              type {
+                name
+                kind
+              }
+              args {
+                name
+                type {
+                  name
+                  kind
+                }
+              }
+            }
+          }
+        }
       }
+    `;
+
+    return await this.makeClientAPIRequest(introspectionQuery);
+  }
+
+  async tryAlternativeClientQueries(locationId: string, startDate: string, endDate: string): Promise<GraphqlResponse> {
+    console.log('Trying alternative Client API query patterns...');
+    
+    // Try the locations query to see if it provides any useful appointment-related data
+    console.log('Testing Client API locations query...');
+    const locationsQuery = `
+      query GetLocationsForAppointments {
+        locations(first: 50) {
+          edges {
+            node {
+              id
+              name
+              businessName
+              address {
+                line1
+                line2
+                city
+                state
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    try {
+      const locationsResponse = await this.makeClientAPIRequest(locationsQuery);
+      console.log('🔍 Client API Locations Response:', JSON.stringify(locationsResponse, null, 2));
+      
+      if (locationsResponse.data?.locations?.edges) {
+        console.log(`Found ${locationsResponse.data.locations.edges.length} locations via Client API`);
+        // Check if any location matches our target
+        const targetLocation = locationsResponse.data.locations.edges.find((edge: any) => 
+          edge.node.id === locationId
+        );
+        if (targetLocation) {
+          console.log(`✅ Found target location: ${targetLocation.node.name}`);
+        }
+      }
+      
+      return locationsResponse;
     } catch (error) {
-      console.log('Appointments query error, trying alternative...', error);
-      return await this.tryAlternativeAppointmentsQuery(locationId, startDate, endDate);
+      console.log('❌ Client API locations query failed:', error);
+      // Return empty response structure for consistency
+      return {
+        data: {
+          appointments: {
+            edges: [],
+            pageInfo: { hasNextPage: false, endCursor: null }
+          }
+        }
+      } as GraphqlResponse;
+    }
+  }
+
+  async makeClientAPIRequest(query: string, variables?: any): Promise<GraphqlResponse> {
+    try {
+      const body = JSON.stringify({ query, variables });
+      
+      // Use Client API endpoint and authentication
+      const clientApiUrl = `https://dashboard.boulevard.io/api/2020-01/${this.config.businessId}/client`;
+      
+      // Client API uses HTTP Basic Auth with API_KEY (no colon needed for public access)
+      const basicPayload = `${this.config.apiKey}:`;
+      const basicCredentials = Buffer.from(basicPayload).toString('base64');
+      
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${basicCredentials}`
+      };
+      
+      console.log('Making Client API GraphQL request to:', clientApiUrl);
+      console.log('Request headers:', {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic [API key credentials]`
+      });
+      
+      const response = await fetch(clientApiUrl, {
+        method: 'POST',
+        headers,
+        body
+      });
+      
+      console.log('Response status:', response.status, response.statusText);
+      
+      const responseData = await response.json();
+      console.log('Client API GraphQL response received:', JSON.stringify(responseData, null, 2));
+      
+      return responseData;
+    } catch (error) {
+      console.error('Client API GraphQL request failed:', error);
+      throw error;
     }
   }
 
@@ -284,7 +437,7 @@ export class BlvdService {
           data: {
             appointments: (response.data as any).business.appointments
           }
-        };
+        } as GraphqlResponse;
       } else {
         console.log('Alternative appointments query also failed, falling back to capacity-based calculation');
         return await this.getLocationCapacityForDate(locationId, startDate, endDate);
@@ -311,106 +464,7 @@ export class BlvdService {
         // Include location capacity info based on your real Glowbar data
         totalSlots: 31 // Default capacity, will adjust per location
       }
-    };
-  }
-
-  // Remove old mock data generation and replace with capacity-based fallback
-  async getOldMockDataGeneration(): Promise<void> {
-    // Old mock data logic removed - now using real API queries
-    const locationNameMap = new Map([
-      // Higher traffic locations (major cities) - more appointments
-      ['Manhattan', 0.8], ['Brooklyn', 0.7], ['Boston', 0.7], ['Philadelphia', 0.6],
-      // Medium traffic locations - moderate appointments  
-      ['Georgetown', 0.5], ['Back Bay', 0.5], ['Union Square', 0.4],
-      // Lower traffic locations - fewer appointments (will have 25%+ availability)
-      ['Clarendon', 0.2], ['Hingham', 0.15], ['Training', 0.1], ['Westport', 0.3],
-      ['Roslyn', 0.25], ['Lynnfield', 0.2], ['Bryn Mawr', 0.3]
-    ]);
-
-    // Use location name from the ID to determine booking rate  
-    let bookingRate = 0.4; // Default 40% booking rate (60% availability)
-    let capacityMultiplier = 1.0; // Default capacity multiplier
-    let locationName = '';
-    
-    // Extract actual location name from the full location data
-    // This should be passed from the calling function, but we'll work with what we have
-    const idParts = locationId.split(':');
-    if (idParts.length > 2) {
-      // For debugging - we don't have the location name here, so use ID-based logic
-      const lastPart = idParts[idParts.length - 1];
-      const hash = lastPart.split('-')[0]; // Use first part of UUID
-      
-      // Create deterministic but varied booking rates based on location ID
-      const seed = parseInt(hash.substring(0, 8), 16);
-      const locationIndex = seed % 10;
-      
-      // Create realistic booking patterns based on Glowbar data
-      // High-traffic locations: 70-85% utilization (15-30% availability)
-      // Medium-traffic locations: 50-70% utilization (30-50% availability)
-      // Lower-traffic locations: 30-50% utilization (50-70% availability)
-      
-      // Vary total capacity (some locations are bigger/smaller)
-      
-      if (locationIndex < 3) {
-        // High-traffic, high-capacity locations (like Union Square, Back Bay)
-        bookingRate = 0.75 + (locationIndex * 0.05); // 75-85% utilization
-        capacityMultiplier = 1.6; // 83 total slots
-      } else if (locationIndex < 6) {
-        // Medium-traffic locations
-        bookingRate = 0.55 + (locationIndex * 0.05); // 55-70% utilization 
-        capacityMultiplier = 1.2; // 62 total slots
-      } else {
-        // Lower-traffic locations (will have good availability)
-        bookingRate = 0.35 + (locationIndex * 0.03); // 35-50% utilization
-        capacityMultiplier = 0.8; // 42 total slots
-      }
-      
-      // We'll apply capacity variation after the totalSlots calculation
-    }
-
-    // Generate realistic appointment volumes based on real Glowbar data (28-85 appointments)
-    // Match Glowbar: 8 AM to 9 PM = 13 hours, varied capacity by location
-    const businessHours = 13; // 8 AM to 9 PM (matches Glowbar data)
-    const baseCapacity = 4; // Base appointments per hour
-    let totalSlots = businessHours * baseCapacity; // 52 base capacity
-    
-    // Apply capacity variation if we calculated it above
-    if (idParts.length > 2) {
-      const adjustedTotalSlots = Math.floor(totalSlots * capacityMultiplier);
-      totalSlots = adjustedTotalSlots;
-    }
-    
-    const bookedSlots = Math.floor(totalSlots * bookingRate);
-
-    // Create mock appointment edges
-    const appointmentEdges = [];
-    for (let i = 0; i < bookedSlots; i++) {
-      appointmentEdges.push({
-        node: {
-          id: `mock-appointment-${i}`,
-          startAt: new Date(Date.parse(startDate) + (i * 30 * 60 * 1000)).toISOString(),
-          endAt: new Date(Date.parse(startDate) + ((i + 1) * 30 * 60 * 1000)).toISOString(),
-          duration: 30,
-          state: 'confirmed',
-          locationId: locationId,
-          cancelled: false
-        }
-      });
-    }
-
-    return {
-      data: {
-        appointments: {
-          edges: appointmentEdges,
-          pageInfo: {
-            hasNextPage: false,
-            endCursor: bookedSlots > 0 ? `cursor-${bookedSlots}` : null
-          }
-        },
-        // Include total slots for consistent calculations
-        totalSlots: totalSlots
-      }
-    };
+    } as GraphqlResponse;
   }
 
   /**
