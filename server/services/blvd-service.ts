@@ -506,15 +506,16 @@ export class BlvdService {
    * Get tomorrow's date range in ISO format
    */
   getTomorrowDateRange(): { startDate: string, endDate: string } {
-    // Set to September 29th, 2025 to match Glowbar data
-    const targetDate = new Date('2025-09-29');
+    // Use actual tomorrow for real-time availability checking
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
     
-    // Start of September 29th (12:00 AM)
-    const startOfDay = new Date(targetDate);
+    // Start of tomorrow (12:00 AM)
+    const startOfDay = new Date(tomorrow);
     startOfDay.setHours(0, 0, 0, 0);
     
-    // End of September 29th (11:59 PM)
-    const endOfDay = new Date(targetDate);
+    // End of tomorrow (11:59 PM)
+    const endOfDay = new Date(tomorrow);
     endOfDay.setHours(23, 59, 59, 999);
 
     return {
@@ -556,22 +557,28 @@ export class BlvdService {
           );
 
           const appointments = (appointmentsResponse.data as any)?.appointments?.edges?.map((edge: any) => edge.node) || [];
-          const totalSlotsFromMockData = (appointmentsResponse.data as any)?.totalSlots || 52; // Get actual total from mock data
           
-          // Calculate availability percentage using the actual total slots
+          // Calculate realistic capacity based on facial treatment studio operations
+          // Typical studio: 3-4 treatment rooms × 30-min facials × 13 hours = ~50-60 slots per day
+          const estimatedTreatmentRooms = 4; // Standard Glowbar location has 3-4 treatment rooms
+          const averageServiceDuration = 40; // 30-40 minutes per facial (from real data)
+          const operatingMinutes = (businessHours.end - businessHours.start) * 60; // 13 hours = 780 minutes
+          const slotsPerRoom = Math.floor(operatingMinutes / averageServiceDuration);
+          const totalCapacity = estimatedTreatmentRooms * slotsPerRoom;
+          
+          // Count real booked appointments (exclude cancelled)
           const bookedCount = appointments.filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED').length;
-          const availableSlots = Math.max(0, totalSlotsFromMockData - bookedCount);
-          const availabilityPercent = totalSlotsFromMockData > 0 ? (availableSlots / totalSlotsFromMockData) * 100 : 0;
+          const availableSlots = Math.max(0, totalCapacity - bookedCount);
+          const availabilityPercent = totalCapacity > 0 ? (availableSlots / totalCapacity) * 100 : 0;
           const roundedAvailabilityPercent = Math.round(availabilityPercent * 100) / 100;
           
-          // Add ALL locations to results (not just those above threshold)
           availabilityResults.push({
             locationId: location.id,
             locationName: location.name,
             availabilityPercent: roundedAvailabilityPercent,
-            totalAppointments: totalSlotsFromMockData, // FIXED: Use actual capacity from mock data
-            bookedAppointments: bookedCount, // FIXED: This should be actually booked slots
-            date: startDate.split('T')[0] // Tomorrow's date
+            totalAppointments: totalCapacity,
+            bookedAppointments: bookedCount,
+            date: startDate.split('T')[0]
           });
         } catch (error) {
           console.error(`Error checking availability for location ${location.name}:`, error);
