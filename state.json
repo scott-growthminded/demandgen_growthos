@@ -1,0 +1,14 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://22f78605-d9f8-4709-ae93-1d92ea535b03-00-1o2chru389x9p.spock.replit.dev",
+      "localStorage": [
+        {
+          "name": "replitDevBannerClosed-22f78605-d9f8-4709-ae93-1d92ea535b03-00-1o2chru389x9p.spock.replit.dev",
+          "value": "true"
+        }
+      ]
+    }
+  ]
+}
