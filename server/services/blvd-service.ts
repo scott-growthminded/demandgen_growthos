@@ -486,7 +486,7 @@ export class BlvdService {
    * Calculate availability percentage for a location on a specific date
    */
   calculateLocationAvailability(appointments: any[], businessHours: { start: number, end: number }, slotDuration: number = 15): number {
-    // Calculate total available slots (matching mock data generation)
+    // Calculate total available slots for facial treatment studio
     // Use 15-minute slots to match realistic salon booking patterns
     const totalMinutes = (businessHours.end - businessHours.start) * 60;
     const totalSlots = Math.floor(totalMinutes / slotDuration);
@@ -624,7 +624,7 @@ export class BlvdService {
       
       // Step 2: Check availability for each location
       const availabilityResults: any[] = [];
-      const businessHours = { start: 8, end: 21 }; // 8 AM to 9 PM (matches Glowbar and mock data)
+      const businessHours = { start: 8, end: 21 }; // 8 AM to 9 PM (matches Glowbar dashboard format)
 
       for (const location of locations) {
         if (location.isRemote) {
