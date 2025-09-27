@@ -136,40 +136,21 @@ export default function BlvdApiTest() {
         throw new Error("Failed to fetch locations data");
       }
 
-      // Create a map of available locations for quick lookup
-      const availabilityMap = new Map(
-        availabilityData.availableLocations.map((loc: any) => [loc.locationId, loc])
-      );
-
-      // Create utilization report for ALL locations
-      const reportData = locationsData.data.locations.edges.map((edge: any) => {
-        const location = edge.node;
-        const availabilityInfo = availabilityMap.get(location.id);
-        
-        if (availabilityInfo) {
-          // For locations with availability data, calculate utilization
-          const utilizationPercent = 100 - availabilityInfo.availabilityPercent;
-          return {
-            locationName: location.name,
-            locationId: location.id,
-            availabilityPercent: availabilityInfo.availabilityPercent.toFixed(2),
-            utilizationPercent: utilizationPercent.toFixed(2),
-            totalAppointments: availabilityInfo.totalAppointments,
-            bookedAppointments: availabilityInfo.bookedAppointments,
-            status: availabilityInfo.availabilityPercent >= 25 ? "Available" : "High Utilization"
-          };
-        } else {
-          // For locations without availability data, show as fully booked
-          return {
-            locationName: location.name,
-            locationId: location.id,
-            availabilityPercent: "0.00",
-            utilizationPercent: "100.00",
-            totalAppointments: "N/A",
-            bookedAppointments: "N/A",
-            status: "Fully Booked"
-          };
-        }
+      // Use allLocations if available (includes all locations), otherwise fall back to availableLocations
+      const allLocationData = availabilityData.allLocations || availabilityData.availableLocations;
+      
+      // Create utilization report for ALL locations using the backend data
+      const reportData = allLocationData.map((locationData: any) => {
+        const utilizationPercent = 100 - locationData.availabilityPercent;
+        return {
+          locationName: locationData.locationName,
+          locationId: locationData.locationId,
+          availabilityPercent: locationData.availabilityPercent.toFixed(2),
+          utilizationPercent: utilizationPercent.toFixed(2),
+          totalAppointments: locationData.totalAppointments,
+          bookedAppointments: locationData.bookedAppointments,
+          status: locationData.availabilityPercent >= 25 ? "Available" : "High Utilization"
+        };
       });
 
       // Sort by utilization percentage (highest first)

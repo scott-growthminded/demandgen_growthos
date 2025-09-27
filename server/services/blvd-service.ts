@@ -223,10 +223,10 @@ export class BlvdService {
       }
     }
 
-    // Generate 8-10 hour business day with 30-minute slots
-    const businessHours = 10;
-    const slotsPerHour = 2;
-    const totalSlots = businessHours * slotsPerHour;
+    // Generate realistic appointment volumes based on real Glowbar data (28-85 appointments)
+    const businessHours = 12; // 8 AM to 8 PM
+    const slotsPerHour = 6; // 10-minute slots to match real salon capacity
+    const totalSlots = businessHours * slotsPerHour; // 72 total slots
     const bookedSlots = Math.floor(totalSlots * bookingRate);
 
     // Create mock appointment edges
@@ -335,17 +335,20 @@ export class BlvdService {
           // Calculate availability percentage
           const availabilityPercent = this.calculateLocationAvailability(appointments, businessHours);
           
-          // Add to results if meets minimum threshold
-          if (availabilityPercent >= minAvailabilityPercent) {
-            availabilityResults.push({
-              locationId: location.id,
-              locationName: location.name,
-              availabilityPercent,
-              totalAppointments: appointments.length,
-              bookedAppointments: appointments.filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED').length,
-              date: startDate.split('T')[0] // Tomorrow's date
-            });
-          }
+          // Calculate total slots for this location (should match the mock data generation)
+          const totalMinutes = (businessHours.end - businessHours.start) * 60;
+          const totalSlots = Math.floor(totalMinutes / 60) * 6; // 6 slots per hour (10-minute appointments)
+          const bookedCount = appointments.filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED').length;
+          
+          // Add ALL locations to results (not just those above threshold)
+          availabilityResults.push({
+            locationId: location.id,
+            locationName: location.name,
+            availabilityPercent,
+            totalAppointments: totalSlots, // FIXED: This should be total available slots
+            bookedAppointments: bookedCount, // FIXED: This should be actually booked slots
+            date: startDate.split('T')[0] // Tomorrow's date
+          });
         } catch (error) {
           console.error(`Error checking availability for location ${location.name}:`, error);
           // Continue with other locations
@@ -355,13 +358,17 @@ export class BlvdService {
       // Sort by availability percentage (highest first)
       availabilityResults.sort((a: any, b: any) => b.availabilityPercent - a.availabilityPercent);
 
+      // Filter for locations meeting the availability threshold (for the availableLocations field)
+      const availableLocations = availabilityResults.filter(loc => loc.availabilityPercent >= minAvailabilityPercent);
+
       return {
         success: true,
         date: startDate.split('T')[0],
         minAvailabilityPercent,
         totalLocationsChecked: locations.filter((loc: any) => !loc.isRemote).length,
-        availableLocationsCount: availabilityResults.length,
-        availableLocations: availabilityResults
+        availableLocationsCount: availableLocations.length,
+        availableLocations: availableLocations,
+        allLocations: availabilityResults // ADDED: All locations for complete utilization report
       };
 
     } catch (error) {
