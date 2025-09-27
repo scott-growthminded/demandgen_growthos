@@ -181,49 +181,40 @@ export class BlvdService {
    * Get real appointment data from Boulevard Admin API for a specific location and date range
    */
   async getLocationAppointments(locationId: string, startDate: string, endDate: string): Promise<GraphqlResponse> {
-    // Try to get real appointment data from Boulevard Client API
-    console.log(`Querying real appointments via Client API for ${locationId} on ${startDate.split('T')[0]}`);
+    // Use the correct Admin API appointments query that provides business-level access
+    console.log(`🎯 Querying REAL appointments via Admin API for ${locationId} on ${startDate.split('T')[0]}`);
     
     try {
-      // Try Client API approach - get all appointments for the date range and filter by location
-      const response = await this.queryClientAPIAppointments(locationId, startDate, endDate);
+      const response = await this.queryAdminAPIAppointments(locationId, startDate, endDate);
       
-      if ((response.data as any)?.appointments || (response.data as any)?.myAppointments) {
-        console.log(`Found real appointment data via Client API`);
+      if ((response.data as any)?.appointments) {
+        const appointmentCount = (response.data as any).appointments.edges?.length || 0;
+        console.log(`✅ Found ${appointmentCount} REAL appointments for location via Admin API`);
         return response;
       } else if (response.errors) {
-        console.log('Client API query failed, trying alternative approach...', response.errors[0]?.message);
+        console.log('❌ Admin API appointments query failed:', response.errors[0]?.message);
         return await this.tryAlternativeAppointmentsQuery(locationId, startDate, endDate);
       } else {
-        console.log('No appointment data returned from Client API, trying alternative...');
+        console.log('⚠️ No appointment data returned from Admin API, falling back...');
         return await this.tryAlternativeAppointmentsQuery(locationId, startDate, endDate);
       }
     } catch (error) {
-      console.log('Client API error, falling back...', error);
+      console.log('❌ Admin API error, falling back to capacity calculation:', error);
       return await this.tryAlternativeAppointmentsQuery(locationId, startDate, endDate);
     }
   }
 
-  async queryClientAPIAppointments(locationId: string, startDate: string, endDate: string): Promise<GraphqlResponse> {
-    // First, try GraphQL introspection to discover the schema
-    console.log('Using GraphQL introspection to discover Client API schema...');
+  async queryAdminAPIAppointments(locationId: string, startDate: string, endDate: string): Promise<GraphqlResponse> {
+    // Use the CORRECT Admin API appointments query that provides business-level access to all appointment data
+    console.log('📋 Using Admin API appointments query (business-level access)...');
     
-    try {
-      const introspectionResponse = await this.introspectClientAPISchema();
-      if (introspectionResponse?.data?.__schema) {
-        console.log('Client API schema discovered! Available root queries:', 
-          introspectionResponse.data.__schema.queryType?.fields?.map((f: any) => f.name) || []);
-      }
-    } catch (error) {
-      console.log('Introspection failed, proceeding with known queries:', error);
-    }
-
-    // Try the documented myAppointments query pattern
-    console.log('Trying myAppointments query for Client API...');
-    
-    const myAppointmentsQuery = `
-      query GetMyAppointments($first: Int, $query: String) {
-        myAppointments(first: $first, query: $query) {
+    const adminAppointmentsQuery = `
+      query ListAppointments($locationId: ID!, $first: Int, $query: String) {
+        appointments(
+          locationId: $locationId,
+          first: $first,
+          query: $query
+        ) {
           edges {
             node {
               id
@@ -232,13 +223,39 @@ export class BlvdService {
               duration
               state
               cancelled
+              notes
+              client {
+                id
+                firstName
+                lastName
+                email
+                mobilePhone
+              }
               location {
                 id
                 name
               }
-              client {
+              appointmentServices {
                 id
-                name
+                startAt
+                endAt
+                duration
+                price
+                service {
+                  id
+                  name
+                  category {
+                    name
+                  }
+                }
+                staff {
+                  id
+                  firstName
+                  lastName
+                  role {
+                    name
+                  }
+                }
               }
             }
           }
@@ -250,23 +267,21 @@ export class BlvdService {
       }
     `;
 
-    const startFormatted = new Date(startDate).toISOString();
-    const endFormatted = new Date(endDate).toISOString();
+    // Format dates for Boulevard query syntax - use next day for upper bound to create valid range
+    const startFormatted = new Date(startDate).toISOString().split('T')[0]; // YYYY-MM-DD format
+    const nextDay = new Date(endDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const endFormatted = nextDay.toISOString().split('T')[0]; // Next day for exclusive upper bound
     
     const variables = {
+      locationId: locationId,
       first: 200,
-      query: `startAt >= '${startFormatted}' AND startAt < '${endFormatted}' AND locationId = '${locationId}'`
+      query: `cancelled = false AND startAt >= '${startFormatted}' AND startAt < '${endFormatted}'`
     };
 
-    const response = await this.makeClientAPIRequest(myAppointmentsQuery, variables);
+    console.log(`📊 Querying appointments for ${locationId} from ${startFormatted} to ${endFormatted} (exclusive)`);
     
-    if (response.errors) {
-      console.log('myAppointments query failed, trying alternative approaches...');
-      // Try other potential query patterns
-      return await this.tryAlternativeClientQueries(locationId, startDate, endDate);
-    }
-    
-    return response;
+    return await this.makeGraphqlRequest(adminAppointmentsQuery, variables);
   }
 
   async introspectClientAPISchema(): Promise<GraphqlResponse> {
