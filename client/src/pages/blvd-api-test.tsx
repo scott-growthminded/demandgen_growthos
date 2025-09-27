@@ -1,26 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ChartScatter, Link, Circle, Loader2 } from "lucide-react";
 import { BlvdConfig } from "@shared/schema";
 import { ConfigurationPanel } from "@/components/configuration-panel";
 import { TestingPanel } from "@/components/testing-panel";
 import { QuickActions } from "@/components/quick-actions";
-import { testBlvdConnection, queryBlvdLocations } from "@/lib/blvd-api";
+import { testBlvdConnection, queryBlvdLocations, getBlvdServerConfig } from "@/lib/blvd-api";
 
 export default function BlvdApiTest() {
   const { toast } = useToast();
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'testing'>('disconnected');
   const [config, setConfig] = useState<BlvdConfig>({
-    apiUrl: import.meta.env.VITE_BLVD_ADMIN_API_URL || "https://api.joinblvd.com/graphql-admin",
-    apiKey: import.meta.env.VITE_BLVD_API_KEY || "",
-    businessId: import.meta.env.VITE_BLVD_BUSINESS_ID || "",
+    apiUrl: "https://api.joinblvd.com/graphql-admin",
+    apiKey: "",
+    businessId: "",
   });
 
+  // Load server configuration on startup
+  const { data: serverConfig } = useQuery({
+    queryKey: ["/api/blvd/config"],
+    queryFn: getBlvdServerConfig,
+  });
+
+  // Update config when server config loads
+  useEffect(() => {
+    if (serverConfig) {
+      setConfig({
+        apiUrl: serverConfig.apiUrl || "https://api.joinblvd.com/graphql-admin",
+        apiKey: serverConfig.hasApiKey ? "sk_***configured***" : "",
+        businessId: serverConfig.businessId || "",
+      });
+    }
+  }, [serverConfig]);
+
   const connectionTest = useMutation({
-    mutationFn: () => testBlvdConnection(config),
+    mutationFn: () => testBlvdConnection(serverConfig?.hasApiKey ? undefined : config),
     onMutate: () => {
       setConnectionStatus('testing');
     },
@@ -50,7 +67,7 @@ export default function BlvdApiTest() {
   });
 
   const locationsQuery = useMutation({
-    mutationFn: () => queryBlvdLocations(config),
+    mutationFn: () => queryBlvdLocations(serverConfig?.hasApiKey ? undefined : config),
     onSuccess: (data) => {
       if (data.errors && data.errors.length > 0) {
         toast({

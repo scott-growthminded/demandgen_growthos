@@ -18,7 +18,7 @@ export function TestingPanel({ config }: TestingPanelProps) {
   const [queryTime, setQueryTime] = useState<number | null>(null);
 
   const connectionTest = useMutation({
-    mutationFn: () => testBlvdConnection(config),
+    mutationFn: () => testBlvdConnection(),
     onSuccess: (data) => {
       setConnectionResult(data);
     },
@@ -30,7 +30,7 @@ export function TestingPanel({ config }: TestingPanelProps) {
   const locationsQuery = useMutation({
     mutationFn: () => {
       const start = Date.now();
-      return queryBlvdLocations(config).then((result) => {
+      return queryBlvdLocations().then((result) => {
         setQueryTime(Date.now() - start);
         return result;
       });

@@ -197,23 +197,42 @@ export class BlvdService {
   }
 
   private async makeGraphqlRequest(query: string, variables?: any): Promise<GraphqlResponse> {
-    const response = await fetch(this.config.apiUrl, {
-      method: 'POST',
-      headers: {
+    try {
+      console.log('Making GraphQL request to:', this.config.apiUrl);
+      console.log('Request headers:', {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
-      },
-      body: JSON.stringify({
-        query,
-        variables,
-      }),
-    });
+        'Authorization': `Bearer ${this.config.apiKey.substring(0, 10)}...`,
+      });
+      
+      const response = await fetch(this.config.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({
+          query,
+          variables,
+        }),
+      });
 
-    if (!response.ok) {
-      throw new Error(`GraphQL HTTP ${response.status}: ${response.statusText}`);
+      console.log('Response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Error response body:', errorText);
+        throw new Error(`GraphQL HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('GraphQL response received:', JSON.stringify(result, null, 2));
+      return result;
+    } catch (error) {
+      console.error('GraphQL request failed:', error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(`GraphQL request failed: ${String(error)}`);
     }
-
-    const result = await response.json();
-    return result;
   }
 }
