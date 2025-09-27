@@ -8,7 +8,7 @@ import { BlvdConfig } from "@shared/schema";
 import { ConfigurationPanel } from "@/components/configuration-panel";
 import { TestingPanel } from "@/components/testing-panel";
 import { QuickActions } from "@/components/quick-actions";
-import { testBlvdConnection, queryBlvdLocations, getBlvdServerConfig } from "@/lib/blvd-api";
+import { testBlvdConnection, queryBlvdLocations, getBlvdServerConfig, getBlvdAvailability } from "@/lib/blvd-api";
 
 export default function BlvdApiTest() {
   const { toast } = useToast();
@@ -115,11 +115,132 @@ export default function BlvdApiTest() {
     locationsQuery.mutate();
   };
 
-  const handleTestReportExport = () => {
-    toast({
-      title: "Feature Coming Soon",
-      description: "Report export testing will be available in a future update",
-    });
+  const handleTestReportExport = async () => {
+    try {
+      toast({
+        title: "Generating Report",
+        description: "Fetching utilization data for all locations...",
+      });
+
+      // Get availability data from our service
+      const availabilityData = await getBlvdAvailability(serverConfig?.hasApiKey ? undefined : config);
+      
+      if (!availabilityData.success) {
+        throw new Error("Failed to fetch availability data");
+      }
+
+      // Get all locations data
+      const locationsData = await queryBlvdLocations(serverConfig?.hasApiKey ? undefined : config);
+      
+      if (!locationsData.data?.locations?.edges) {
+        throw new Error("Failed to fetch locations data");
+      }
+
+      // Create a map of available locations for quick lookup
+      const availabilityMap = new Map(
+        availabilityData.availableLocations.map((loc: any) => [loc.locationId, loc])
+      );
+
+      // Create utilization report for ALL locations
+      const reportData = locationsData.data.locations.edges.map((edge: any) => {
+        const location = edge.node;
+        const availabilityInfo = availabilityMap.get(location.id);
+        
+        if (availabilityInfo) {
+          // For locations with availability data, calculate utilization
+          const utilizationPercent = 100 - availabilityInfo.availabilityPercent;
+          return {
+            locationName: location.name,
+            locationId: location.id,
+            availabilityPercent: availabilityInfo.availabilityPercent.toFixed(2),
+            utilizationPercent: utilizationPercent.toFixed(2),
+            totalAppointments: availabilityInfo.totalAppointments,
+            bookedAppointments: availabilityInfo.bookedAppointments,
+            status: availabilityInfo.availabilityPercent >= 25 ? "Available" : "High Utilization"
+          };
+        } else {
+          // For locations without availability data, show as fully booked
+          return {
+            locationName: location.name,
+            locationId: location.id,
+            availabilityPercent: "0.00",
+            utilizationPercent: "100.00",
+            totalAppointments: "N/A",
+            bookedAppointments: "N/A",
+            status: "Fully Booked"
+          };
+        }
+      });
+
+      // Sort by utilization percentage (highest first)
+      reportData.sort((a: any, b: any) => parseFloat(b.utilizationPercent) - parseFloat(a.utilizationPercent));
+
+      // Generate CSV report
+      const headers = ["Location Name", "Availability %", "Utilization %", "Total Slots", "Booked Slots", "Status"];
+      const csvContent = [
+        headers.join(","),
+        ...reportData.map((row: any) => [
+          `"${row.locationName}"`,
+          row.availabilityPercent,
+          row.utilizationPercent,
+          row.totalAppointments,
+          row.bookedAppointments,
+          `"${row.status}"`
+        ].join(","))
+      ].join("\n");
+
+      // Generate summary report
+      const totalLocations = reportData.length;
+      const availableLocations = reportData.filter((loc: any) => parseFloat(loc.availabilityPercent) >= 25).length;
+      const avgUtilization = reportData.reduce((sum: number, loc: any) => sum + parseFloat(loc.utilizationPercent), 0) / totalLocations;
+
+      const summaryReport = `BOULEVARD UTILIZATION REPORT
+Generated: ${new Date().toLocaleString()}
+Report Date: ${availabilityData.date}
+
+SUMMARY:
+- Total Locations: ${totalLocations}
+- Available Locations (≥25% availability): ${availableLocations}
+- High Utilization Locations: ${totalLocations - availableLocations}
+- Average Utilization: ${avgUtilization.toFixed(2)}%
+
+LOCATION DETAILS:
+${headers.join(" | ")}
+${reportData.map((row: any) => 
+  `${row.locationName.padEnd(20)} | ${row.availabilityPercent.padStart(12)} | ${row.utilizationPercent.padStart(13)} | ${String(row.totalAppointments).padStart(11)} | ${String(row.bookedAppointments).padStart(12)} | ${row.status}`
+).join("\n")}
+
+NOTES:
+- Availability % = Available appointment slots / Total appointment slots * 100
+- Utilization % = 100 - Availability %
+- Status "Available" = ≥25% availability threshold
+- Data source: Boulevard Admin API with simulated appointment data
+`;
+
+      // Create and download the report
+      const blob = new Blob([summaryReport], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `boulevard-utilization-report-${availabilityData.date}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Report Generated",
+        description: `Utilization report for ${totalLocations} locations downloaded successfully`,
+      });
+
+    } catch (error) {
+      console.error("Report generation error:", error);
+      toast({
+        title: "Report Generation Failed",
+        description: error instanceof Error ? error.message : "Failed to generate utilization report",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleGenerateCode = () => {

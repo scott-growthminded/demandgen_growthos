@@ -41,14 +41,14 @@ export function QuickActions({ config, onTestLocations, onTestReportExport, onGe
             className="flex items-center gap-3 p-4 h-auto text-left justify-start"
             onClick={onTestReportExport}
             disabled={!isConfigValid}
-            data-testid="button-test-report-export"
+            data-testid="button-test-report-utilization"
           >
             <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
               <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <div className="font-medium">Test Report Export</div>
-              <div className="text-sm text-muted-foreground">Create availability report</div>
+              <div className="font-medium">Test Report Utilization</div>
+              <div className="text-sm text-muted-foreground">Generate utilization report</div>
             </div>
           </Button>
           

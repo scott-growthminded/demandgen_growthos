@@ -16,6 +16,11 @@ export async function queryBlvdLocations(config?: BlvdConfig): Promise<GraphqlRe
   return response.json();
 }
 
+export async function getBlvdAvailability(config?: BlvdConfig) {
+  const response = await apiRequest("POST", "/api/blvd/availability", config || {});
+  return response.json();
+}
+
 export async function getEnvironmentInfo() {
   const response = await apiRequest("GET", "/api/env-info");
   return response.json();
