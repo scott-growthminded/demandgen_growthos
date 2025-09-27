@@ -8,21 +8,36 @@ export class BlvdService {
     this.config = config;
   }
 
-  private createAuthHeaders(method: string, path: string, timestamp: string, body?: string): Record<string, string> {
-    // Boulevard API HMAC authentication format
-    const bodyToHash = body || '';
-    // Try different signature formats that Boulevard might expect
-    const stringToSign = `${method}\n${path}\n${timestamp}\n${bodyToHash}`;
+  private createBoulevardToken(): string {
+    // Boulevard API authentication according to official docs
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const prefix = "blvd-admin-v1";
     
-    const signature = createHmac('sha256', this.config.secretKey)
-      .update(stringToSign, 'utf8')
-      .digest('hex'); // Try hex instead of base64
+    // 1. Generate token payload: prefix + business_id + timestamp
+    const tokenPayload = prefix + this.config.businessId + timestamp;
+    
+    // 2. Sign the payload with HMAC-SHA256
+    const rawKey = Buffer.from(this.config.secretKey, 'base64');
+    const rawMac = createHmac('sha256', rawKey)
+      .update(tokenPayload, 'utf8')
+      .digest(); // Get raw bytes, not string
+    const signature = Buffer.from(rawMac).toString('base64');
+    
+    // 3. Concatenate signature + token_payload
+    const token = signature + tokenPayload;
+    
+    return token;
+  }
+
+  private createAuthHeaders(): Record<string, string> {
+    // Boulevard uses Basic HTTP Authentication with signed tokens
+    const token = this.createBoulevardToken();
+    const basicPayload = `${this.config.apiKey}:${token}`;
+    const basicCredentials = Buffer.from(basicPayload).toString('base64');
     
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.config.apiKey}`,
-      'X-Timestamp': timestamp, // Different header format
-      'X-Signature': signature,
+      'Authorization': `Basic ${basicCredentials}`,
     };
   }
 
@@ -71,29 +86,24 @@ export class BlvdService {
 
   async executeLocationsQuery(): Promise<GraphqlResponse> {
     const query = `
-      query Locations($businessId: ID!, $cursor: String) {
-        business(id: $businessId) {
-          id
-          name
-          locations(first: 100, after: $cursor) {
-            edges { 
-              node { 
-                id 
-                name 
-                timeZone 
-              } 
-            }
-            pageInfo { 
-              hasNextPage 
-              endCursor 
-            }
+      query Locations($cursor: String) {
+        locations(first: 100, after: $cursor) {
+          edges { 
+            node { 
+              id 
+              name 
+              isRemote
+            } 
+          }
+          pageInfo { 
+            hasNextPage 
+            endCursor 
           }
         }
       }
     `;
 
     const variables = {
-      businessId: this.config.businessId,
       cursor: null,
     };
 
@@ -103,10 +113,8 @@ export class BlvdService {
 
   private async testNetworkConnectivity(): Promise<TestResult> {
     try {
-      const timestamp = Math.floor(Date.now() / 1000).toString();
       const body = JSON.stringify({ query: '{ __typename }' });
-      const url = new URL(this.config.apiUrl);
-      const headers = this.createAuthHeaders('POST', url.pathname, timestamp, body);
+      const headers = this.createAuthHeaders();
 
       const response = await fetch(this.config.apiUrl, {
         method: 'POST',
@@ -181,17 +189,15 @@ export class BlvdService {
   private async testBusinessAccess(): Promise<TestResult> {
     try {
       const query = `
-        query TestBusiness($businessId: ID!) {
-          business(id: $businessId) {
+        query TestBusiness {
+          business {
             id
             name
           }
         }
       `;
 
-      const response = await this.makeGraphqlRequest(query, {
-        businessId: this.config.businessId,
-      });
+      const response = await this.makeGraphqlRequest(query);
 
       if (response.data?.business) {
         return {
@@ -217,17 +223,13 @@ export class BlvdService {
 
   private async makeGraphqlRequest(query: string, variables?: any): Promise<GraphqlResponse> {
     try {
-      const timestamp = Math.floor(Date.now() / 1000).toString();
       const body = JSON.stringify({ query, variables });
-      const url = new URL(this.config.apiUrl);
-      const headers = this.createAuthHeaders('POST', url.pathname, timestamp, body);
+      const headers = this.createAuthHeaders();
       
       console.log('Making GraphQL request to:', this.config.apiUrl);
       console.log('Request headers:', {
         'Content-Type': headers['Content-Type'],
-        'Authorization': `Bearer ${this.config.apiKey.substring(0, 10)}...`,
-        'X-Timestamp': headers['X-Timestamp'],
-        'X-Signature': `${headers['X-Signature'].substring(0, 16)}...`,
+        'Authorization': 'Basic [signed token with API key]',
       });
       
       const response = await fetch(this.config.apiUrl, {
