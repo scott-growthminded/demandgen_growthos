@@ -1,0 +1,266 @@
+# PRD — BLVD Availability Service
+
+**Doc owner:** <your name>
+**Stakeholders:** Engineering (Bolt), Integrations, Ops
+**Last updated:** 2025-09-27
+
+---
+
+## 1) Objective
+
+Build a small web service that queries the **Boulevard Admin GraphQL API** and returns **studios (locations) with at least 25% remaining availability** for a target date (default: **tomorrow** in America/New_York). The output will be consumed by internal tools and experiments.
+
+---
+
+## 2) Background & Rationale
+
+* Scheduling coverage is highly uneven day-to-day. We want a daily signal of **which locations have slack capacity** so Growth/Lifecycle teams can target offers and content accordingly.
+* BLVD exposes the day-level utilization signal via the **Appointment Metrics Summary report** which includes **Percent Booked** (booked hours ÷ scheduled hours).
+* Remaining availability (%) = **100 − PercentBooked**.
+
+---
+
+## 3) Scope
+
+**In scope**
+
+* A stateless HTTP service with **one read-only endpoint**: `GET /studios/available`.
+* BLVD Admin GraphQL integration to: (1) list locations for a business, (2) request a one-day Appointment Metrics Summary report **grouped by location**, (3) poll export job until ready, (4) download & parse CSV, (5) filter locations by remaining availability ≥ threshold (default **25**).
+* JSON response with per-location utilization + sorting by most available.
+
+**Out of scope (v1)**
+
+* Slot-level availability, employee-specific schedules, service-level constraints.
+* Historical aggregation, dashboards, or data warehousing.
+* OAuth-based auth (use static Admin API token for v1).
+
+---
+
+## 4) Definitions
+
+* **Target date**: default **tomorrow** in `America/New_York` unless `?date=YYYY-MM-DD` provided (UTC dates permitted but treated as literal calendar dates).
+* **Remaining availability**: `100 − PercentBooked` from BLVD Appointment Metrics Summary report.
+* **Threshold (default)**: **25** (%). Endpoint returns locations with remaining availability **≥ threshold**.
+
+---
+
+## 5) User Stories
+
+1. **Ops Lead**: “I want to see which studios have ≥25% remaining availability tomorrow so I can prioritize promotions.”
+2. **Lifecycle Marketer**: “Give me a simple JSON list I can plug into campaign rules.”
+3. **Analyst**: “I need a deterministic, daily endpoint to pull the list at 6am ET.”
+
+---
+
+## 6) Functional Requirements
+
+1. **Endpoint**: `GET /studios/available`
+
+   * **Query params**
+
+     * `date` (optional): `YYYY-MM-DD`. Defaults to **tomorrow** (ET).
+     * `threshold` (optional): integer 0–100. Defaults to **25**.
+   * **Behavior**
+
+     * Fetch all locations for the configured **BLVD_BUSINESS_ID**.
+     * Kick off **Appointment Metrics Summary** export for `date` with `groupBy=LOCATION`, format `CSV`.
+     * Poll until export is `COMPLETED` (or error/timeout).
+     * Download CSV; extract `Percent Booked` per location.
+     * Compute `availability = max(0, 100 − percentBooked)`.
+     * Filter `availability ≥ threshold`. Sort descending by availability.
+   * **Response (200)**
+
+```json
+{
+  "businessId": "<BLVD_BUSINESS_ID>",
+  "date": "2025-09-28",
+  "threshold": 25,
+  "count": 12,
+  "studios": [
+    { "id": "loc_123", "name": "Downtown", "percentBooked": 12.5, "availability": 87.5 },
+    { "id": "loc_987", "name": "Uptown",   "percentBooked": 18.0, "availability": 82.0 }
+  ]
+}
+```
+
+* **Errors (examples)**
+
+```json
+{ "error": "GraphQL HTTP 401: unauthorized" }
+{ "error": "Export failed" }
+{ "error": "Timed out waiting for export completion" }
+```
+
+2. **Config (env)**
+
+   * `BLVD_ADMIN_API_URL` (e.g., `https://api.joinblvd.com/graphql-admin` — confirm for tenant)
+   * `BLVD_API_KEY` (Admin API token)
+   * `BLVD_BUSINESS_ID`
+   * `PORT` (default 3000)
+
+3. **Polling Strategy**
+
+   * Interval: 3s, Timeout: 90s (configurable via constants).
+   * Statuses: `PENDING` → `PROCESSING` → `COMPLETED` | `FAILED`.
+
+4. **CSV Parsing**
+
+   * Columns vary by tenant/version. Handle common variants:
+
+     * Location ID: `"Location ID" | "location_id" | "LocationId"`
+     * Location Name: `"Location" | "Location Name" | "location"`
+     * Percent Booked: `"Percent Booked" | "percent_booked" | "% Booked"` (strip `%`).
+
+---
+
+## 7) Integration Details (BLVD Admin GraphQL)
+
+> **Note:** Operation names/fields can vary slightly by version. Bolt should confirm against the tenant’s schema and adjust accordingly.
+
+* **List Locations**
+
+```graphql
+query Locations($businessId: ID!, $cursor: String) {
+  business(id: $businessId) {
+    id
+    name
+    locations(first: 100, after: $cursor) {
+      edges { node { id name timeZone } }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+}
+```
+
+* **Create Report Export** (one-day Appointment Metrics Summary)
+
+```graphql
+mutation CreateAppointmentMetricsExport($input: ReportExportCreateInput!) {
+  reportExportCreate(input: $input) {
+    reportExport { id status downloadUrl }
+    userErrors { field message }
+  }
+}
+```
+
+**Input shape (example):**
+
+```json
+{
+  "reportType": "APPOINTMENT_METRICS_SUMMARY",
+  "businessId": "<BLVD_BUSINESS_ID>",
+  "format": "CSV",
+  "filters": { "startDate": "2025-09-28", "endDate": "2025-09-28" },
+  "groupBy": "LOCATION"
+}
+```
+
+* **Get Report Export** (poll)
+
+```graphql
+query GetReportExport($id: ID!) {
+  reportExport(id: $id) {
+    id
+    status
+    downloadUrl
+    filename
+    createdAt
+  }
+}
+```
+
+---
+
+## 8) Non‑Functional Requirements
+
+* **Performance**: P95 under 5s when export completes quickly; up to timeout window otherwise.
+* **Reliability**: Graceful error handling; no partial/empty success responses.
+* **Security**: API key must be stored in server-side secrets (env). No logging of secrets. HTTPS only in deployed environments.
+* **Rate Limits**: Avoid excessive polling (3s interval). Single export per request. Caller should cache responses where possible.
+* **Observability**: Basic structured logs: request id, date, export id, status transitions, errors.
+
+---
+
+## 9) OpenAPI (for the service)
+
+```yaml
+openapi: 3.0.1
+info:
+  title: BLVD Availability Service
+  version: 1.0.0
+paths:
+  /studios/available:
+    get:
+      summary: Studios with ≥X% remaining availability for a given date
+      parameters:
+        - in: query
+          name: date
+          schema: { type: string, example: "2025-09-28" }
+          description: YYYY-MM-DD; defaults to tomorrow (America/New_York)
+        - in: query
+          name: threshold
+          schema: { type: integer, minimum: 0, maximum: 100, default: 25 }
+          description: Remaining availability percent threshold
+      responses:
+        '200':
+          description: OK
+        '500':
+          description: Error
+```
+
+---
+
+## 10) Acceptance Criteria
+
+1. **Default behavior**: `GET /studios/available` returns only locations with **availability ≥ 25%** for **tomorrow (ET)**.
+2. **Threshold override**: `?threshold=40` returns locations with **availability ≥ 40%**.
+3. **Date override**: `?date=YYYY-MM-DD` queries that specific day.
+4. **Sorting**: Results ordered by `availability` descending.
+5. **Accuracy**: For any location, `availability` matches `100 − PercentBooked` in the BLVD report for that date ±0.1%.
+6. **Resilience**: If the export fails or times out, the service responds with a **500** and a clear error message.
+
+---
+
+## 11) Test Plan (UAT)
+
+* **Happy path**: Known low-booked date returns ≥1 location with availability ≥25%.
+* **No matches**: High-traffic date returns `count: 0` and empty `studios`.
+* **Header variants**: Validate CSV parsing tolerates each header variant listed.
+* **Auth**: Invalid `BLVD_API_KEY` → 401 from GraphQL; service returns 500 with error message.
+* **Timeout**: Force export to remain pending beyond timeout → returns 500 timeout error.
+* **Threshold bounds**: `threshold=-1` coerces to 0; `threshold=150` coerces to 100.
+
+---
+
+## 12) Deliverables
+
+* Source code (Node/TypeScript or Python—Bolt’s choice). Reference implementation attached in canvas (Node/TS).
+* `Dockerfile` + minimal `README.md`.
+* OpenAPI (above) exported as `openapi.yaml`.
+* Basic log configuration.
+
+---
+
+## 13) Implementation Notes for Bolt
+
+* Start from the reference Node/TS code in canvas or re-implement in Python/Flask.
+* Ensure **default threshold = 25** in code and docs.
+* Confirm the tenant’s **Admin GraphQL endpoint** and **report export input shape**. Adjust operation names if schema differs.
+* Add small retry for the initial `reportExportCreate` in case of transient errors.
+* Unit-test CSV parsing with 2–3 header variants.
+
+---
+
+## 14) Open Questions
+
+1. Do we need an allowlist/denylist of locations (e.g., closed or pilot locations)?
+2. Should we add a `min-appointments` guard to avoid skew from tiny schedules?
+3. Do we need basic auth (shared secret) on the endpoint for internal use?
+
+---
+
+## 15) Timeline (suggested)
+
+* Build: 1–2 days
+* UAT: 0.5 day
+* Rollout: same day after UAT
