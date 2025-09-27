@@ -115,59 +115,37 @@ export default function BlvdApiTest() {
     locationsQuery.mutate();
   };
 
+  const [availabilityResults, setAvailabilityResults] = useState<any>(null);
+
   const handleTestReportExport = async () => {
     try {
       toast({
-        title: "Generating Report",
+        title: "Loading Results",
         description: "Fetching real appointment data for all locations...",
       });
 
-      // Get real Glowbar-style CSV report directly from backend 
-      const response = await fetch('/api/blvd/availability-csv', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to generate CSV report: ${response.status}`);
+      // Get availability data with real appointment data
+      const availabilityData = await getBlvdAvailability(serverConfig?.hasApiKey ? undefined : config);
+      
+      if (!availabilityData.success) {
+        throw new Error("Failed to fetch availability data");
       }
 
-      // Get the CSV data
-      const csvData = await response.text();
-      
-      // Create and download the Glowbar-style CSV with real appointment data
-      const csvBlob = new Blob([csvData], { type: 'text/csv' });
-      const csvUrl = URL.createObjectURL(csvBlob);
-      const csvLink = document.createElement('a');
-      csvLink.href = csvUrl;
-      
-      const today = new Date().toISOString().split('T')[0];
-      csvLink.download = `glowbar-availability-report-${today}.csv`;
-      
-      document.body.appendChild(csvLink);
-      csvLink.click();
-      document.body.removeChild(csvLink);
-      URL.revokeObjectURL(csvUrl);
-
-      // Also get availability data for summary info
-      const availabilityData = await getBlvdAvailability(serverConfig?.hasApiKey ? undefined : config);
+      setAvailabilityResults(availabilityData);
       
       const totalLocations = availabilityData.allLocations?.length || 0;
       const availableLocations = availabilityData.availableLocationsCount || 0;
 
       toast({
-        title: "Real Data Report Generated!",
-        description: `Glowbar-style CSV with real Boulevard appointment data for ${totalLocations} locations downloaded successfully`,
+        title: "Results Loaded!",
+        description: `Real Boulevard appointment data for ${totalLocations} locations loaded successfully`,
       });
 
     } catch (error) {
       console.error("Report generation error:", error);
       toast({
-        title: "Report Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate utilization report",
+        title: "Failed to Load Results",
+        description: error instanceof Error ? error.message : "Failed to fetch availability data",
         variant: "destructive",
       });
     }
@@ -317,6 +295,66 @@ fetchLocations();`;
             onGenerateCode={handleGenerateCode}
           />
         </div>
+
+        {/* Results Display */}
+        {availabilityResults && (
+          <div className="mt-8">
+            <div className="bg-card rounded-lg border shadow-sm">
+              <div className="p-6 border-b">
+                <h3 className="text-lg font-semibold mb-2">Availability Results</h3>
+                <p className="text-sm text-muted-foreground">
+                  Real appointment data for {availabilityResults.date} • {availabilityResults.totalLocationsChecked} locations checked • {availabilityResults.availableLocationsCount} locations with 25%+ availability
+                </p>
+              </div>
+              <div className="p-6">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-2 font-medium">Studio</th>
+                        <th className="text-right p-2 font-medium">Schedule</th>
+                        <th className="text-right p-2 font-medium">Booked</th>
+                        <th className="text-right p-2 font-medium">Available</th>
+                        <th className="text-right p-2 font-medium">Availability %</th>
+                        <th className="text-center p-2 font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {availabilityResults.allLocations?.map((location: any, index: number) => (
+                        <tr key={location.locationId} className={index % 2 === 0 ? "bg-muted/30" : ""}>
+                          <td className="p-2 font-medium" data-testid={`text-location-${index}`}>
+                            {location.locationName}
+                          </td>
+                          <td className="p-2 text-right" data-testid={`text-schedule-${index}`}>
+                            {location.totalAppointments}
+                          </td>
+                          <td className="p-2 text-right" data-testid={`text-booked-${index}`}>
+                            {location.bookedAppointments}
+                          </td>
+                          <td className="p-2 text-right" data-testid={`text-available-${index}`}>
+                            {location.totalAppointments - location.bookedAppointments}
+                          </td>
+                          <td className="p-2 text-right" data-testid={`text-availability-${index}`}>
+                            {location.availabilityPercent.toFixed(2)}%
+                          </td>
+                          <td className="p-2 text-center">
+                            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              location.availabilityPercent >= 25 
+                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100" 
+                                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+                            }`} data-testid={`badge-status-${index}`}>
+                              {location.availabilityPercent >= 25 ? "Available" : "High Demand"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

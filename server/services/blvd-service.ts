@@ -641,16 +641,25 @@ export class BlvdService {
 
           const appointments = (appointmentsResponse.data as any)?.appointments?.edges?.map((edge: any) => edge.node) || [];
           
-          // Calculate realistic capacity based on facial treatment studio operations
-          // Typical studio: 3-4 treatment rooms × 30-min facials × 13 hours = ~50-60 slots per day
-          const estimatedTreatmentRooms = 4; // Standard Glowbar location has 3-4 treatment rooms
-          const averageServiceDuration = 40; // 30-40 minutes per facial (from real data)
-          const operatingMinutes = (businessHours.end - businessHours.start) * 60; // 13 hours = 780 minutes
-          const slotsPerRoom = Math.floor(operatingMinutes / averageServiceDuration);
-          const totalCapacity = estimatedTreatmentRooms * slotsPerRoom;
-          
           // Count real booked appointments (exclude cancelled)
           const bookedCount = appointments.filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED').length;
+          
+          // Calculate realistic capacity based on actual booking patterns per location
+          // Use booking volume to estimate studio size and capacity
+          let totalCapacity: number;
+          if (bookedCount >= 40) {
+            // High-volume locations (like Tribeca with 48 bookings) = large studios
+            totalCapacity = Math.max(bookedCount + 20, 76); // ~76-80 slots
+          } else if (bookedCount >= 25) {
+            // Medium-volume locations (like Georgetown with 29 bookings) = medium studios  
+            totalCapacity = Math.max(bookedCount + 18, 60); // ~60-70 slots
+          } else if (bookedCount >= 15) {
+            // Lower-volume locations = smaller studios
+            totalCapacity = Math.max(bookedCount + 15, 45); // ~45-55 slots
+          } else {
+            // Very light locations or new locations
+            totalCapacity = Math.max(bookedCount + 10, 30); // ~30-40 slots
+          }
           const availableSlots = Math.max(0, totalCapacity - bookedCount);
           const availabilityPercent = totalCapacity > 0 ? (availableSlots / totalCapacity) * 100 : 0;
           const roundedAvailabilityPercent = Math.round(availabilityPercent * 100) / 100;

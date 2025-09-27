@@ -47,8 +47,8 @@ export function QuickActions({ config, onTestLocations, onTestReportExport, onGe
               <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <div className="font-medium">Test Report Utilization</div>
-              <div className="text-sm text-muted-foreground">Generate utilization report</div>
+              <div className="font-medium">View Availability Results</div>
+              <div className="text-sm text-muted-foreground">Show real appointment data on screen</div>
             </div>
           </Button>
           
