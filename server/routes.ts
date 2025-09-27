@@ -98,6 +98,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Webhook endpoint for Boulevard events
+  app.post("/api/blvd/webhook", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const hasServerConfig = serverConfig.apiKey && serverConfig.secretKey;
+      
+      if (!hasServerConfig) {
+        console.error('Webhook endpoint: Missing server configuration');
+        return res.status(500).json({
+          error: "Server configuration missing"
+        });
+      }
+      
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      // Parse webhook headers
+      const headers = blvdService.parseWebhookHeaders(req.headers as Record<string, string>);
+      
+      if (!headers.isValid) {
+        console.error('Webhook: Missing required headers');
+        return res.status(400).json({
+          error: "Missing required webhook headers"
+        });
+      }
+      
+      // Get raw body as string for verification
+      const rawBody = JSON.stringify(req.body);
+      
+      // Verify webhook signature
+      const isValidSignature = blvdService.verifyWebhookSignature(
+        headers.hmacSalt!,
+        headers.hmacSha256!,
+        rawBody
+      );
+      
+      if (!isValidSignature) {
+        console.error('Webhook: Invalid signature');
+        return res.status(401).json({
+          error: "Invalid webhook signature"
+        });
+      }
+      
+      // Log successful webhook receipt
+      console.log('Webhook received and verified:', {
+        eventType: req.body.eventType,
+        event: req.body.event,
+        businessId: req.body.businessId,
+        webhookId: req.body.webhookId,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Handle different webhook events
+      switch (req.body.eventType) {
+        case 'PING':
+          console.log('Received PING webhook');
+          break;
+        case 'APPOINTMENT_CREATED':
+        case 'APPOINTMENT_UPDATED':
+        case 'APPOINTMENT_CANCELLED':
+          console.log(`Received appointment event: ${req.body.eventType}`);
+          // Here you would process appointment-related events
+          break;
+        default:
+          console.log(`Received unknown event type: ${req.body.eventType}`);
+      }
+      
+      // Respond quickly to avoid retries (as per Boulevard best practices)
+      res.status(200).json({
+        success: true,
+        received: true,
+        eventType: req.body.eventType
+      });
+      
+    } catch (error) {
+      console.error('Webhook processing error:', error);
+      res.status(500).json({
+        error: "Webhook processing failed"
+      });
+    }
+  });
+
+  // Test webhook verification endpoint
+  app.post("/api/blvd/test-webhook-verification", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const hasServerConfig = serverConfig.apiKey && serverConfig.secretKey;
+      
+      if (!hasServerConfig) {
+        return res.status(500).json({
+          error: "Server configuration missing"
+        });
+      }
+      
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { hmacSalt, hmacSha256, rawBody } = req.body;
+      
+      if (!hmacSalt || !hmacSha256 || !rawBody) {
+        return res.status(400).json({
+          error: "Missing required fields: hmacSalt, hmacSha256, rawBody"
+        });
+      }
+      
+      const isValid = blvdService.verifyWebhookSignature(hmacSalt, hmacSha256, rawBody);
+      
+      res.json({
+        valid: isValid,
+        message: isValid ? "Webhook signature is valid" : "Webhook signature is invalid"
+      });
+      
+    } catch (error) {
+      console.error('Test webhook verification error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Verification test failed"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

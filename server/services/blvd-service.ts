@@ -8,6 +8,72 @@ export class BlvdService {
     this.config = config;
   }
 
+  /**
+   * Verify webhook payload authenticity using Boulevard's HMAC verification
+   * Based on: https://developers.joinblvd.com/2020-01/admin-api/guides/webhooks/#verification-example
+   */
+  verifyWebhookSignature(
+    hmacSalt: string,
+    hmacSha256: string,
+    rawBody: string
+  ): boolean {
+    try {
+      // 1. Construct the message payload that was signed
+      const payload = `${hmacSalt}:${rawBody}`;
+
+      // 2. Obtain the raw binary app secret (Boulevard provides base64 encoded)
+      const rawAppSecret = Buffer.from(this.config.secretKey, 'base64');
+
+      // 3. Create SHA256 HMAC value and encode with base64
+      const rawHmac = createHmac('sha256', rawAppSecret)
+        .update(payload, 'utf8')
+        .digest();
+      const signature = Buffer.from(rawHmac).toString('base64');
+
+      // 4. Securely compare signatures
+      return this.secureCompare(signature, hmacSha256);
+    } catch (error) {
+      console.error('Webhook signature verification failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Parse and validate webhook headers
+   */
+  parseWebhookHeaders(headers: Record<string, string>): {
+    hmacSalt: string | null;
+    hmacSha256: string | null;
+    isValid: boolean;
+  } {
+    const hmacSalt = headers['x-blvd-hmac-salt'] || null;
+    const hmacSha256 = headers['x-blvd-hmac-sha256'] || null;
+
+    const isValid = !!(hmacSalt && hmacSha256);
+
+    return {
+      hmacSalt,
+      hmacSha256,
+      isValid
+    };
+  }
+
+  /**
+   * Secure string comparison to prevent timing attacks
+   */
+  private secureCompare(a: string, b: string): boolean {
+    if (a.length !== b.length) {
+      return false;
+    }
+
+    let result = 0;
+    for (let i = 0; i < a.length; i++) {
+      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    }
+
+    return result === 0;
+  }
+
   private createBoulevardToken(): string {
     // Boulevard API authentication according to official docs
     const timestamp = Math.floor(Date.now() / 1000).toString();
