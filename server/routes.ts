@@ -252,6 +252,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get available locations with 25% or more availability for tomorrow
+  app.post("/api/blvd/availability", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const hasServerConfig = serverConfig.apiUrl && serverConfig.apiKey && serverConfig.secretKey && serverConfig.businessId;
+      
+      if (!hasServerConfig) {
+        return res.status(500).json({
+          error: "Server configuration missing"
+        });
+      }
+      
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      // Parse request body for parameters
+      const minAvailabilityPercent = req.body.minAvailability || 25;
+      
+      console.log(`Checking availability for locations with ${minAvailabilityPercent}% or more availability`);
+      
+      const result = await blvdService.getAvailableLocations(minAvailabilityPercent);
+      res.json(result);
+      
+    } catch (error) {
+      console.error('Availability check error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Availability check failed"
+      });
+    }
+  });
+
+  // Get appointments for a specific location (for debugging/testing)
+  app.post("/api/blvd/location-appointments", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const hasServerConfig = serverConfig.apiUrl && serverConfig.apiKey && serverConfig.secretKey && serverConfig.businessId;
+      
+      if (!hasServerConfig) {
+        return res.status(500).json({
+          error: "Server configuration missing"
+        });
+      }
+      
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { locationId, date } = req.body;
+      
+      if (!locationId) {
+        return res.status(400).json({
+          error: "Missing required field: locationId"
+        });
+      }
+      
+      let startDate: string, endDate: string;
+      
+      if (date) {
+        // Use provided date
+        const dateObj = new Date(date);
+        const startOfDay = new Date(dateObj);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(dateObj);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        startDate = startOfDay.toISOString();
+        endDate = endOfDay.toISOString();
+      } else {
+        // Default to tomorrow
+        const { startDate: tomorrowStart, endDate: tomorrowEnd } = blvdService.getTomorrowDateRange();
+        startDate = tomorrowStart;
+        endDate = tomorrowEnd;
+      }
+      
+      const result = await blvdService.getLocationAppointments(locationId, startDate, endDate);
+      res.json(result);
+      
+    } catch (error) {
+      console.error('Location appointments error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to get location appointments"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

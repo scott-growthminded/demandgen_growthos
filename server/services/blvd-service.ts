@@ -267,11 +267,11 @@ export class BlvdService {
       // Step 1: Get all locations
       const locationsResponse = await this.executeLocationsQuery();
       
-      if (!locationsResponse.data?.locations?.edges) {
+      if (!(locationsResponse.data as any)?.locations?.edges) {
         throw new Error('Failed to fetch locations');
       }
 
-      const locations = locationsResponse.data.locations.edges.map((edge: any) => edge.node);
+      const locations = (locationsResponse.data as any).locations.edges.map((edge: any) => edge.node);
       const { startDate, endDate } = this.getTomorrowDateRange();
       
       // Step 2: Check availability for each location
@@ -291,7 +291,7 @@ export class BlvdService {
             endDate
           );
 
-          const appointments = appointmentsResponse.data?.appointments?.edges?.map((edge: any) => edge.node) || [];
+          const appointments = (appointmentsResponse.data as any)?.appointments?.edges?.map((edge: any) => edge.node) || [];
           
           // Calculate availability percentage
           const availabilityPercent = this.calculateLocationAvailability(appointments, businessHours);
