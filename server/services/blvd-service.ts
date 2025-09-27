@@ -199,6 +199,7 @@ export class BlvdService {
 
     // Use location name from the ID to determine booking rate  
     let bookingRate = 0.4; // Default 40% booking rate (60% availability)
+    let capacityMultiplier = 1.0; // Default capacity multiplier
     let locationName = '';
     
     // Extract actual location name from the full location data
@@ -213,20 +214,42 @@ export class BlvdService {
       const seed = parseInt(hash.substring(0, 8), 16);
       const locationIndex = seed % 10;
       
-      // Create varied booking rates: some busy (70-80%), some moderate (40-50%), some light (20-30%)
+      // Create realistic booking patterns based on Glowbar data
+      // High-traffic locations: 70-85% utilization (15-30% availability)
+      // Medium-traffic locations: 50-70% utilization (30-50% availability)
+      // Lower-traffic locations: 30-50% utilization (50-70% availability)
+      
+      // Vary total capacity (some locations are bigger/smaller)
+      
       if (locationIndex < 3) {
-        bookingRate = 0.7 + (locationIndex * 0.05); // 70-80% (20-30% availability)
+        // High-traffic, high-capacity locations (like Union Square, Back Bay)
+        bookingRate = 0.75 + (locationIndex * 0.05); // 75-85% utilization
+        capacityMultiplier = 1.6; // 83 total slots
       } else if (locationIndex < 6) {
-        bookingRate = 0.4 + (locationIndex * 0.03); // 40-50% (50-60% availability)  
+        // Medium-traffic locations
+        bookingRate = 0.55 + (locationIndex * 0.05); // 55-70% utilization 
+        capacityMultiplier = 1.2; // 62 total slots
       } else {
-        bookingRate = 0.15 + (locationIndex * 0.02); // 15-25% (75-85% availability)
+        // Lower-traffic locations (will have good availability)
+        bookingRate = 0.35 + (locationIndex * 0.03); // 35-50% utilization
+        capacityMultiplier = 0.8; // 42 total slots
       }
+      
+      // We'll apply capacity variation after the totalSlots calculation
     }
 
     // Generate realistic appointment volumes based on real Glowbar data (28-85 appointments)
-    const businessHours = 12; // 8 AM to 8 PM
-    const slotsPerHour = 6; // 10-minute slots to match real salon capacity
-    const totalSlots = businessHours * slotsPerHour; // 72 total slots
+    // Match Glowbar: 8 AM to 9 PM = 13 hours, varied capacity by location
+    const businessHours = 13; // 8 AM to 9 PM (matches Glowbar data)
+    const baseCapacity = 4; // Base appointments per hour
+    let totalSlots = businessHours * baseCapacity; // 52 base capacity
+    
+    // Apply capacity variation if we calculated it above
+    if (idParts.length > 2) {
+      const adjustedTotalSlots = Math.floor(totalSlots * capacityMultiplier);
+      totalSlots = adjustedTotalSlots;
+    }
+    
     const bookedSlots = Math.floor(totalSlots * bookingRate);
 
     // Create mock appointment edges
@@ -253,7 +276,9 @@ export class BlvdService {
             hasNextPage: false,
             endCursor: bookedSlots > 0 ? `cursor-${bookedSlots}` : null
           }
-        }
+        },
+        // Include total slots for consistent calculations
+        totalSlots: totalSlots
       }
     };
   }
@@ -261,8 +286,9 @@ export class BlvdService {
   /**
    * Calculate availability percentage for a location on a specific date
    */
-  calculateLocationAvailability(appointments: any[], businessHours: { start: number, end: number }, slotDuration: number = 60): number {
-    // Calculate total available minutes in a day
+  calculateLocationAvailability(appointments: any[], businessHours: { start: number, end: number }, slotDuration: number = 15): number {
+    // Calculate total available slots (matching mock data generation)
+    // Use 15-minute slots to match realistic salon booking patterns
     const totalMinutes = (businessHours.end - businessHours.start) * 60;
     const totalSlots = Math.floor(totalMinutes / slotDuration);
 
@@ -315,7 +341,7 @@ export class BlvdService {
       
       // Step 2: Check availability for each location
       const availabilityResults: any[] = [];
-      const businessHours = { start: 9, end: 18 }; // 9 AM to 6 PM (configurable)
+      const businessHours = { start: 8, end: 21 }; // 8 AM to 9 PM (matches Glowbar and mock data)
 
       for (const location of locations) {
         if (location.isRemote) {
@@ -331,21 +357,20 @@ export class BlvdService {
           );
 
           const appointments = (appointmentsResponse.data as any)?.appointments?.edges?.map((edge: any) => edge.node) || [];
+          const totalSlotsFromMockData = (appointmentsResponse.data as any)?.totalSlots || 52; // Get actual total from mock data
           
-          // Calculate availability percentage
-          const availabilityPercent = this.calculateLocationAvailability(appointments, businessHours);
-          
-          // Calculate total slots for this location (should match the mock data generation)
-          const totalMinutes = (businessHours.end - businessHours.start) * 60;
-          const totalSlots = Math.floor(totalMinutes / 60) * 6; // 6 slots per hour (10-minute appointments)
+          // Calculate availability percentage using the actual total slots
           const bookedCount = appointments.filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED').length;
+          const availableSlots = Math.max(0, totalSlotsFromMockData - bookedCount);
+          const availabilityPercent = totalSlotsFromMockData > 0 ? (availableSlots / totalSlotsFromMockData) * 100 : 0;
+          const roundedAvailabilityPercent = Math.round(availabilityPercent * 100) / 100;
           
           // Add ALL locations to results (not just those above threshold)
           availabilityResults.push({
             locationId: location.id,
             locationName: location.name,
-            availabilityPercent,
-            totalAppointments: totalSlots, // FIXED: This should be total available slots
+            availabilityPercent: roundedAvailabilityPercent,
+            totalAppointments: totalSlotsFromMockData, // FIXED: Use actual capacity from mock data
             bookedAppointments: bookedCount, // FIXED: This should be actually booked slots
             date: startDate.split('T')[0] // Tomorrow's date
           });
