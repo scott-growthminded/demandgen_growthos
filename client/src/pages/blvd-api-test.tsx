@@ -78,7 +78,7 @@ export default function BlvdApiTest() {
       } else {
         toast({
           title: "Query Successful",
-          description: `Found ${data.data?.business?.locations?.edges?.length || 0} locations`,
+          description: `Found ${data.data?.locations?.edges?.length || 0} locations`,
         });
       }
     },
@@ -133,18 +133,18 @@ const client = new GraphQLClient('${config.apiUrl}', {
 });
 
 const query = \`
-  query Locations($businessId: ID!) {
-    business(id: $businessId) {
-      id
-      name
-      locations(first: 100) {
-        edges {
-          node {
-            id
-            name
-            timeZone
-          }
+  query Locations {
+    locations(first: 100) {
+      edges {
+        node {
+          id
+          name
+          isRemote
         }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }
@@ -152,8 +152,8 @@ const query = \`
 
 async function fetchLocations() {
   try {
-    const data = await client.request(query, { businessId: '${config.businessId}' });
-    console.log('Locations:', data.business.locations.edges);
+    const data = await client.request(query);
+    console.log('Locations:', data.locations.edges);
   } catch (error) {
     console.error('Error:', error);
   }
