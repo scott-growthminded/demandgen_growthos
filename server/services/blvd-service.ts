@@ -88,7 +88,7 @@ export class BlvdService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.config.apiKey}`,
+          'Authorization': `Basic ${Buffer.from(`${this.config.apiKey}:`).toString('base64')}`,
         },
         body: JSON.stringify({
           query: '{ __typename }',
@@ -201,14 +201,14 @@ export class BlvdService {
       console.log('Making GraphQL request to:', this.config.apiUrl);
       console.log('Request headers:', {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey.substring(0, 10)}...`,
+        'Authorization': `Basic ${Buffer.from(`${this.config.apiKey.substring(0, 10)}...:`).toString('base64')}`,
       });
       
       const response = await fetch(this.config.apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.config.apiKey}`,
+          'Authorization': `Basic ${Buffer.from(`${this.config.apiKey}:`).toString('base64')}`,
         },
         body: JSON.stringify({
           query,
