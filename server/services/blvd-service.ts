@@ -177,6 +177,164 @@ export class BlvdService {
     return response;
   }
 
+  /**
+   * Query appointments for a specific location and date range
+   */
+  async getLocationAppointments(locationId: string, startDate: string, endDate: string): Promise<GraphqlResponse> {
+    const query = `
+      query LocationAppointments($locationId: ID!, $startIso8601: DateTime!, $endIso8601: DateTime!, $first: Int) {
+        appointments(
+          locationId: $locationId
+          startIso8601: $startIso8601
+          endIso8601: $endIso8601
+          first: $first
+        ) {
+          edges {
+            node {
+              id
+              startAt
+              endAt
+              duration
+              state
+              locationId
+              cancelled
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    `;
+
+    const variables = {
+      locationId,
+      startIso8601: startDate,
+      endIso8601: endDate,
+      first: 100, // Get up to 100 appointments
+    };
+
+    const response = await this.makeGraphqlRequest(query, variables);
+    return response;
+  }
+
+  /**
+   * Calculate availability percentage for a location on a specific date
+   */
+  calculateLocationAvailability(appointments: any[], businessHours: { start: number, end: number }, slotDuration: number = 60): number {
+    // Calculate total available minutes in a day
+    const totalMinutes = (businessHours.end - businessHours.start) * 60;
+    const totalSlots = Math.floor(totalMinutes / slotDuration);
+
+    // Count non-cancelled appointments
+    const bookedAppointments = appointments.filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED');
+    const bookedSlots = bookedAppointments.length;
+
+    // Calculate availability percentage
+    const availableSlots = Math.max(0, totalSlots - bookedSlots);
+    const availabilityPercentage = totalSlots > 0 ? (availableSlots / totalSlots) * 100 : 0;
+
+    return Math.round(availabilityPercentage * 100) / 100; // Round to 2 decimal places
+  }
+
+  /**
+   * Get tomorrow's date range in ISO format
+   */
+  getTomorrowDateRange(): { startDate: string, endDate: string } {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Start of tomorrow (12:00 AM)
+    const startOfDay = new Date(tomorrow);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    // End of tomorrow (11:59 PM)
+    const endOfDay = new Date(tomorrow);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return {
+      startDate: startOfDay.toISOString(),
+      endDate: endOfDay.toISOString()
+    };
+  }
+
+  /**
+   * Find locations with 25% or more availability for tomorrow
+   */
+  async getAvailableLocations(minAvailabilityPercent: number = 25): Promise<any> {
+    try {
+      // Step 1: Get all locations
+      const locationsResponse = await this.executeLocationsQuery();
+      
+      if (!locationsResponse.data?.locations?.edges) {
+        throw new Error('Failed to fetch locations');
+      }
+
+      const locations = locationsResponse.data.locations.edges.map((edge: any) => edge.node);
+      const { startDate, endDate } = this.getTomorrowDateRange();
+      
+      // Step 2: Check availability for each location
+      const availabilityResults: any[] = [];
+      const businessHours = { start: 9, end: 18 }; // 9 AM to 6 PM (configurable)
+
+      for (const location of locations) {
+        if (location.isRemote) {
+          continue; // Skip remote locations
+        }
+
+        try {
+          // Get appointments for this location tomorrow
+          const appointmentsResponse = await this.getLocationAppointments(
+            location.id,
+            startDate,
+            endDate
+          );
+
+          const appointments = appointmentsResponse.data?.appointments?.edges?.map((edge: any) => edge.node) || [];
+          
+          // Calculate availability percentage
+          const availabilityPercent = this.calculateLocationAvailability(appointments, businessHours);
+          
+          // Add to results if meets minimum threshold
+          if (availabilityPercent >= minAvailabilityPercent) {
+            availabilityResults.push({
+              locationId: location.id,
+              locationName: location.name,
+              availabilityPercent,
+              totalAppointments: appointments.length,
+              bookedAppointments: appointments.filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED').length,
+              date: startDate.split('T')[0] // Tomorrow's date
+            });
+          }
+        } catch (error) {
+          console.error(`Error checking availability for location ${location.name}:`, error);
+          // Continue with other locations
+        }
+      }
+
+      // Sort by availability percentage (highest first)
+      availabilityResults.sort((a: any, b: any) => b.availabilityPercent - a.availabilityPercent);
+
+      return {
+        success: true,
+        date: startDate.split('T')[0],
+        minAvailabilityPercent,
+        totalLocationsChecked: locations.filter((loc: any) => !loc.isRemote).length,
+        availableLocationsCount: availabilityResults.length,
+        availableLocations: availabilityResults
+      };
+
+    } catch (error) {
+      console.error('Error getting available locations:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        availableLocations: []
+      };
+    }
+  }
+
   private async testNetworkConnectivity(): Promise<TestResult> {
     try {
       const body = JSON.stringify({ query: '{ __typename }' });
