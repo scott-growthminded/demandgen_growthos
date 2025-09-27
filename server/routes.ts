@@ -283,6 +283,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate Glowbar-style CSV report
+  app.post("/api/blvd/availability-csv", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const hasServerConfig = serverConfig.apiUrl && serverConfig.apiKey && serverConfig.secretKey && serverConfig.businessId;
+      
+      if (!hasServerConfig) {
+        return res.status(500).json({
+          error: "Server configuration missing"
+        });
+      }
+      
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      // Parse request body for parameters
+      const minAvailabilityPercent = req.body.minAvailability || 0; // Include all locations for CSV
+      
+      console.log('Generating Glowbar-style CSV report with real appointment data');
+      
+      const result = await blvdService.getAvailableLocations(minAvailabilityPercent);
+      console.log('Availability result:', {
+        success: result.success,
+        totalLocations: result.allLocations?.length || 0,
+        hasAllLocations: !!result.allLocations
+      });
+      
+      // Generate CSV using real appointment data
+      const csvData = blvdService.generateGlowbarCSVReport(result.allLocations || []);
+      console.log('Generated CSV data length:', csvData.length, 'characters');
+      console.log('CSV preview (first 200 chars):', csvData.substring(0, 200));
+      
+      // Set appropriate headers for CSV download
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="glowbar-availability-report.csv"');
+      
+      res.send(csvData);
+      
+    } catch (error) {
+      console.error('CSV generation error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "CSV generation failed"
+      });
+    }
+  });
+
   // Get appointments for a specific location (for debugging/testing)
   app.post("/api/blvd/location-appointments", async (req, res) => {
     try {
