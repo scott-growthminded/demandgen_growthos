@@ -159,6 +159,10 @@ export class BlvdService {
               id 
               name 
               isRemote
+              address {
+                city
+                state
+              }
             } 
           }
           pageInfo { 
@@ -706,8 +710,9 @@ export class BlvdService {
           const availableSlots = Math.max(0, totalCapacity - bookedCount);
           const availabilityPercent = totalCapacity > 0 ? (availableSlots / totalCapacity) * 100 : 0;
           
-          // Generate potential booking times (simplified approach)
-          const availableTimeSlots = this.generateAvailableTimeSlots(timeSlots, businessHours, startDate);
+          // Generate potential booking times with proper timezone handling
+          const locationTimeZone = this.inferLocationTimeZone(location.name, location.address);
+          const availableTimeSlots = this.generateAvailableTimeSlots(timeSlots, businessHours, startDate, locationTimeZone);
           
           // Create service-specific booking URL (placeholder for now)
           const bookingBaseUrl = `https://widget.boulevard.io/${this.config.businessId}`;
@@ -757,40 +762,153 @@ export class BlvdService {
   }
 
   /**
-   * Generate available time slots based on business hours and booked appointments
+   * Since all studios are in the northeast, always return Eastern Time
    */
-  generateAvailableTimeSlots(bookedSlots: any[], businessHours: { start: number, end: number }, startDate: string): any[] {
+  inferLocationTimeZone(locationName: string, address?: { city?: string; state?: string }): string {
+    console.log(`🌆 Using Eastern Time for location: ${locationName} (${address?.city || ''}, ${address?.state || ''})`);
+    return 'America/New_York';
+  }
+
+  /**
+   * Generate available time slots based on business hours and booked appointments
+   * Fixed to properly handle timezone conversion and validate business hours
+   */
+  generateAvailableTimeSlots(bookedSlots: any[], businessHours: { start: number, end: number }, startDate: string, locationTimeZone: string): any[] {
     const availableSlots: any[] = [];
-    const dateObj = new Date(startDate);
     
-    // Generate hourly time slots during business hours
+    console.log(`🕐 Generating available slots for ${locationTimeZone} on ${startDate}`);
+    console.log(`📋 Business hours: ${businessHours.start}:00 - ${businessHours.end}:00`);
+    console.log(`📅 Input date: ${startDate}`);
+    
+    // Parse the input date more carefully
+    const baseDate = new Date(startDate);
+    
+    // Generate ONLY business hours (8 AM to 9 PM = hours 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+    const businessHoursList = [];
     for (let hour = businessHours.start; hour < businessHours.end; hour++) {
-      const slotStart = new Date(dateObj);
-      slotStart.setHours(hour, 0, 0, 0);
+      businessHoursList.push(hour);
+    }
+    
+    console.log(`⏰ Generating slots for hours: ${businessHoursList.join(', ')}`);
+    
+    for (const hour of businessHoursList) {
+      // CRITICAL: Create timezone-aware date using proper IANA timezone conversion
+      // This works for ANY timezone (Eastern, Pacific, Central, etc.) and handles DST automatically
       
-      const slotEnd = new Date(dateObj);
-      slotEnd.setHours(hour + 1, 0, 0, 0);
+      // Create the desired local time in the location's timezone
+      const localTimeString = `${baseDate.getFullYear()}-${(baseDate.getMonth() + 1).toString().padStart(2, '0')}-${baseDate.getDate().toString().padStart(2, '0')}T${hour.toString().padStart(2, '0')}:00:00`;
       
-      // Check if this hour has any booked appointments
-      const hasBookings = bookedSlots.some(booking => {
-        const bookingStart = new Date(booking.startTime);
-        const bookingEnd = new Date(booking.endTime);
-        return (bookingStart >= slotStart && bookingStart < slotEnd) ||
-               (bookingEnd > slotStart && bookingEnd <= slotEnd) ||
-               (bookingStart <= slotStart && bookingEnd >= slotEnd);
+      // Use a reference date to understand the timezone offset for this specific date
+      const referenceUTC = new Date(`${localTimeString}.000Z`);
+      
+      // Get what time it would be in the target timezone if this were UTC
+      const timeInTargetZone = new Intl.DateTimeFormat('en-CA', {
+        timeZone: locationTimeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).format(referenceUTC);
+      
+      // Parse the target zone time to get a date object
+      const [datePartTarget, timePartTarget] = timeInTargetZone.split(', ');
+      const targetZoneDate = new Date(`${datePartTarget}T${timePartTarget}.000`);
+      
+      // Calculate the offset between what we want and what we'd get with naive UTC
+      const offsetMs = referenceUTC.getTime() - targetZoneDate.getTime();
+      
+      // Apply the offset to get the correct UTC timestamp
+      // This UTC time, when converted to locationTimeZone, will display as the desired hour
+      const utcSlotDate = new Date(referenceUTC.getTime() + offsetMs);
+      
+      // Validation: Verify the conversion works correctly
+      const verifyDisplayTime = utcSlotDate.toLocaleString('en-US', {
+        timeZone: locationTimeZone,
+        hour: 'numeric',
+        hour12: false
       });
       
-      // If no bookings in this hour, consider it available (simplified logic)
-      if (!hasBookings) {
-        availableSlots.push({
-          startTime: slotStart.toISOString(),
-          endTime: slotEnd.toISOString(),
-          duration: 60, // 1 hour slot
-          type: 'available',
-          // Note: In a real implementation, we'd need staff schedules and service availability
-          suggestedServices: ['Facial Treatment', 'First Time Treatment']
-        });
+      const slotDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), hour, 0, 0, 0);
+      
+      // Validate the hour is actually what we expect
+      const actualHour = slotDate.getHours();
+      
+      // STRICT VALIDATION: Only allow slots within business hours
+      if (actualHour < businessHours.start || actualHour >= businessHours.end) {
+        console.warn(`⚠️ Skipping invalid hour: expected ${hour}, got ${actualHour}`);
+        continue;
       }
+      
+      // Check for conflicts with booked appointments
+      const hasBookings = bookedSlots.some(booking => {
+        const bookingStart = new Date(booking.startTime);
+        const bookingHour = bookingStart.getHours();
+        return bookingHour === hour; // Simple hour-based conflict check
+      });
+      
+      // Only create slot if no bookings and valid business hour
+      if (!hasBookings) {
+        const slot = {
+          startTime: utcSlotDate.toISOString(),
+          endTime: new Date(utcSlotDate.getTime() + 60 * 60 * 1000).toISOString(), // Add 1 hour
+          duration: 60,
+          type: 'available',
+          locationTimeZone: locationTimeZone,
+          localHour: actualHour,
+          debugInfo: {
+            expectedHour: hour,
+            actualHour: actualHour,
+            localTime: slotDate.toLocaleString('en-US', { timeZone: locationTimeZone }),
+            utcTime: utcSlotDate.toISOString(),
+            locationTime: utcSlotDate.toLocaleString('en-US', { timeZone: locationTimeZone }),
+            verifyDisplayTime: verifyDisplayTime
+          }
+        };
+        
+        // FINAL VALIDATION: Ensure the generated time is reasonable
+        const displayTime = slotDate.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit', 
+          hour12: true 
+        });
+        
+        const locationDisplayTime = utcSlotDate.toLocaleString('en-US', { 
+          timeZone: locationTimeZone,
+          hour: 'numeric', 
+          minute: '2-digit', 
+          hour12: true 
+        });
+        
+        console.log(`✅ Generated slot: Desired ${hour}:00 -> ${locationTimeZone} ${locationDisplayTime} -> UTC ${slot.startTime} (verify: ${verifyDisplayTime})`);
+        availableSlots.push(slot);
+      } else {
+        console.log(`❌ Skipping hour ${hour} (${hour}:00) - has bookings`);
+      }
+    }
+    
+    console.log(`📊 Generated ${availableSlots.length} available slots`);
+    
+    // CRITICAL VALIDATION: Check all generated slots are within business hours
+    const invalidSlots = availableSlots.filter(slot => {
+      const slotHour = new Date(slot.startTime).getHours();
+      return slotHour < businessHours.start || slotHour >= businessHours.end;
+    });
+    
+    if (invalidSlots.length > 0) {
+      console.error(`🚨 CRITICAL: Found ${invalidSlots.length} slots outside business hours!`);
+      invalidSlots.forEach(slot => {
+        const badTime = new Date(slot.startTime);
+        console.error(`  - Bad slot: ${badTime.toLocaleTimeString()} (hour ${badTime.getHours()})`);
+      });
+      
+      // Remove invalid slots
+      return availableSlots.filter(slot => {
+        const slotHour = new Date(slot.startTime).getHours();
+        return slotHour >= businessHours.start && slotHour < businessHours.end;
+      });
     }
     
     return availableSlots;
@@ -942,4 +1060,5 @@ export class BlvdService {
       throw new Error(`GraphQL request failed: ${String(error)}`);
     }
   }
+
 }

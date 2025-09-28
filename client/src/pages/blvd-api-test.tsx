@@ -223,7 +223,7 @@ export default function BlvdApiTest() {
                             <div key={slot.id} className="p-3 bg-red-50 dark:bg-red-950 rounded border" data-testid={`time-slot-booked-${slotIndex}`}>
                               <div className="flex justify-between items-start mb-1">
                                 <span className="font-medium text-sm">
-                                  {new Date(slot.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                  {new Date(slot.startTime).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', timeZone: slot.locationTimeZone || 'America/New_York'})}
                                 </span>
                                 <Badge variant="destructive" className="text-xs">Booked</Badge>
                               </div>
@@ -248,7 +248,7 @@ export default function BlvdApiTest() {
                             <div key={slotIndex} className="p-3 bg-green-50 dark:bg-green-950 rounded border" data-testid={`time-slot-available-${slotIndex}`}>
                               <div className="flex justify-between items-start mb-1">
                                 <span className="font-medium text-sm">
-                                  {new Date(slot.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                  {new Date(slot.startTime).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', timeZone: slot.locationTimeZone || 'America/New_York'})}
                                 </span>
                                 <Badge variant="outline" className="text-xs border-green-600 text-green-700">Open</Badge>
                               </div>
