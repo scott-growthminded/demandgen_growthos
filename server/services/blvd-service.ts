@@ -267,19 +267,22 @@ export class BlvdService {
       }
     `;
 
-    // Format dates for Boulevard query syntax - use next day for upper bound to create valid range
-    const startFormatted = new Date(startDate).toISOString().split('T')[0]; // YYYY-MM-DD format
-    const nextDay = new Date(endDate);
-    nextDay.setDate(nextDay.getDate() + 1);
-    const endFormatted = nextDay.toISOString().split('T')[0]; // Next day for exclusive upper bound
+    // NEW: Use time-based filtering to only show future availability (now + 1 hour)
+    const now = new Date();
+    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000); // Add 1 hour
+    
+    // Format as full ISO timestamp for precise time filtering
+    const startTimeFormatted = oneHourFromNow.toISOString(); // Full timestamp with time
+    const endOfDay = new Date(endDate);
+    const endTimeFormatted = endOfDay.toISOString(); // End of selected day
     
     const variables = {
       locationId: locationId,
       first: 200,
-      query: `cancelled = false AND startAt >= '${startFormatted}' AND startAt < '${endFormatted}'`
+      query: `cancelled = false AND startAt >= '${startTimeFormatted}' AND startAt < '${endTimeFormatted}'`
     };
 
-    console.log(`📊 Querying appointments for ${locationId} from ${startFormatted} to ${endFormatted} (exclusive)`);
+    console.log(`📊 Querying FUTURE appointments for ${locationId} from ${startTimeFormatted} (now + 1hr) to ${endTimeFormatted}`);
     
     return await this.makeGraphqlRequest(adminAppointmentsQuery, variables);
   }
