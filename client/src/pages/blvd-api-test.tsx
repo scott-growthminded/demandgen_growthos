@@ -27,6 +27,7 @@ export default function BlvdApiTest() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split('T')[0];
   });
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -138,12 +139,13 @@ export default function BlvdApiTest() {
 
         {/* Results Display */}
         {availabilityResults && (
-          <div className="mt-8">
+          <div className="mt-8 space-y-6">
+            {/* Summary Stats */}
             <div className="bg-card rounded-lg border shadow-sm">
               <div className="p-6 border-b">
-                <h3 className="text-lg font-semibold mb-2">Availability Results</h3>
+                <h3 className="text-lg font-semibold mb-2">Location Overview</h3>
                 <p className="text-sm text-muted-foreground">
-                  Real appointment data for {availabilityResults.date} • {availabilityResults.totalLocationsChecked} locations checked • {availabilityResults.availableLocationsCount} locations with 25%+ availability
+                  Real appointment data for {availabilityResults.date} • {availabilityResults.totalLocationsChecked} locations checked
                 </p>
               </div>
               <div className="p-6">
@@ -152,30 +154,33 @@ export default function BlvdApiTest() {
                     <thead>
                       <tr className="border-b">
                         <th className="text-left p-2 font-medium">Studio</th>
-                        <th className="text-right p-2 font-medium">Schedule</th>
                         <th className="text-right p-2 font-medium">Booked</th>
-                        <th className="text-right p-2 font-medium">Available</th>
+                        <th className="text-right p-2 font-medium">Available Openings</th>
                         <th className="text-right p-2 font-medium">Availability %</th>
                         <th className="text-center p-2 font-medium">Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {availabilityResults.allLocations?.map((location: any, index: number) => (
-                        <tr key={location.locationId} className={index % 2 === 0 ? "bg-muted/30" : ""}>
+                        <tr 
+                          key={location.locationId} 
+                          className={`cursor-pointer hover:bg-muted/50 ${
+                            index % 2 === 0 ? "bg-muted/30" : ""
+                          } ${selectedLocationId === location.locationId ? "bg-blue-100 dark:bg-blue-900" : ""}`}
+                          onClick={() => setSelectedLocationId(location.locationId)}
+                          data-testid={`row-location-${index}`}
+                        >
                           <td className="p-2 font-medium" data-testid={`text-location-${index}`}>
                             {location.locationName}
-                          </td>
-                          <td className="p-2 text-right" data-testid={`text-schedule-${index}`}>
-                            {location.totalAppointments}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-booked-${index}`}>
                             {location.bookedAppointments}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-available-${index}`}>
-                            {location.totalAppointments - location.bookedAppointments}
+                            {location.availableTimeSlots?.length || 0}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-availability-${index}`}>
-                            {location.availabilityPercent.toFixed(2)}%
+                            {location.availabilityPercent.toFixed(1)}%
                           </td>
                           <td className="p-2 text-center">
                             <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
@@ -193,6 +198,82 @@ export default function BlvdApiTest() {
                 </div>
               </div>
             </div>
+
+            {/* Time Slot Details for Selected Location */}
+            {selectedLocationId && (() => {
+              const selectedLocation = availabilityResults.allLocations?.find((loc: any) => loc.locationId === selectedLocationId);
+              if (!selectedLocation) return null;
+              
+              
+              return (
+                <div className="bg-card rounded-lg border shadow-sm" data-testid="detail-panel">
+                  <div className="p-6 border-b">
+                    <h3 className="text-lg font-semibold mb-2" data-testid="detail-location-name">{selectedLocation.locationName}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedLocation.bookedAppointments} booked • {selectedLocation.availableTimeSlots?.length || 0} available openings
+                    </p>
+                  </div>
+                  <div className="p-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Booked Time Slots */}
+                      <div data-testid="booked-times-section">
+                        <h4 className="font-medium mb-3 text-red-700 dark:text-red-400">Booked Times</h4>
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {selectedLocation.bookedTimeSlots?.map((slot: any, slotIndex: number) => (
+                            <div key={slot.id} className="p-3 bg-red-50 dark:bg-red-950 rounded border" data-testid={`time-slot-booked-${slotIndex}`}>
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="font-medium text-sm">
+                                  {new Date(slot.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </span>
+                                <Badge variant="destructive" className="text-xs">Booked</Badge>
+                              </div>
+                              {slot.staff && (
+                                <p className="text-xs text-muted-foreground">
+                                  {slot.staff.name} • {slot.service?.name}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                          {(!selectedLocation.bookedTimeSlots || selectedLocation.bookedTimeSlots.length === 0) && (
+                            <p className="text-sm text-muted-foreground italic" data-testid="no-booked-message">No booked appointments</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Available Time Slots */}
+                      <div data-testid="available-times-section">
+                        <h4 className="font-medium mb-3 text-green-700 dark:text-green-400">Available Openings</h4>
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {selectedLocation.availableTimeSlots?.map((slot: any, slotIndex: number) => (
+                            <div key={slotIndex} className="p-3 bg-green-50 dark:bg-green-950 rounded border" data-testid={`time-slot-available-${slotIndex}`}>
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="font-medium text-sm">
+                                  {new Date(slot.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </span>
+                                <Badge variant="outline" className="text-xs border-green-600 text-green-700">Open</Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {slot.duration} min available
+                              </p>
+                            </div>
+                          ))}
+                          {(!selectedLocation.availableTimeSlots || selectedLocation.availableTimeSlots.length === 0) && (
+                            <p className="text-sm text-muted-foreground italic" data-testid="no-available-message">No available openings</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Instruction Text */}
+            {!selectedLocationId && (
+              <div className="bg-card rounded-lg border shadow-sm p-6 text-center" data-testid="instruction-panel">
+                <p className="text-muted-foreground">Click on a studio row above to view detailed time slot information</p>
+              </div>
+            )}
           </div>
         )}
       </div>
