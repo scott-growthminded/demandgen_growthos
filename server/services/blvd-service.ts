@@ -771,32 +771,38 @@ export class BlvdService {
 
   /**
    * Generate available time slots based on business hours and booked appointments
-   * Fixed to properly handle timezone conversion and validate business hours
+   * Updated to handle 40-minute appointment intervals instead of hourly slots
    */
   generateAvailableTimeSlots(bookedSlots: any[], businessHours: { start: number, end: number }, startDate: string, locationTimeZone: string): any[] {
     const availableSlots: any[] = [];
     
-    console.log(`🕐 Generating available slots for ${locationTimeZone} on ${startDate}`);
+    console.log(`🕐 Generating 40-minute interval slots for ${locationTimeZone} on ${startDate}`);
     console.log(`📋 Business hours: ${businessHours.start}:00 - ${businessHours.end}:00`);
     console.log(`📅 Input date: ${startDate}`);
     
     // Parse the input date more carefully
     const baseDate = new Date(startDate);
     
-    // Generate ONLY business hours (8 AM to 9 PM = hours 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
-    const businessHoursList = [];
-    for (let hour = businessHours.start; hour < businessHours.end; hour++) {
-      businessHoursList.push(hour);
-    }
+    // Generate slots every 40 minutes during business hours
+    const SLOT_DURATION_MINUTES = 40;
+    const businessStartMinutes = businessHours.start * 60; // Convert to minutes from midnight
+    const businessEndMinutes = businessHours.end * 60; // Convert to minutes from midnight
     
-    console.log(`⏰ Generating slots for hours: ${businessHoursList.join(', ')}`);
+    console.log(`⏰ Generating 40-minute slots from ${businessStartMinutes/60}:00 to ${businessEndMinutes/60}:00`);
     
-    for (const hour of businessHoursList) {
-      // CRITICAL: Create timezone-aware date using proper IANA timezone conversion
-      // This works for ANY timezone (Eastern, Pacific, Central, etc.) and handles DST automatically
+    // Generate slots every 40 minutes within business hours
+    for (let minutes = businessStartMinutes; minutes < businessEndMinutes; minutes += SLOT_DURATION_MINUTES) {
+      const hour = Math.floor(minutes / 60);
+      const minute = minutes % 60;
       
-      // Create the desired local time in the location's timezone
-      const localTimeString = `${baseDate.getFullYear()}-${(baseDate.getMonth() + 1).toString().padStart(2, '0')}-${baseDate.getDate().toString().padStart(2, '0')}T${hour.toString().padStart(2, '0')}:00:00`;
+      // Skip if this slot would end after business hours
+      if (minutes + SLOT_DURATION_MINUTES > businessEndMinutes) {
+        console.log(`⏭️ Skipping slot at ${hour}:${minute.toString().padStart(2, '0')} - would end after business hours`);
+        continue;
+      }
+      
+      // CRITICAL: Create timezone-aware date using proper IANA timezone conversion
+      const localTimeString = `${baseDate.getFullYear()}-${(baseDate.getMonth() + 1).toString().padStart(2, '0')}-${baseDate.getDate().toString().padStart(2, '0')}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
       
       // Use a reference date to understand the timezone offset for this specific date
       const referenceUTC = new Date(`${localTimeString}.000Z`);
@@ -821,59 +827,39 @@ export class BlvdService {
       const offsetMs = referenceUTC.getTime() - targetZoneDate.getTime();
       
       // Apply the offset to get the correct UTC timestamp
-      // This UTC time, when converted to locationTimeZone, will display as the desired hour
       const utcSlotDate = new Date(referenceUTC.getTime() + offsetMs);
       
-      // Validation: Verify the conversion works correctly
-      const verifyDisplayTime = utcSlotDate.toLocaleString('en-US', {
-        timeZone: locationTimeZone,
-        hour: 'numeric',
-        hour12: false
-      });
+      // Check for conflicts with booked appointments (40-minute duration overlap check)
+      const slotStart = utcSlotDate.getTime();
+      const slotEnd = slotStart + (SLOT_DURATION_MINUTES * 60 * 1000);
       
-      const slotDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), hour, 0, 0, 0);
-      
-      // Validate the hour is actually what we expect
-      const actualHour = slotDate.getHours();
-      
-      // STRICT VALIDATION: Only allow slots within business hours
-      if (actualHour < businessHours.start || actualHour >= businessHours.end) {
-        console.warn(`⚠️ Skipping invalid hour: expected ${hour}, got ${actualHour}`);
-        continue;
-      }
-      
-      // Check for conflicts with booked appointments
       const hasBookings = bookedSlots.some(booking => {
-        const bookingStart = new Date(booking.startTime);
-        const bookingHour = bookingStart.getHours();
-        return bookingHour === hour; // Simple hour-based conflict check
+        const bookingStart = new Date(booking.startTime).getTime();
+        const bookingEnd = new Date(booking.endTime).getTime();
+        
+        // Check if there's any overlap between the slot and the booking
+        const overlaps = (slotStart < bookingEnd && slotEnd > bookingStart);
+        
+        if (overlaps) {
+          console.log(`🔍 CONFLICT DETECTED: Slot ${hour}:${minute.toString().padStart(2, '0')} overlaps with booking ${booking.startTime} - ${booking.endTime}`);
+          console.log(`   - Slot: ${new Date(slotStart).toISOString()} to ${new Date(slotEnd).toISOString()}`);
+          console.log(`   - Booking: ${new Date(bookingStart).toISOString()} to ${new Date(bookingEnd).toISOString()}`);
+        }
+        
+        return overlaps;
       });
       
-      // Only create slot if no bookings and valid business hour
+      // Only create slot if no bookings conflict
       if (!hasBookings) {
         const slot = {
           startTime: utcSlotDate.toISOString(),
-          endTime: new Date(utcSlotDate.getTime() + 60 * 60 * 1000).toISOString(), // Add 1 hour
-          duration: 60,
+          endTime: new Date(slotEnd).toISOString(),
+          duration: SLOT_DURATION_MINUTES,
           type: 'available',
           locationTimeZone: locationTimeZone,
-          localHour: actualHour,
-          debugInfo: {
-            expectedHour: hour,
-            actualHour: actualHour,
-            localTime: slotDate.toLocaleString('en-US', { timeZone: locationTimeZone }),
-            utcTime: utcSlotDate.toISOString(),
-            locationTime: utcSlotDate.toLocaleString('en-US', { timeZone: locationTimeZone }),
-            verifyDisplayTime: verifyDisplayTime
-          }
+          localHour: hour,
+          localMinute: minute
         };
-        
-        // FINAL VALIDATION: Ensure the generated time is reasonable
-        const displayTime = slotDate.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
-          minute: '2-digit', 
-          hour12: true 
-        });
         
         const locationDisplayTime = utcSlotDate.toLocaleString('en-US', { 
           timeZone: locationTimeZone,
@@ -882,33 +868,11 @@ export class BlvdService {
           hour12: true 
         });
         
-        console.log(`✅ Generated slot: Desired ${hour}:00 -> ${locationTimeZone} ${locationDisplayTime} -> UTC ${slot.startTime} (verify: ${verifyDisplayTime})`);
+        console.log(`✅ Generated 40-min slot: ${hour}:${minute.toString().padStart(2, '0')} -> ${locationTimeZone} ${locationDisplayTime} -> UTC ${slot.startTime}`);
         availableSlots.push(slot);
       } else {
-        console.log(`❌ Skipping hour ${hour} (${hour}:00) - has bookings`);
+        console.log(`❌ Skipping slot ${hour}:${minute.toString().padStart(2, '0')} - conflicts with existing booking`);
       }
-    }
-    
-    console.log(`📊 Generated ${availableSlots.length} available slots`);
-    
-    // CRITICAL VALIDATION: Check all generated slots are within business hours
-    const invalidSlots = availableSlots.filter(slot => {
-      const slotHour = new Date(slot.startTime).getHours();
-      return slotHour < businessHours.start || slotHour >= businessHours.end;
-    });
-    
-    if (invalidSlots.length > 0) {
-      console.error(`🚨 CRITICAL: Found ${invalidSlots.length} slots outside business hours!`);
-      invalidSlots.forEach(slot => {
-        const badTime = new Date(slot.startTime);
-        console.error(`  - Bad slot: ${badTime.toLocaleTimeString()} (hour ${badTime.getHours()})`);
-      });
-      
-      // Remove invalid slots
-      return availableSlots.filter(slot => {
-        const slotHour = new Date(slot.startTime).getHours();
-        return slotHour >= businessHours.start && slotHour < businessHours.end;
-      });
     }
     
     return availableSlots;
