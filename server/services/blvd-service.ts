@@ -271,13 +271,12 @@ export class BlvdService {
       }
     `;
 
-    // NEW: Use time-based filtering to only show future availability (now + 1 hour)
-    const now = new Date();
-    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000); // Add 1 hour
-    
-    // Format as full ISO timestamp for precise time filtering
-    const startTimeFormatted = oneHourFromNow.toISOString(); // Full timestamp with time
+    // Show ALL appointments for the selected date (for complete business intelligence)
+    const startOfDay = new Date(startDate);
     const endOfDay = new Date(endDate);
+    endOfDay.setHours(23, 59, 59, 999); // End of selected day
+    
+    const startTimeFormatted = startOfDay.toISOString(); // Start of selected day
     const endTimeFormatted = endOfDay.toISOString(); // End of selected day
     
     const variables = {
@@ -286,7 +285,7 @@ export class BlvdService {
       query: `cancelled = false AND startAt >= '${startTimeFormatted}' AND startAt < '${endTimeFormatted}'`
     };
 
-    console.log(`📊 Querying FUTURE appointments for ${locationId} from ${startTimeFormatted} (now + 1hr) to ${endTimeFormatted}`);
+    console.log(`📊 Querying ALL appointments for ${locationId} from ${startTimeFormatted} to ${endTimeFormatted}`);
     
     return await this.makeGraphqlRequest(adminAppointmentsQuery, variables);
   }
