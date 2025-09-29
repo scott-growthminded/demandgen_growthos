@@ -640,6 +640,14 @@ export class BlvdService {
    */
   async getAvailableLocations(minAvailabilityPercent: number = 25, date?: string): Promise<any> {
     try {
+      // Validate input date before processing
+      if (date) {
+        const testDate = new Date(date);
+        if (isNaN(testDate.getTime()) || testDate.getFullYear() > 2100 || testDate.getFullYear() < 2020) {
+          throw new Error(`Invalid input date provided: "${date}". Please provide a valid date in YYYY-MM-DD format.`);
+        }
+      }
+      
       // Step 1: Get all locations
       const locationsResponse = await this.executeLocationsQuery();
       
@@ -804,9 +812,8 @@ export class BlvdService {
     
     console.log(`🕐 Generating 40-minute interval slots for ${locationTimeZone} on ${startDate}`);
     console.log(`📋 Business hours: ${businessHours.start}:00 - ${businessHours.end}:00`);
-    console.log(`📅 Input date: ${startDate}`);
     
-    // Parse the input date more carefully
+    // Parse the input date
     const baseDate = new Date(startDate);
     
     // Generate slots every 40 minutes during business hours
@@ -828,33 +835,19 @@ export class BlvdService {
         continue;
       }
       
-      // CRITICAL: Create timezone-aware date using proper IANA timezone conversion
-      const localTimeString = `${baseDate.getFullYear()}-${(baseDate.getMonth() + 1).toString().padStart(2, '0')}-${baseDate.getDate().toString().padStart(2, '0')}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+      // PROPER: Create timezone-aware date using robust approach
+      const year = baseDate.getFullYear();
+      const month = baseDate.getMonth(); // Keep 0-indexed for Date constructor
+      const day = baseDate.getDate();
       
-      // Use a reference date to understand the timezone offset for this specific date
-      const referenceUTC = new Date(`${localTimeString}.000Z`);
+      // Create timezone-aware UTC date using proper IANA timezone conversion
+      const utcSlotDate = this.convertLocalTimeToUTC(year, month, day, hour, minute, locationTimeZone);
       
-      // Get what time it would be in the target timezone if this were UTC
-      const timeInTargetZone = new Intl.DateTimeFormat('en-CA', {
-        timeZone: locationTimeZone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      }).format(referenceUTC);
-      
-      // Parse the target zone time to get a date object
-      const [datePartTarget, timePartTarget] = timeInTargetZone.split(', ');
-      const targetZoneDate = new Date(`${datePartTarget}T${timePartTarget}.000`);
-      
-      // Calculate the offset between what we want and what we'd get with naive UTC
-      const offsetMs = referenceUTC.getTime() - targetZoneDate.getTime();
-      
-      // Apply the offset to get the correct UTC timestamp
-      const utcSlotDate = new Date(referenceUTC.getTime() + offsetMs);
+      // Validate the date conversion succeeded (but allow year boundary crossings)
+      if (isNaN(utcSlotDate.getTime())) {
+        console.error(`Invalid UTC date conversion for ${year}-${month + 1}-${day} ${hour}:${minute}`);
+        continue; // Skip invalid conversions only
+      }
       
       // Check for conflicts with booked appointments - only unavailable if ALL staff are booked
       const slotStart = utcSlotDate.getTime();
@@ -903,6 +896,41 @@ export class BlvdService {
     
     return availableSlots;
   }
+
+  /**
+   * Convert local time components to UTC using IANA timezone
+   * Robust approach that avoids date corruption
+   */
+  private convertLocalTimeToUTC(year: number, month: number, day: number, hour: number, minute: number, timeZone: string): Date {
+    // Create a local time string in the target timezone
+    const localTimeString = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
+    
+    // Create a temporary date assuming this is UTC (we'll correct it)
+    const tempDate = new Date(localTimeString + 'Z');
+    
+    // Get what time this UTC moment would display in the target timezone
+    const timeInZone = tempDate.toLocaleString('en-CA', { 
+      timeZone, 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit', 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false 
+    });
+    
+    // Parse the timezone-adjusted time to see the offset
+    const [datePart, timePart] = timeInZone.split(', ');
+    const zoneTimeString = `${datePart}T${timePart}:00Z`;
+    const zoneDate = new Date(zoneTimeString);
+    
+    // Calculate the offset and apply it
+    const offsetMs = tempDate.getTime() - zoneDate.getTime();
+    const utcDate = new Date(tempDate.getTime() + offsetMs);
+    
+    return utcDate;
+  }
+
 
   private async testNetworkConnectivity(): Promise<TestResult> {
     try {
