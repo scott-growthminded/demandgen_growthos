@@ -649,16 +649,25 @@ export class BlvdService {
       const locations = (locationsResponse.data as any).locations.edges.map((edge: any) => edge.node);
       const { startDate, endDate } = date ? this.getDateRange(date) : this.getTomorrowDateRange();
       
+      console.log(`🔍 TOTAL LOCATIONS TO PROCESS: ${locations.length}`);
+      locations.forEach((loc: any, index: number) => {
+        console.log(`  ${index + 1}. ${loc.name} (${loc.id})`);
+      });
+      
       // Step 2: Get detailed availability for each location
       const availabilityResults: any[] = [];
       const businessHours = { start: 8, end: 21 }; // 8 AM to 9 PM
 
-      for (const location of locations) {
+      for (let i = 0; i < locations.length; i++) {
+        const location = locations[i];
+        console.log(`\n🎯 PROCESSING LOCATION ${i + 1}/${locations.length}: ${location.name}`);
         if (location.isRemote) {
           continue; // Skip remote locations
         }
 
         try {
+          console.log(`🏢 ========== PROCESSING LOCATION: ${location.name} (${location.id}) ==========`);
+          
           // Get appointments for this location
           const appointmentsResponse = await this.getLocationAppointments(
             location.id,
@@ -667,9 +676,11 @@ export class BlvdService {
           );
 
           const appointments = (appointmentsResponse.data as any)?.appointments?.edges?.map((edge: any) => edge.node) || [];
+          console.log(`📅 Raw appointments found for ${location.name}: ${appointments.length}`);
           
           // Filter out cancelled appointments
           const bookedAppointments = appointments.filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED');
+          console.log(`✅ Active appointments for ${location.name}: ${bookedAppointments.length}`);
           
           // Process appointment data to extract time slots and staff info
           const timeSlots = bookedAppointments.map((apt: any) => ({
@@ -729,11 +740,17 @@ export class BlvdService {
             availableTimeSlots: availableTimeSlots,
             bookingUrl: `${bookingBaseUrl}?location=${location.id}`
           });
+          
+          console.log(`📊 FINAL RESULTS for ${location.name}: ${availableTimeSlots.length} available time slots`);
+          console.log(`🏢 ========== END PROCESSING: ${location.name} ==========\n`);
         } catch (error) {
-          console.error(`Error checking availability for location ${location.name}:`, error);
+          console.error(`❌ ERROR processing location ${location.name}:`, error);
+          console.error(`Stack trace:`, error instanceof Error ? error.stack : 'No stack trace');
           // Continue with other locations
         }
       }
+      
+      console.log(`✅ LOCATION PROCESSING COMPLETE! Processed ${availabilityResults.length} locations successfully.`);
 
       // Sort by availability percentage (highest first)
       availabilityResults.sort((a: any, b: any) => b.availabilityPercent - a.availabilityPercent);
@@ -834,36 +851,20 @@ export class BlvdService {
       const slotStart = utcSlotDate.getTime();
       const slotEnd = slotStart + (SLOT_DURATION_MINUTES * 60 * 1000);
       
-      // Get all unique staff members from booked slots
-      const allStaffIds = [...new Set(bookedSlots.map((booking: any) => booking.staff?.id).filter(Boolean))];
-      console.log(`👥 Found ${allStaffIds.length} staff members at this location`);
-      
-      // Find which staff members are booked during this slot
-      const bookedStaffIds = new Set();
-      bookedSlots.forEach(booking => {
+      // Check for conflicts with booked appointments (return to simple conflict detection)
+      const hasBookings = bookedSlots.some(booking => {
         const bookingStart = new Date(booking.startTime).getTime();
         const bookingEnd = new Date(booking.endTime).getTime();
         
         // Check if there's any overlap between the slot and the booking
         const overlaps = (slotStart < bookingEnd && slotEnd > bookingStart);
         
-        if (overlaps && booking.staff?.id) {
-          bookedStaffIds.add(booking.staff.id);
-          console.log(`🔍 Staff conflict: ${booking.staff.name || booking.staff.id} booked ${booking.startTime} - ${booking.endTime}`);
+        if (overlaps) {
+          console.log(`🔍 CONFLICT: Slot ${hour}:${minute.toString().padStart(2, '0')} overlaps with booking ${booking.startTime} - ${booking.endTime}`);
         }
+        
+        return overlaps;
       });
-      
-      // Only mark unavailable if ALL staff members are booked
-      const allStaffBooked = allStaffIds.length > 0 && bookedStaffIds.size >= allStaffIds.length;
-      const availableStaffCount = allStaffIds.length - bookedStaffIds.size;
-      
-      if (!allStaffBooked && availableStaffCount > 0) {
-        console.log(`✅ Slot ${hour}:${minute.toString().padStart(2, '0')}: ${availableStaffCount}/${allStaffIds.length} staff available`);
-      } else {
-        console.log(`❌ Slot ${hour}:${minute.toString().padStart(2, '0')}: All ${allStaffIds.length} staff booked`);
-      }
-      
-      const hasBookings = allStaffBooked;
       
       // Only create slot if no bookings conflict
       if (!hasBookings) {
