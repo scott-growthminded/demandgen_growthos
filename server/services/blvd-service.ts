@@ -691,11 +691,24 @@ export class BlvdService {
           const bookedAppointments = appointments.filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED');
           console.log(`✅ Active appointments for ${location.name}: ${bookedAppointments.length}`);
           
-          // DEBUG: Log detailed appointment data for problem locations
-          if (location.name && (location.name.includes('Hoboken') || location.name.includes('Hingham') || bookedAppointments.length >= 20)) {
-            console.log(`🔍 DEBUG: ${location.name} appointment details (${bookedAppointments.length} total):`);
+          // DEBUG: Log detailed appointment data for validation
+          console.log(`🔍 ${location.name} appointments for ${startDate.split('T')[0]}:`);
+          console.log(`  Raw API response: ${appointments.length} appointments`);
+          console.log(`  After filtering cancelled: ${bookedAppointments.length} active appointments`);
+          
+          // Check for date range issues
+          bookedAppointments.forEach((apt: any, index: number) => {
+            const aptDate = apt.startAt.split('T')[0];
+            const targetDate = startDate.split('T')[0];
+            if (aptDate !== targetDate) {
+              console.log(`😱 DATE MISMATCH: Apt ${index + 1} is ${aptDate}, but target is ${targetDate}`);
+            }
+          });
+          
+          if (location.name.includes('Hoboken')) {
+            console.log(`🏠 HOBOKEN DETAILS:`);
             bookedAppointments.forEach((apt: any, index: number) => {
-              console.log(`  ${index + 1}. ID: ${apt.id.split(':').pop()}, Start: ${apt.startAt}, Duration: ${apt.duration}, State: ${apt.state}, Services: ${apt.appointmentServices?.length || 0}`);
+              console.log(`  ${index + 1}. ${apt.startAt} | ${apt.client?.firstName} ${apt.client?.lastName} | ${apt.appointmentServices?.[0]?.service?.name}`);
             });
           }
           
