@@ -271,13 +271,15 @@ export class BlvdService {
       }
     `;
 
-    // Show ALL appointments for the selected date (for complete business intelligence)
-    const startOfDay = new Date(startDate);
-    const endOfDay = new Date(endDate);
-    endOfDay.setHours(23, 59, 59, 999); // End of selected day
+    // Show appointments that START on the selected date only (precise date filtering)
+    console.log(`🔧 DEBUGGING: Input startDate = ${startDate}, endDate = ${endDate}`);
+    const targetDate = new Date(startDate);
+    const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0);
+    const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
     
-    const startTimeFormatted = startOfDay.toISOString(); // Start of selected day
-    const endTimeFormatted = endOfDay.toISOString(); // End of selected day
+    const startTimeFormatted = startOfDay.toISOString(); // Start of target date
+    const endTimeFormatted = endOfDay.toISOString(); // End of target date
+    console.log(`🔧 DEBUGGING: Date range generated: ${startTimeFormatted} to ${endTimeFormatted}`);
     
     const variables = {
       locationId: locationId,
@@ -285,7 +287,7 @@ export class BlvdService {
       query: `cancelled = false AND startAt >= '${startTimeFormatted}' AND startAt < '${endTimeFormatted}'`
     };
 
-    console.log(`📊 Querying ALL appointments for ${locationId} from ${startTimeFormatted} to ${endTimeFormatted}`);
+    console.log(`📊 Querying appointments that START on target date for ${locationId} from ${startTimeFormatted} to ${endTimeFormatted}`);
     
     return await this.makeGraphqlRequest(adminAppointmentsQuery, variables);
   }
@@ -680,6 +682,14 @@ export class BlvdService {
           // Filter out cancelled appointments
           const bookedAppointments = appointments.filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED');
           console.log(`✅ Active appointments for ${location.name}: ${bookedAppointments.length}`);
+          
+          // DEBUG: Log detailed appointment data for problem locations
+          if (location.name && (location.name.includes('Hoboken') || location.name.includes('Hingham') || bookedAppointments.length >= 20)) {
+            console.log(`🔍 DEBUG: ${location.name} appointment details (${bookedAppointments.length} total):`);
+            bookedAppointments.forEach((apt: any, index: number) => {
+              console.log(`  ${index + 1}. ID: ${apt.id.split(':').pop()}, Start: ${apt.startAt}, Duration: ${apt.duration}, State: ${apt.state}, Services: ${apt.appointmentServices?.length || 0}`);
+            });
+          }
           
           // Process appointment data to extract time slots and staff info
           const timeSlots = bookedAppointments.map((apt: any) => ({
