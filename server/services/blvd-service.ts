@@ -687,28 +687,49 @@ export class BlvdService {
           const appointments = (appointmentsResponse.data as any)?.appointments?.edges?.map((edge: any) => edge.node) || [];
           console.log(`📅 Raw appointments found for ${location.name}: ${appointments.length}`);
           
-          // Filter out cancelled appointments
-          const bookedAppointments = appointments.filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED');
+          // Filter out cancelled appointments AND filter by target date
+          const targetDate = startDate.split('T')[0];
+          const bookedAppointments = appointments.filter((apt: any) => {
+            // Skip cancelled appointments
+            if (apt.cancelled || apt.state === 'CANCELLED') return false;
+            
+            // Only include appointments that start on the target date
+            const aptDate = apt.startAt.split('T')[0];
+            return aptDate === targetDate;
+          });
+          
           console.log(`✅ Active appointments for ${location.name}: ${bookedAppointments.length}`);
           
           // DEBUG: Log detailed appointment data for validation
-          console.log(`🔍 ${location.name} appointments for ${startDate.split('T')[0]}:`);
+          console.log(`🔍 ${location.name} appointments for ${targetDate}:`);
           console.log(`  Raw API response: ${appointments.length} appointments`);
-          console.log(`  After filtering cancelled: ${bookedAppointments.length} active appointments`);
+          console.log(`  After filtering cancelled & date: ${bookedAppointments.length} target date appointments`);
           
-          // Check for date range issues
-          bookedAppointments.forEach((apt: any, index: number) => {
+          // Verify all appointments are for the correct date
+          const dateMismatches = appointments.filter(apt => {
             const aptDate = apt.startAt.split('T')[0];
-            const targetDate = startDate.split('T')[0];
-            if (aptDate !== targetDate) {
-              console.log(`😱 DATE MISMATCH: Apt ${index + 1} is ${aptDate}, but target is ${targetDate}`);
-            }
+            return aptDate !== targetDate;
           });
+          if (dateMismatches.length > 0) {
+            console.log(`📅 Found ${dateMismatches.length} appointments from other dates (filtered out)`);
+          }
           
-          if (location.name.includes('Hoboken')) {
-            console.log(`🏠 HOBOKEN DETAILS:`);
+          // DEBUG: Show detailed data for validation locations
+          const validationLocations = ['Hoboken', 'Georgetown', 'Hingham', 'Bryn Mawr'];
+          const isValidationLocation = validationLocations.some(val => location.name.includes(val));
+          
+          if (isValidationLocation) {
+            console.log(`📊 VALIDATION LOCATION: ${location.name} (Expected counts for validation)`);
+            console.log(`  Final filtered count: ${bookedAppointments.length} appointments`);
+            if (location.name.includes('Hoboken')) {
+              console.log(`  🏠 HOBOKEN EXPECTED: 22 booked, but found: ${bookedAppointments.length}`);
+            }
+            
+            console.log(`  Appointment breakdown:`);
             bookedAppointments.forEach((apt: any, index: number) => {
-              console.log(`  ${index + 1}. ${apt.startAt} | ${apt.client?.firstName} ${apt.client?.lastName} | ${apt.appointmentServices?.[0]?.service?.name}`);
+              const aptDate = apt.startAt.split('T')[0];
+              const aptTime = apt.startAt.split('T')[1];
+              console.log(`    ${index + 1}. Date: ${aptDate} | Time: ${aptTime} | Client: ${apt.client?.firstName} ${apt.client?.lastName} | State: ${apt.state}`);
             });
           }
           
