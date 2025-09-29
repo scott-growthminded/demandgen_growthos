@@ -830,25 +830,40 @@ export class BlvdService {
       // Apply the offset to get the correct UTC timestamp
       const utcSlotDate = new Date(referenceUTC.getTime() + offsetMs);
       
-      // Check for conflicts with booked appointments (30-minute duration overlap check)
+      // Check for conflicts with booked appointments - only unavailable if ALL staff are booked
       const slotStart = utcSlotDate.getTime();
       const slotEnd = slotStart + (SLOT_DURATION_MINUTES * 60 * 1000);
       
-      const hasBookings = bookedSlots.some(booking => {
+      // Get all unique staff members from booked slots
+      const allStaffIds = [...new Set(bookedSlots.map((booking: any) => booking.staff?.id).filter(Boolean))];
+      console.log(`👥 Found ${allStaffIds.length} staff members at this location`);
+      
+      // Find which staff members are booked during this slot
+      const bookedStaffIds = new Set();
+      bookedSlots.forEach(booking => {
         const bookingStart = new Date(booking.startTime).getTime();
         const bookingEnd = new Date(booking.endTime).getTime();
         
         // Check if there's any overlap between the slot and the booking
         const overlaps = (slotStart < bookingEnd && slotEnd > bookingStart);
         
-        if (overlaps) {
-          console.log(`🔍 CONFLICT DETECTED: Slot ${hour}:${minute.toString().padStart(2, '0')} overlaps with booking ${booking.startTime} - ${booking.endTime}`);
-          console.log(`   - Slot: ${new Date(slotStart).toISOString()} to ${new Date(slotEnd).toISOString()}`);
-          console.log(`   - Booking: ${new Date(bookingStart).toISOString()} to ${new Date(bookingEnd).toISOString()}`);
+        if (overlaps && booking.staff?.id) {
+          bookedStaffIds.add(booking.staff.id);
+          console.log(`🔍 Staff conflict: ${booking.staff.name || booking.staff.id} booked ${booking.startTime} - ${booking.endTime}`);
         }
-        
-        return overlaps;
       });
+      
+      // Only mark unavailable if ALL staff members are booked
+      const allStaffBooked = allStaffIds.length > 0 && bookedStaffIds.size >= allStaffIds.length;
+      const availableStaffCount = allStaffIds.length - bookedStaffIds.size;
+      
+      if (!allStaffBooked && availableStaffCount > 0) {
+        console.log(`✅ Slot ${hour}:${minute.toString().padStart(2, '0')}: ${availableStaffCount}/${allStaffIds.length} staff available`);
+      } else {
+        console.log(`❌ Slot ${hour}:${minute.toString().padStart(2, '0')}: All ${allStaffIds.length} staff booked`);
+      }
+      
+      const hasBookings = allStaffBooked;
       
       // Only create slot if no bookings conflict
       if (!hasBookings) {
