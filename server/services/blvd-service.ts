@@ -784,14 +784,15 @@ export class BlvdService {
     const baseDate = new Date(startDate);
     
     // Generate slots every 40 minutes during business hours
-    const SLOT_DURATION_MINUTES = 40;
+    const SLOT_DURATION_MINUTES = 30; // 30-minute appointment duration
+    const SLOT_INTERVAL_MINUTES = 40; // 40-minute intervals (30-minute appointment + 10-minute buffer)
     const businessStartMinutes = businessHours.start * 60; // Convert to minutes from midnight
     const businessEndMinutes = businessHours.end * 60; // Convert to minutes from midnight
     
     console.log(`⏰ Generating 40-minute slots from ${businessStartMinutes/60}:00 to ${businessEndMinutes/60}:00`);
     
     // Generate slots every 40 minutes within business hours
-    for (let minutes = businessStartMinutes; minutes < businessEndMinutes; minutes += SLOT_DURATION_MINUTES) {
+    for (let minutes = businessStartMinutes; minutes < businessEndMinutes; minutes += SLOT_INTERVAL_MINUTES) {
       const hour = Math.floor(minutes / 60);
       const minute = minutes % 60;
       
@@ -829,7 +830,7 @@ export class BlvdService {
       // Apply the offset to get the correct UTC timestamp
       const utcSlotDate = new Date(referenceUTC.getTime() + offsetMs);
       
-      // Check for conflicts with booked appointments (40-minute duration overlap check)
+      // Check for conflicts with booked appointments (30-minute duration overlap check)
       const slotStart = utcSlotDate.getTime();
       const slotEnd = slotStart + (SLOT_DURATION_MINUTES * 60 * 1000);
       
