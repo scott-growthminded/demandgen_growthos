@@ -687,7 +687,7 @@ export class BlvdService {
           const appointments = (appointmentsResponse.data as any)?.appointments?.edges?.map((edge: any) => edge.node) || [];
           console.log(`📅 Raw appointments found for ${location.name}: ${appointments.length}`);
           
-          // Filter out cancelled appointments AND filter by target date
+          // Filter out cancelled appointments AND filter by target date AND filter out training facials
           const targetDate = startDate.split('T')[0];
           const bookedAppointments = appointments.filter((apt: any) => {
             // Skip cancelled appointments
@@ -695,7 +695,16 @@ export class BlvdService {
             
             // Only include appointments that start on the target date
             const aptDate = apt.startAt.split('T')[0];
-            return aptDate === targetDate;
+            if (aptDate !== targetDate) return false;
+            
+            // Skip appointments with ANY training facial service
+            const hasTrainingFacial = apt.appointmentServices?.some((service: any) => {
+              const serviceName = service?.service?.name || '';
+              return serviceName.toLowerCase().includes('training facial');
+            });
+            if (hasTrainingFacial) return false;
+            
+            return true;
           });
           
           console.log(`✅ Active appointments for ${location.name}: ${bookedAppointments.length}`);
@@ -822,8 +831,8 @@ export class BlvdService {
       
       console.log(`✅ LOCATION PROCESSING COMPLETE! Processed ${availabilityResults.length} locations successfully.`);
 
-      // Sort by availability percentage (highest first)
-      availabilityResults.sort((a: any, b: any) => b.availabilityPercent - a.availabilityPercent);
+      // Sort alphabetically by studio name
+      availabilityResults.sort((a: any, b: any) => a.locationName.localeCompare(b.locationName));
 
       // Filter for locations meeting the availability threshold
       const availableLocations = availabilityResults.filter(loc => loc.availabilityPercent >= minAvailabilityPercent);
