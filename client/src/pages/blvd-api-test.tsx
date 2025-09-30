@@ -156,6 +156,7 @@ export default function BlvdApiTest() {
                         <th className="text-left p-2 font-medium">Studio</th>
                         <th className="text-right p-2 font-medium">Booked</th>
                         <th className="text-right p-2 font-medium">Available Openings</th>
+                        <th className="text-right p-2 font-medium">Schedule</th>
                         <th className="text-right p-2 font-medium">Availability %</th>
                         <th className="text-center p-2 font-medium">Status</th>
                       </tr>
@@ -178,6 +179,9 @@ export default function BlvdApiTest() {
                           </td>
                           <td className="p-2 text-right" data-testid={`text-available-${index}`}>
                             {location.availableTimeSlots?.length || 0}
+                          </td>
+                          <td className="p-2 text-right" data-testid={`text-schedule-${index}`}>
+                            {location.schedule || 0}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-availability-${index}`}>
                             {location.availabilityPercent.toFixed(1)}%
@@ -210,7 +214,7 @@ export default function BlvdApiTest() {
                   <div className="p-6 border-b">
                     <h3 className="text-lg font-semibold mb-2" data-testid="detail-location-name">{selectedLocation.locationName}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {selectedLocation.bookedAppointments} booked • {selectedLocation.availableTimeSlots?.length || 0} available openings
+                      {selectedLocation.bookedAppointments} booked • {selectedLocation.availableTimeSlots?.length || 0} available openings • {selectedLocation.schedule || 0} total schedule
                     </p>
                   </div>
                   <div className="p-6">
