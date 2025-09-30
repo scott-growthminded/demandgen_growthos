@@ -355,30 +355,28 @@ export class BlvdService {
   async getStaffShifts(locationId: string, startDate: string, endDate: string, staffId?: string): Promise<any[]> {
     console.log(`🔄 Querying staff shifts for ${locationId} from ${startDate} to ${endDate}`);
     
+    // Format dates as YYYY-MM-DD for Boulevard API
+    const startDateOnly = startDate.split('T')[0];
+    const endDateOnly = endDate.split('T')[0];
+    
+    console.log(`📅 Formatted dates for shifts query: startIso8601=${startDateOnly}, endIso8601=${endDateOnly}`);
+    
     const shiftsQuery = `
-      query Shifts($locationId: ID!, $staffId: ID, $from: DateTime!, $to: DateTime!, $first: Int!) {
+      query Shifts($locationId: ID!, $startIso8601: Date!, $endIso8601: Date!) {
         shifts(
-          locationId: $locationId,
-          staffId: $staffId,
-          startsAt_GTE: $from,
-          endsAt_LTE: $to,
-          first: $first
+          locationId: $locationId
+          startIso8601: $startIso8601
+          endIso8601: $endIso8601
         ) {
-          edges {
-            node {
+          nodes {
+            id
+            startsAt
+            endsAt
+            staff {
               id
-              startsAt
-              endsAt
-              staff {
-                id
-                firstName
-                lastName
-              }
+              firstName
+              lastName
             }
-          }
-          pageInfo {
-            hasNextPage
-            endCursor
           }
         }
       }
@@ -386,18 +384,15 @@ export class BlvdService {
 
     const variables: any = {
       locationId,
-      from: startDate,
-      to: endDate,
-      first: 200
+      startIso8601: startDateOnly,
+      endIso8601: endDateOnly
     };
-
-    if (staffId) {
-      variables.staffId = staffId;
-    }
+    
+    console.log(`📤 Shifts query variables:`, JSON.stringify(variables, null, 2));
 
     try {
       const response = await this.makeGraphqlRequest(shiftsQuery, variables);
-      const shifts = (response.data as any)?.shifts?.edges?.map((edge: any) => edge.node) || [];
+      const shifts = (response.data as any)?.shifts?.nodes || [];
       console.log(`✅ Found ${shifts.length} shifts`);
       return shifts;
     } catch (error) {
@@ -409,45 +404,34 @@ export class BlvdService {
   async getTimeblocks(locationId: string, startDate: string, endDate: string, staffId?: string): Promise<any[]> {
     console.log(`⏱️ Querying timeblocks for ${locationId} from ${startDate} to ${endDate}`);
     
+    // Format dates as YYYY-MM-DD for Boulevard API
+    const startDateOnly = startDate.split('T')[0];
+    const endDateOnly = endDate.split('T')[0];
+    
     const timeblocksQuery = `
-      query Timeblocks($locationId: ID!, $staffId: ID, $from: DateTime!, $to: DateTime!, $first: Int!) {
+      query Timeblocks($locationId: ID!, $startIso8601: Date!, $endIso8601: Date!) {
         timeblocks(
-          locationId: $locationId,
-          staffId: $staffId,
-          startsAt_GTE: $from,
-          endsAt_LTE: $to,
-          first: $first
+          locationId: $locationId
+          startIso8601: $startIso8601
+          endIso8601: $endIso8601
         ) {
-          edges {
-            node {
-              id
-              startsAt
-              endsAt
-              reason
-            }
-          }
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
+          id
+          startsAt
+          endsAt
+          reason
         }
       }
     `;
 
     const variables: any = {
       locationId,
-      from: startDate,
-      to: endDate,
-      first: 200
+      startIso8601: startDateOnly,
+      endIso8601: endDateOnly
     };
-
-    if (staffId) {
-      variables.staffId = staffId;
-    }
 
     try {
       const response = await this.makeGraphqlRequest(timeblocksQuery, variables);
-      const timeblocks = (response.data as any)?.timeblocks?.edges?.map((edge: any) => edge.node) || [];
+      const timeblocks = (response.data as any)?.timeblocks || [];
       console.log(`✅ Found ${timeblocks.length} timeblocks`);
       return timeblocks;
     } catch (error) {
