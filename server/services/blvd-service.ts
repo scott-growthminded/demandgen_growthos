@@ -776,9 +776,23 @@ export class BlvdService {
           const locationTimeZone = this.inferLocationTimeZone(location.name, location.address);
           const availableTimeSlots = this.generateAvailableTimeSlots(timeSlots, businessHours, startDate, locationTimeZone);
           
-          // Calculate schedule as actual observed capacity (booked + available slots)
-          // This represents the true operational capacity we can verify from real data
-          const scheduleCapacity = bookedCount + availableTimeSlots.length;
+          // Calculate schedule capacity accounting for multiple concurrent staff
+          // Count unique staff members from booked appointments
+          const uniqueStaffIds = new Set(
+            timeSlots
+              .filter((slot: any) => slot.staff?.id)
+              .map((slot: any) => slot.staff.id)
+          );
+          const staffCount = uniqueStaffIds.size || 1; // At least 1 staff
+          
+          // Calculate theoretical capacity: (business hours / slot interval) * staff count
+          const SLOT_INTERVAL_MINUTES = 40; // 40-minute intervals
+          const businessHoursMinutes = (businessHours.end - businessHours.start) * 60;
+          const slotsPerStaff = Math.floor(businessHoursMinutes / SLOT_INTERVAL_MINUTES);
+          const theoreticalCapacity = slotsPerStaff * staffCount;
+          
+          // Use theoretical capacity as schedule
+          const scheduleCapacity = theoreticalCapacity;
           
           // Create service-specific booking URL (placeholder for now)
           const bookingBaseUrl = `https://widget.boulevard.io/${this.config.businessId}`;
