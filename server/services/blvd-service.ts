@@ -74,6 +74,66 @@ export class BlvdService {
     return result === 0;
   }
 
+  private toMs(iso: string): number {
+    return new Date(iso).getTime();
+  }
+
+  private fromMs(ms: number): string {
+    return new Date(ms).toISOString();
+  }
+
+  private mergeIntervals(list: Array<{startsAt?: string; endsAt?: string; start?: string; end?: string; startMs?: number; endMs?: number}>): Array<{startMs: number; endMs: number}> {
+    if (!list.length) return [];
+    
+    const sorted = list
+      .map(iv => ({
+        startMs: iv.startMs ?? this.toMs(iv.startsAt ?? iv.start ?? ''),
+        endMs: iv.endMs ?? this.toMs(iv.endsAt ?? iv.end ?? '')
+      }))
+      .filter(iv => Number.isFinite(iv.startMs) && Number.isFinite(iv.endMs) && iv.endMs > iv.startMs)
+      .sort((a, b) => a.startMs - b.startMs);
+
+    const out: Array<{startMs: number; endMs: number}> = [];
+    for (const iv of sorted) {
+      if (!out.length || iv.startMs > out[out.length - 1].endMs) {
+        out.push({ ...iv });
+      } else {
+        out[out.length - 1].endMs = Math.max(out[out.length - 1].endMs, iv.endMs);
+      }
+    }
+    return out;
+  }
+
+  private subtractIntervals(working: Array<{startMs: number; endMs: number}>, blocks: Array<{startsAt?: string; endsAt?: string; startMs?: number; endMs?: number}>): Array<{startMs: number; endMs: number}> {
+    let result = working.map(x => ({ ...x }));
+    const B = this.mergeIntervals(blocks.map(x => ({
+      startsAt: x.startsAt ?? this.fromMs(x.startMs ?? 0),
+      endsAt: x.endsAt ?? this.fromMs(x.endMs ?? 0)
+    })));
+    
+    for (const b of B) {
+      const next: Array<{startMs: number; endMs: number}> = [];
+      for (const a of result) {
+        if (b.endMs <= a.startMs || b.startMs >= a.endMs) {
+          next.push(a);
+          continue;
+        }
+        if (b.startMs > a.startMs) {
+          next.push({ startMs: a.startMs, endMs: Math.min(b.startMs, a.endMs) });
+        }
+        if (b.endMs < a.endMs) {
+          next.push({ startMs: Math.max(b.endMs, a.startMs), endMs: a.endMs });
+        }
+      }
+      result = next;
+    }
+    return result;
+  }
+
+  private ceilToStep(ms: number, stepMs: number, anchorMs: number = 0): number {
+    return ms + ((stepMs - ((ms - anchorMs) % stepMs)) % stepMs);
+  }
+
   private createBoulevardToken(): string {
     // Boulevard API authentication according to official docs
     const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -290,6 +350,110 @@ export class BlvdService {
     console.log(`📊 Querying appointments that START on target date for ${locationId} from ${startTimeFormatted} to ${endTimeFormatted}`);
     
     return await this.makeGraphqlRequest(adminAppointmentsQuery, variables);
+  }
+
+  async getStaffShifts(locationId: string, startDate: string, endDate: string, staffId?: string): Promise<any[]> {
+    console.log(`🔄 Querying staff shifts for ${locationId} from ${startDate} to ${endDate}`);
+    
+    const shiftsQuery = `
+      query Shifts($locationId: ID!, $staffId: ID, $from: DateTime!, $to: DateTime!, $first: Int!) {
+        shifts(
+          locationId: $locationId,
+          staffId: $staffId,
+          startsAt_GTE: $from,
+          endsAt_LTE: $to,
+          first: $first
+        ) {
+          edges {
+            node {
+              id
+              startsAt
+              endsAt
+              staff {
+                id
+                firstName
+                lastName
+              }
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    `;
+
+    const variables: any = {
+      locationId,
+      from: startDate,
+      to: endDate,
+      first: 200
+    };
+
+    if (staffId) {
+      variables.staffId = staffId;
+    }
+
+    try {
+      const response = await this.makeGraphqlRequest(shiftsQuery, variables);
+      const shifts = (response.data as any)?.shifts?.edges?.map((edge: any) => edge.node) || [];
+      console.log(`✅ Found ${shifts.length} shifts`);
+      return shifts;
+    } catch (error) {
+      console.error('❌ Error fetching shifts:', error);
+      return [];
+    }
+  }
+
+  async getTimeblocks(locationId: string, startDate: string, endDate: string, staffId?: string): Promise<any[]> {
+    console.log(`⏱️ Querying timeblocks for ${locationId} from ${startDate} to ${endDate}`);
+    
+    const timeblocksQuery = `
+      query Timeblocks($locationId: ID!, $staffId: ID, $from: DateTime!, $to: DateTime!, $first: Int!) {
+        timeblocks(
+          locationId: $locationId,
+          staffId: $staffId,
+          startsAt_GTE: $from,
+          endsAt_LTE: $to,
+          first: $first
+        ) {
+          edges {
+            node {
+              id
+              startsAt
+              endsAt
+              reason
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    `;
+
+    const variables: any = {
+      locationId,
+      from: startDate,
+      to: endDate,
+      first: 200
+    };
+
+    if (staffId) {
+      variables.staffId = staffId;
+    }
+
+    try {
+      const response = await this.makeGraphqlRequest(timeblocksQuery, variables);
+      const timeblocks = (response.data as any)?.timeblocks?.edges?.map((edge: any) => edge.node) || [];
+      console.log(`✅ Found ${timeblocks.length} timeblocks`);
+      return timeblocks;
+    } catch (error) {
+      console.log('⚠️ Timeblocks query failed (may not be supported), continuing without timeblocks');
+      return [];
+    }
   }
 
   async introspectClientAPISchema(): Promise<GraphqlResponse> {

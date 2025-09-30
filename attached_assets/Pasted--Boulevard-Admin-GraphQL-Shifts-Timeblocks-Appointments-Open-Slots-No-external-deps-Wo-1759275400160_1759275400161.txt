@@ -1,0 +1,343 @@
+/**
+ * Boulevard Admin GraphQL → Shifts/Timeblocks/Appointments → Open Slots
+ * No external deps. Works on Node 18+ (global fetch).
+ */
+
+/////////////////////// env ///////////////////////
+const ENDPOINT = process.env.BLVD_ADMIN_ENDPOINT;
+const TOKEN    = process.env.BLVD_ADMIN_TOKEN;
+const SCHEME   = (process.env.BLVD_AUTH_SCHEME || "Basic").trim(); // "Basic" or "Bearer"
+const LOCATION = process.env.BLVD_LOCATION_ID;
+const FROM     = process.env.FROM_ISO;
+const TO       = process.env.TO_ISO;
+
+const STAFF_ID = process.env.STAFF_ID || null;
+
+const DURATION_MIN       = Number(process.env.DURATION_MIN ?? 30);
+const STEP_MIN           = Number(process.env.STEP_MIN ?? 15);
+const BUFFER_BEFORE_MIN  = Number(process.env.BUFFER_BEFORE_MIN ?? 0);
+const BUFFER_AFTER_MIN   = Number(process.env.BUFFER_AFTER_MIN ?? 0);
+const MIN_LEAD_MIN       = Number(process.env.MIN_LEAD_MIN ?? 0);
+
+const FETCH_APPOINTMENTS = String(process.env.FETCH_APPOINTMENTS ?? "1") === "1";
+const INCLUDE_TIMEBLOCKS = String(process.env.INCLUDE_TIMEBLOCKS ?? "1") === "1";
+
+const BLOCK_STATUSES = (process.env.BLOCK_STATUSES || "BOOKED,CONFIRMED,CHECKED_IN")
+  .split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+
+if (!ENDPOINT || !TOKEN || !LOCATION || !FROM || !TO || !DURATION_MIN) {
+  console.error("Missing required env vars. Required: BLVD_ADMIN_ENDPOINT, BLVD_ADMIN_TOKEN, BLVD_LOCATION_ID, FROM_ISO, TO_ISO, DURATION_MIN");
+  process.exit(1);
+}
+
+const headers = {
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Authorization": SCHEME === "Basic"
+    ? `Basic ${Buffer.from(`${TOKEN}:`).toString("base64")}`
+    : `Bearer ${TOKEN}`,
+};
+
+/////////////////////// gql helpers ///////////////////////
+async function gql(query, variables = {}) {
+  const res = await fetch(ENDPOINT, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ query, variables }),
+  });
+  const json = await res.json();
+  if (!res.ok || json.errors) {
+    const msg = (json.errors || []).map(e => e.message).join(" | ") || res.statusText;
+    throw new Error(msg);
+  }
+  return json.data;
+}
+
+async function gatherConnection(query, pathKeys, variables, pageSize = 100) {
+  let after = null, all = [];
+  while (true) {
+    const data = await gql(query, { ...variables, first: pageSize, after });
+    let conn = data;
+    for (const k of pathKeys) conn = conn?.[k];
+    if (!conn) throw new Error("Connection path not found: " + pathKeys.join("."));
+    const { edges = [], pageInfo = {} } = conn;
+    all.push(...edges.map(e => e.node));
+    if (!pageInfo.hasNextPage) break;
+    after = pageInfo.endCursor;
+  }
+  return all;
+}
+
+/////////////////////// queries ///////////////////////
+const STAFF_QUERY = `
+  query Staff($locationId: ID!, $first: Int!, $after: String) {
+    staff(locationId: $locationId, first: $first, after: $after) {
+      edges { node { id firstName lastName } }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+const SHIFTS_QUERY = `
+  query Shifts($locationId: ID!, $staffId: ID, $from: DateTime!, $to: DateTime!, $first: Int!, $after: String) {
+    shifts(
+      locationId: $locationId,
+      staffId: $staffId,
+      startsAt_GTE: $from,
+      endsAt_LTE: $to,
+      first: $first,
+      after: $after
+    ) {
+      edges {
+        node {
+          id
+          startsAt
+          endsAt
+          staff { id firstName lastName }
+          location { id name }
+          recurrence { frequency interval byWeekday }
+        }
+      }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+const TIMEBLOCKS_QUERY_PLURAL = `
+  query Timeblocks($locationId: ID!, $staffId: ID, $from: DateTime!, $to: DateTime!, $first: Int!, $after: String) {
+    timeblocks(
+      locationId: $locationId,
+      staffId: $staffId,
+      startsAt_GTE: $from,
+      endsAt_LTE: $to,
+      first: $first,
+      after: $after
+    ) {
+      edges { node { id startsAt endsAt reason } }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+const TIMEBLOCKS_QUERY_SINGULAR = `
+  query Timeblock($locationId: ID!, $staffId: ID, $from: DateTime!, $to: DateTime!, $first: Int!, $after: String) {
+    timeblock(
+      locationId: $locationId,
+      staffId: $staffId,
+      startsAt_GTE: $from,
+      endsAt_LTE: $to,
+      first: $first,
+      after: $after
+    ) {
+      edges { node { id startsAt endsAt reason } }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+const APPTS_QUERY = `
+  query Appts($locationId: ID!, $staffId: ID, $from: DateTime!, $to: DateTime!, $first: Int!, $after: String) {
+    appointments(
+      locationId: $locationId,
+      staffId: $staffId,
+      startsAt_GTE: $from,
+      endsAt_LTE: $to,
+      first: $first,
+      after: $after
+    ) {
+      edges { node { id startsAt endsAt status } }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+const INTROSPECT = `query { __schema { queryType { fields { name } } } }`;
+
+/////////////////////// interval helpers ///////////////////////
+const toMs = (iso) => new Date(iso).getTime();
+const fromMs = (ms) => new Date(ms).toISOString();
+
+function mergeIntervals(list) {
+  const sorted = list
+    .map(iv => {
+      const startMs = toMs(iv.startsAt ?? iv.start ?? iv.startMs);
+      const endMs   = toMs(iv.endsAt   ?? iv.end   ?? iv.endMs);
+      return { startMs, endMs };
+    })
+    .filter(iv => Number.isFinite(iv.startMs) && Number.isFinite(iv.endMs) && iv.endMs > iv.startMs)
+    .sort((a,b) => a.startMs - b.startMs);
+
+  const out = [];
+  for (const iv of sorted) {
+    if (!out.length || iv.startMs > out[out.length-1].endMs) {
+      out.push({ ...iv });
+    } else {
+      out[out.length-1].endMs = Math.max(out[out.length-1].endMs, iv.endMs);
+    }
+  }
+  return out;
+}
+
+function subtractIntervals(working, blocks) {
+  let result = working.map(x => ({ startMs: x.startMs, endMs: x.endMs }));
+  const B = mergeIntervals(blocks);
+  for (const b of B) {
+    const next = [];
+    for (const a of result) {
+      if (b.endMs <= a.startMs || b.startMs >= a.endMs) { next.push(a); continue; }
+      if (b.startMs > a.startMs) next.push({ startMs: a.startMs, endMs: Math.min(b.startMs, a.endMs) });
+      if (b.endMs < a.endMs)     next.push({ startMs: Math.max(b.endMs, a.startMs), endMs: a.endMs });
+    }
+    result = next;
+  }
+  return result;
+}
+
+const ceilToStep = (ms, stepMs, anchorMs = 0) => ms + ((stepMs - ((ms - anchorMs) % stepMs)) % stepMs);
+
+function isBlockingAppointment(appt) {
+  const s = String(appt.status || "").toUpperCase();
+  return BLOCK_STATUSES.includes(s);
+}
+
+function computeOpenSlots({
+  shifts, appointments, timeblocks,
+  fromISO, toISO,
+  durationMin, stepMin, bufferBeforeMin, bufferAfterMin, minLeadMin
+}) {
+  const windowStart = toMs(fromISO);
+  const windowEnd   = toMs(toISO);
+  const nowCutoff   = minLeadMin ? Date.now() + minLeadMin*60_000 : -Infinity;
+
+  const serviceMs = durationMin * 60_000;
+  const stepMs    = stepMin * 60_000;
+  const padBefore = bufferBeforeMin * 60_000;
+  const padAfter  = bufferAfterMin * 60_000;
+
+  const working = mergeIntervals(shifts)
+    .map(iv => ({
+      startMs: Math.max(iv.startMs, windowStart),
+      endMs:   Math.min(iv.endMs,   windowEnd),
+    }))
+    .filter(iv => iv.endMs > iv.startMs);
+
+  const apptBlocks = (appointments || [])
+    .filter(isBlockingAppointment)
+    .map(x => ({ startsAt: x.startsAt, endsAt: x.endsAt }));
+
+  const blockIntervals = mergeIntervals([...(timeblocks || []), ...apptBlocks])
+    .map(iv => ({
+      startMs: Math.max(iv.startMs, windowStart),
+      endMs:   Math.min(iv.endMs,   windowEnd),
+    }))
+    .filter(iv => iv.endMs > iv.startMs);
+
+  const free = subtractIntervals(working, blockIntervals);
+
+  const slots = [];
+  for (const w of free) {
+    const earliest = Math.max(w.startMs + padBefore, windowStart, nowCutoff);
+    const latestStart = w.endMs - (serviceMs + padAfter);
+    if (latestStart < earliest) continue;
+
+    let t = ceilToStep(earliest, stepMs, 0); // epoch-based 15-min grid
+    for (; t <= latestStart; t += stepMs) slots.push(fromMs(t));
+  }
+  return slots;
+}
+
+/////////////////////// main ///////////////////////
+(async () => {
+  try {
+    // 0) Staff list (to iterate). If STAFF_ID provided, just use that.
+    let staffList = [];
+    if (STAFF_ID) {
+      staffList = [{ id: STAFF_ID, firstName: "", lastName: "" }];
+    } else {
+      staffList = await gatherConnection(STAFF_QUERY, ["staff"], { locationId: LOCATION }, 100);
+    }
+
+    const results = [];
+
+    for (const s of staffList) {
+      const staffId = s.id;
+
+      // 1) Shifts (required)
+      const shiftsNodes = await gatherConnection(
+        SHIFTS_QUERY, ["shifts"],
+        { locationId: LOCATION, staffId, from: FROM, to: TO }, 100
+      );
+      const shifts = shiftsNodes.map(n => ({ startsAt: n.startsAt, endsAt: n.endsAt }));
+
+      // 2) Timeblocks (optional)
+      let timeblocks = [];
+      if (INCLUDE_TIMEBLOCKS) {
+        try {
+          const tbPlural = await gatherConnection(
+            TIMEBLOCKS_QUERY_PLURAL, ["timeblocks"],
+            { locationId: LOCATION, staffId, from: FROM, to: TO }, 100
+          );
+          timeblocks = tbPlural.map(n => ({ startsAt: n.startsAt, endsAt: n.endsAt }));
+        } catch {
+          const tbSing = await gatherConnection(
+            TIMEBLOCKS_QUERY_SINGULAR, ["timeblock"],
+            { locationId: LOCATION, staffId, from: FROM, to: TO }, 100
+          );
+          timeblocks = tbSing.map(n => ({ startsAt: n.startsAt, endsAt: n.endsAt }));
+        }
+      }
+
+      // 3) Appointments (optional — you can skip if you already have them)
+      let appointments = [];
+      if (FETCH_APPOINTMENTS) {
+        const appts = await gatherConnection(
+          APPTS_QUERY, ["appointments"],
+          { locationId: LOCATION, staffId, from: FROM, to: TO }, 100
+        );
+        appointments = appts.map(n => ({ startsAt: n.startsAt, endsAt: n.endsAt, status: n.status }));
+      }
+
+      // 4) Compute slots
+      const slots = computeOpenSlots({
+        shifts,
+        appointments,
+        timeblocks,
+        fromISO: FROM,
+        toISO: TO,
+        durationMin: DURATION_MIN,
+        stepMin: STEP_MIN,
+        bufferBeforeMin: BUFFER_BEFORE_MIN,
+        bufferAfterMin: BUFFER_AFTER_MIN,
+        minLeadMin: MIN_LEAD_MIN,
+      });
+
+      results.push({
+        staffId,
+        name: [s.firstName, s.lastName].filter(Boolean).join(" "),
+        shiftCount: shifts.length,
+        timeblockCount: timeblocks.length,
+        appointmentCount: appointments.length,
+        slots
+      });
+    }
+
+    console.log(JSON.stringify({
+      locationId: LOCATION,
+      from: FROM,
+      to: TO,
+      config: {
+        durationMin: DURATION_MIN,
+        stepMin: STEP_MIN,
+        bufferBeforeMin: BUFFER_BEFORE_MIN,
+        bufferAfterMin: BUFFER_AFTER_MIN,
+        minLeadMin: MIN_LEAD_MIN,
+        blockingStatuses: BLOCK_STATUSES
+      },
+      results
+    }, null, 2));
+  } catch (err) {
+    console.error("Error:", err.message);
+    console.error("\nIf this is a schema/field error, run this introspection to see available query roots:\n");
+    console.error(INTROSPECT);
+  }
+})();
