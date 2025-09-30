@@ -1,0 +1,162 @@
+// ---- INPUT SHAPES (all ISO-8601, ideally with "Z" timezone) ----
+// const shifts       = [{ startsAt: "2025-10-01T09:00:00Z", endsAt: "2025-10-01T17:00:00Z" }, ...]
+// const appointments = [{ startsAt: "...", endsAt: "...", status: "BOOKED" }, ...]
+// const timeblocks   = [{ startsAt: "...", endsAt: "...", reason: "PTO" }, ...]
+// Call computeOpenSlots(...) and get back array of slot start timestamps.
+
+// --------------------------------- helpers ---------------------------------
+const toMs = (iso) => new Date(iso).getTime();
+const fromMs = (ms) => new Date(ms).toISOString();
+
+function mergeIntervals(list) {
+  if (!list.length) return [];
+  const sorted = list
+    .map(iv => ({ startMs: toMs(iv.startsAt || iv.start), endMs: toMs(iv.endsAt || iv.end) }))
+    .filter(iv => Number.isFinite(iv.startMs) && Number.isFinite(iv.endMs) && iv.endMs > iv.startMs)
+    .sort((a,b) => a.startMs - b.startMs);
+
+  const out = [];
+  for (const iv of sorted) {
+    if (!out.length || iv.startMs > out[out.length-1].endMs) {
+      out.push({ ...iv });
+    } else {
+      out[out.length-1].endMs = Math.max(out[out.length-1].endMs, iv.endMs);
+    }
+  }
+  return out;
+}
+
+function subtractIntervals(working, blocks) {
+  let result = working.map(x => ({ ...x }));
+  const B = mergeIntervals(blocks.map(x => ({ startsAt: fromMs(x.startMs || x.start || toMs(x.startsAt)), endsAt: fromMs(x.endMs || x.end || toMs(x.endsAt)) })));
+  for (const b of B) {
+    const next = [];
+    for (const a of result) {
+      if (b.endMs <= a.startMs || b.startMs >= a.endMs) { next.push(a); continue; }
+      if (b.startMs > a.startMs) next.push({ startMs: a.startMs, endMs: Math.min(b.startMs, a.endMs) });
+      if (b.endMs   < a.endMs)   next.push({ startMs: Math.max(b.endMs, a.startMs), endMs: a.endMs });
+    }
+    result = next;
+  }
+  return result;
+}
+
+// anchor=0 means "round against epoch". You can use the day's midnight if you prefer.
+const ceilToStep = (ms, stepMs, anchorMs = 0) =>
+  ms + ((stepMs - ((ms - anchorMs) % stepMs)) % stepMs);
+const floorToStep = (ms, stepMs, anchorMs = 0) =>
+  ms - (((ms - anchorMs) % stepMs) + stepMs) % stepMs;
+
+// Statuses that actually block time (tweak for your tenant)
+function isBlockingAppointment(appt) {
+  const s = String(appt.status || "").toUpperCase();
+  // ignore canceled/no-show/etc.; treat booked/confirmed/checked-in as blocking
+  return !["CANCELED","CANCELLED","NO_SHOW","NOSHOW","DECLINED"].includes(s);
+}
+
+// ---------------------------- main slot logic ------------------------------
+/**
+ * Compute open start times for a service of a given duration.
+ * @param {Object} opts
+ * @param {Array}  opts.shifts        [{startsAt, endsAt}]
+ * @param {Array}  opts.appointments  [{startsAt, endsAt, status}]
+ * @param {Array}  opts.timeblocks    [{startsAt, endsAt}]  (optional)
+ * @param {String} opts.fromISO       inclusive window start
+ * @param {String} opts.toISO         exclusive window end
+ * @param {Number} opts.durationMin   service duration in minutes (required)
+ * @param {Number} opts.stepMin       grid step (e.g. 15)
+ * @param {Number} opts.bufferBeforeMin  pad before service (optional)
+ * @param {Number} opts.bufferAfterMin   pad after service  (optional)
+ * @param {Number} opts.minLeadMin       minimum lead time from "now" (optional)
+ * @returns {String[]} ISO start times
+ */
+function computeOpenSlots({
+  shifts,
+  appointments,
+  timeblocks = [],
+  fromISO,
+  toISO,
+  durationMin,
+  stepMin = 15,
+  bufferBeforeMin = 0,
+  bufferAfterMin = 0,
+  minLeadMin = 0,
+}) {
+  const windowStart = toMs(fromISO);
+  const windowEnd   = toMs(toISO);
+  const nowCutoff   = minLeadMin ? toMs(new Date().toISOString()) + minLeadMin*60_000 : -Infinity;
+
+  const serviceMs = durationMin * 60_000;
+  const stepMs    = stepMin * 60_000;
+  const padBefore = bufferBeforeMin * 60_000;
+  const padAfter  = bufferAfterMin * 60_000;
+
+  // 1) Working intervals (clamped to the window)
+  const working = mergeIntervals(shifts)
+    .map(iv => ({
+      startMs: Math.max(toMs(iv.startsAt || iv.start), windowStart),
+      endMs:   Math.min(toMs(iv.endsAt   || iv.end),   windowEnd),
+    }))
+    .filter(iv => iv.endMs > iv.startMs);
+
+  // 2) Blocking intervals = appointments (blocking statuses only) + timeblocks
+  const apptBlocks = (appointments || [])
+    .filter(isBlockingAppointment)
+    .map(x => ({ startsAt: x.startsAt, endsAt: x.endsAt }));
+  const blockIntervals = mergeIntervals([...apptBlocks, ...(timeblocks || [])])
+    .map(iv => ({
+      startMs: Math.max(toMs(iv.startsAt || iv.start), windowStart),
+      endMs:   Math.min(toMs(iv.endsAt   || iv.end),   windowEnd),
+    }))
+    .filter(iv => iv.endMs > iv.startMs);
+
+  // 3) Free windows = working - blocks
+  const freeWindows = subtractIntervals(working, blockIntervals);
+
+  // 4) Turn free windows into slot start times on a grid
+  const slots = [];
+  for (const w of freeWindows) {
+    // Respect buffers: service must fit entirely inside the free window incl. buffers
+    const earliest = Math.max(w.startMs + padBefore, windowStart, nowCutoff);
+    const latestStart = w.endMs - (serviceMs + padAfter);
+    if (latestStart < earliest) continue;
+
+    let t = ceilToStep(earliest, stepMs, 0); // anchor=0: epoch-based 15-min grid
+    for (; t <= latestStart; t += stepMs) {
+      slots.push(fromMs(t));
+    }
+  }
+  return slots;
+}
+
+// ------------------------------- EXAMPLE -----------------------------------
+// Replace these with your real data:
+const shifts = [
+  { startsAt: "2025-10-01T09:00:00Z", endsAt: "2025-10-01T12:00:00Z" },
+  { startsAt: "2025-10-01T13:00:00Z", endsAt: "2025-10-01T17:00:00Z" },
+];
+
+const appointments = [
+  { startsAt: "2025-10-01T09:30:00Z", endsAt: "2025-10-01T10:00:00Z", status: "BOOKED" },
+  { startsAt: "2025-10-01T15:00:00Z", endsAt: "2025-10-01T15:30:00Z", status: "BOOKED" },
+  { startsAt: "2025-10-01T11:00:00Z", endsAt: "2025-10-01T11:30:00Z", status: "CANCELED" }, // won't block
+];
+
+const timeblocks = [
+  { startsAt: "2025-10-01T16:30:00Z", endsAt: "2025-10-01T17:00:00Z" }, // e.g., admin hold
+];
+
+const open = computeOpenSlots({
+  shifts,
+  appointments,
+  timeblocks,
+  fromISO: "2025-10-01T00:00:00Z",
+  toISO:   "2025-10-02T00:00:00Z",
+  durationMin: 30,     // your service length
+  stepMin: 15,         // grid
+  bufferBeforeMin: 0,  // optional buffer padding
+  bufferAfterMin: 0,
+  minLeadMin: 0,       // set e.g. 120 to enforce 2h notice
+});
+
+console.log(open);
