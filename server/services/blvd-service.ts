@@ -456,6 +456,113 @@ export class BlvdService {
     }
   }
 
+  async calculateScheduleCapacity(locationId: string, startDate: string, endDate: string, appointments: any[]): Promise<number> {
+    console.log(`📊 Calculating schedule capacity for ${locationId} based on actual staff shifts`);
+    
+    try {
+      // 1. Get staff shifts (working windows)
+      const shifts = await this.getStaffShifts(locationId, startDate, endDate);
+      
+      if (shifts.length === 0) {
+        console.log('⚠️ No shifts found, falling back to theoretical calculation');
+        return this.calculateTheoreticalCapacity(appointments);
+      }
+      
+      // 2. Get timeblocks (breaks, HOLDs, PTO)
+      const timeblocks = await this.getTimeblocks(locationId, startDate, endDate);
+      
+      // 3. Prepare appointments as blocking intervals
+      const BLOCKING_STATUSES = ['BOOKED', 'CONFIRMED', 'CHECKED_IN', 'ACTIVE'];
+      const blockingAppointments = appointments
+        .filter((apt: any) => {
+          const status = String(apt.state || '').toUpperCase();
+          return BLOCKING_STATUSES.includes(status);
+        })
+        .map((apt: any) => ({
+          startsAt: apt.startAt,
+          endsAt: apt.endAt
+        }));
+      
+      // 4. Calculate open slots using interval math
+      const durationMin = 30; // Service duration
+      const stepMin = 15; // Grid step
+      const bufferBeforeMin = 0;
+      const bufferAfterMin = 10; // 10-minute buffer
+      
+      const windowStart = this.toMs(startDate);
+      const windowEnd = this.toMs(endDate);
+      const serviceMs = durationMin * 60_000;
+      const stepMs = stepMin * 60_000;
+      const padBefore = bufferBeforeMin * 60_000;
+      const padAfter = bufferAfterMin * 60_000;
+      
+      // Convert shifts to working intervals
+      const working = this.mergeIntervals(shifts.map((s: any) => ({
+        startsAt: s.startsAt,
+        endsAt: s.endsAt
+      })))
+        .map(iv => ({
+          startMs: Math.max(iv.startMs, windowStart),
+          endMs: Math.min(iv.endMs, windowEnd)
+        }))
+        .filter(iv => iv.endMs > iv.startMs);
+      
+      // Merge blocking intervals (timeblocks + appointments)
+      const blockIntervals = this.mergeIntervals([...timeblocks, ...blockingAppointments])
+        .map(iv => ({
+          startMs: Math.max(iv.startMs, windowStart),
+          endMs: Math.min(iv.endMs, windowEnd)
+        }))
+        .filter(iv => iv.endMs > iv.startMs);
+      
+      // Calculate free windows
+      const freeWindows = this.subtractIntervals(working, blockIntervals);
+      
+      // Count available slots
+      let slotCount = 0;
+      for (const w of freeWindows) {
+        const earliest = Math.max(w.startMs + padBefore, windowStart);
+        const latestStart = w.endMs - (serviceMs + padAfter);
+        if (latestStart < earliest) continue;
+        
+        let t = this.ceilToStep(earliest, stepMs, 0);
+        for (; t <= latestStart; t += stepMs) {
+          slotCount++;
+        }
+      }
+      
+      // Total capacity = booked + available slots
+      const bookedCount = appointments.length;
+      const totalCapacity = bookedCount + slotCount;
+      
+      console.log(`📊 Schedule capacity calculation:`);
+      console.log(`  Shifts found: ${shifts.length}`);
+      console.log(`  Timeblocks: ${timeblocks.length}`);
+      console.log(`  Booked appointments: ${bookedCount}`);
+      console.log(`  Available slots: ${slotCount}`);
+      console.log(`  Total capacity: ${totalCapacity}`);
+      
+      return totalCapacity;
+      
+    } catch (error) {
+      console.error('❌ Error calculating schedule capacity:', error);
+      return this.calculateTheoreticalCapacity(appointments);
+    }
+  }
+
+  private calculateTheoreticalCapacity(appointments: any[]): number {
+    const bookedCount = appointments.length;
+    if (bookedCount >= 40) {
+      return Math.max(bookedCount + 20, 76);
+    } else if (bookedCount >= 25) {
+      return Math.max(bookedCount + 18, 60);
+    } else if (bookedCount >= 15) {
+      return Math.max(bookedCount + 15, 45);
+    } else {
+      return Math.max(bookedCount + 10, 30);
+    }
+  }
+
   async introspectClientAPISchema(): Promise<GraphqlResponse> {
     // GraphQL introspection query to discover available schema
     const introspectionQuery = `
@@ -949,23 +1056,13 @@ export class BlvdService {
           const locationTimeZone = this.inferLocationTimeZone(location.name, location.address);
           const availableTimeSlots = this.generateAvailableTimeSlots(timeSlots, businessHours, startDate, locationTimeZone);
           
-          // Calculate schedule capacity accounting for multiple concurrent staff
-          // Count unique staff members from booked appointments
-          const uniqueStaffIds = new Set(
-            timeSlots
-              .filter((slot: any) => slot.staff?.id)
-              .map((slot: any) => slot.staff.id)
+          // Calculate schedule capacity based on ACTUAL staff shifts
+          const scheduleCapacity = await this.calculateScheduleCapacity(
+            location.id,
+            startDate,
+            endDate,
+            bookedAppointments
           );
-          const staffCount = uniqueStaffIds.size || 1; // At least 1 staff
-          
-          // Calculate theoretical capacity: (business hours / slot interval) * staff count
-          const SLOT_INTERVAL_MINUTES = 40; // 40-minute intervals
-          const businessHoursMinutes = (businessHours.end - businessHours.start) * 60;
-          const slotsPerStaff = Math.floor(businessHoursMinutes / SLOT_INTERVAL_MINUTES);
-          const theoreticalCapacity = slotsPerStaff * staffCount;
-          
-          // Use theoretical capacity as schedule
-          const scheduleCapacity = theoreticalCapacity;
           
           // Create service-specific booking URL (placeholder for now)
           const bookingBaseUrl = `https://widget.boulevard.io/${this.config.businessId}`;
