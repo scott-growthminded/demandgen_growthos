@@ -627,8 +627,9 @@ export class BlvdService {
       let totalAvailable = 0;
       
       for (let hour = 8; hour <= 20; hour++) {
-        // Count number of estheticians (rooms) working during this hour
-        let staffCount = 0;
+        // Calculate total overlap minutes for all staff during this hour
+        // Each room can provide maximum 60 minutes of capacity per hour
+        let scheduledMinutes = 0;
         
         for (const shift of shifts) {
           // Skip unavailable shifts
@@ -648,14 +649,12 @@ export class BlvdService {
           const overlapStart = Math.max(shiftStartMinutes, hourStartMinutes);
           const overlapEnd = Math.min(shiftEndMinutes, hourEndMinutes);
           
-          // If staff works ANY time during this hour, count them as a room
+          // Add actual overlap minutes (max 60 per staff member per hour)
           if (overlapEnd > overlapStart) {
-            staffCount++;
+            const overlapMinutes = overlapEnd - overlapStart;
+            scheduledMinutes += Math.min(overlapMinutes, 60); // Cap at 60 min per room
           }
         }
-        
-        // Scheduled Minutes = Number of rooms × 60 minutes per hour
-        const scheduledMinutes = staffCount * 60;
         
         // Calculate booked minutes for this hour
         let bookedMinutes = 0;
