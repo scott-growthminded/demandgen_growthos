@@ -314,6 +314,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test Client API availability for a specific location
+  app.post("/api/blvd/test-client-availability", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const hasServerConfig = serverConfig.apiUrl && serverConfig.apiKey && serverConfig.secretKey && serverConfig.businessId;
+      
+      if (!hasServerConfig) {
+        return res.status(500).json({
+          error: "Server configuration missing"
+        });
+      }
+      
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { locationId, date } = req.body;
+      
+      if (!locationId || !date) {
+        return res.status(400).json({
+          error: "Missing required fields: locationId, date (YYYY-MM-DD)"
+        });
+      }
+      
+      console.log(`\n========== TESTING CLIENT API AVAILABILITY ==========`);
+      console.log(`Location: ${locationId}`);
+      console.log(`Date: ${date}`);
+      
+      const result = await blvdService.getLocationAvailabilityFromClientAPI(locationId, date);
+      
+      if (!result) {
+        return res.status(500).json({
+          error: "Failed to get availability from Client API"
+        });
+      }
+      
+      console.log(`\n✅ AVAILABLE SLOTS: ${result.totalSlots}`);
+      console.log(`================================================\n`);
+      
+      res.json({
+        locationId,
+        date,
+        availableSlots: result.totalSlots,
+        slots: result.availableSlots,
+        cached: result.totalSlots > 0 // Simple indicator if result came from cache
+      });
+      
+    } catch (error) {
+      console.error('Test Client API availability error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Test failed"
+      });
+    }
+  });
+
   // Get available locations with 25% or more availability for tomorrow
   app.post("/api/blvd/availability", async (req, res) => {
     try {

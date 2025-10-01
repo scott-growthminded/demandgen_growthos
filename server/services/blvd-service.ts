@@ -167,6 +167,19 @@ export class BlvdService {
     };
   }
 
+  private createClientApiHeaders(): Record<string, string> {
+    // Client API uses simple API key authentication
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.config.apiKey}`,
+    };
+  }
+
+  private getClientApiUrl(): string {
+    // Client API endpoint format: https://dashboard.boulevard.io/api/2020-01/:business_id/client
+    return `https://dashboard.boulevard.io/api/2020-01/${this.config.businessId}/client`;
+  }
+
   async testConnection(): Promise<ConnectionTestResult> {
     const tests: TestResult[] = [];
     let connected = false;
@@ -675,6 +688,293 @@ export class BlvdService {
       return Math.max(bookedCount + 15, 45);
     } else {
       return Math.max(bookedCount + 10, 30);
+    }
+  }
+
+  /**
+   * CLIENT API METHODS - For querying actual availability
+   */
+
+  private availabilityCache: Map<string, { data: any; timestamp: number }> = new Map();
+  private readonly CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour cache
+
+  private getCachedAvailability(key: string): any | null {
+    const cached = this.availabilityCache.get(key);
+    if (!cached) return null;
+    
+    const age = Date.now() - cached.timestamp;
+    if (age > this.CACHE_TTL_MS) {
+      this.availabilityCache.delete(key);
+      return null;
+    }
+    
+    console.log(`📦 Using cached availability data (age: ${Math.round(age / 1000 / 60)}min)`);
+    return cached.data;
+  }
+
+  private setCachedAvailability(key: string, data: any): void {
+    this.availabilityCache.set(key, {
+      data,
+      timestamp: Date.now()
+    });
+  }
+
+  async makeClientApiRequest(query: string, variables?: any): Promise<GraphqlResponse> {
+    try {
+      const body = JSON.stringify({ query, variables });
+      const headers = this.createClientApiHeaders();
+      const url = this.getClientApiUrl();
+      
+      console.log('Making Client API request to:', url);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body,
+      });
+
+      console.log('Client API response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('Client API error response:', errorText);
+        throw new Error(`Client API HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Client API response received');
+      return result;
+    } catch (error) {
+      console.error('Client API request failed:', error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(`Client API request failed: ${String(error)}`);
+    }
+  }
+
+  async createCartForLocation(locationId: string): Promise<string | null> {
+    console.log(`🛒 Creating cart for location: ${locationId}`);
+    
+    const mutation = `
+      mutation CreateCart($locationId: ID!) {
+        createCart(input: { locationId: $locationId }) {
+          cart {
+            id
+            availableCategories {
+              name
+              availableItems {
+                id
+                name
+                ... on CartAvailableBookableItem {
+                  listDuration
+                  listDurationRange {
+                    min
+                    max
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    try {
+      const response = await this.makeClientApiRequest(mutation, { locationId });
+      
+      if (response.errors) {
+        console.error('❌ Error creating cart:', response.errors);
+        return null;
+      }
+
+      const cartId = (response.data as any)?.createCart?.cart?.id;
+      const categories = (response.data as any)?.createCart?.cart?.availableCategories;
+      
+      console.log(`✅ Cart created: ${cartId}`);
+      console.log(`📋 Available categories: ${categories?.length || 0}`);
+      
+      return cartId;
+    } catch (error) {
+      console.error('❌ Failed to create cart:', error);
+      return null;
+    }
+  }
+
+  async addBookableItemToCart(cartId: string, itemId: string): Promise<boolean> {
+    console.log(`➕ Adding item ${itemId} to cart ${cartId}`);
+    
+    const mutation = `
+      mutation AddItem($cartId: ID!, $itemId: ID!) {
+        addCartSelectedBookableItem(input: { 
+          id: $cartId, 
+          itemId: $itemId 
+        }) {
+          cart {
+            id
+          }
+        }
+      }
+    `;
+
+    try {
+      const response = await this.makeClientApiRequest(mutation, { 
+        cartId, 
+        itemId 
+      });
+      
+      if (response.errors) {
+        console.error('❌ Error adding item to cart:', response.errors);
+        return false;
+      }
+
+      console.log(`✅ Item added to cart successfully`);
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to add item to cart:', error);
+      return false;
+    }
+  }
+
+  async getCartBookableTimes(cartId: string, searchDate: string, timeZone: string = 'America/New_York'): Promise<any[]> {
+    console.log(`📅 Getting bookable times for cart ${cartId} on ${searchDate}`);
+    
+    const query = `
+      query GetBookableTimes($cartId: ID!, $searchDate: Date!, $tz: Tz!) {
+        cartBookableTimes(
+          id: $cartId,
+          searchDate: $searchDate,
+          tz: $tz
+        ) {
+          id
+          startTime
+          score
+        }
+      }
+    `;
+
+    try {
+      const response = await this.makeClientApiRequest(query, {
+        cartId,
+        searchDate,
+        tz: timeZone
+      });
+      
+      if (response.errors) {
+        console.error('❌ Error getting bookable times:', response.errors);
+        return [];
+      }
+
+      const times = (response.data as any)?.cartBookableTimes || [];
+      console.log(`✅ Found ${times.length} available booking times`);
+      
+      return times;
+    } catch (error) {
+      console.error('❌ Failed to get bookable times:', error);
+      return [];
+    }
+  }
+
+  async getLocationAvailabilityFromClientAPI(
+    locationId: string, 
+    date: string
+  ): Promise<{ availableSlots: any[]; totalSlots: number } | null> {
+    const cacheKey = `${locationId}-${date}`;
+    
+    // Check cache first
+    const cached = this.getCachedAvailability(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    console.log(`🔍 Querying Client API for real availability at ${locationId} on ${date}`);
+
+    try {
+      // Step 1: Create a cart for this location
+      const cartId = await this.createCartForLocation(locationId);
+      if (!cartId) {
+        console.error('❌ Failed to create cart');
+        return null;
+      }
+
+      // Step 2: Get available services - we need to add a 40-min service to the cart
+      // For now, we'll use a standard facial service (this should be configurable)
+      const serviceQuery = `
+        query GetServices($cartId: ID!) {
+          cart(id: $cartId) {
+            availableCategories {
+              name
+              availableItems {
+                id
+                name
+                ... on CartAvailableBookableItem {
+                  listDuration
+                }
+              }
+            }
+          }
+        }
+      `;
+      
+      const servicesResponse = await this.makeClientApiRequest(serviceQuery, { cartId });
+      const categories = (servicesResponse.data as any)?.cart?.availableCategories || [];
+      
+      // Find a facial service around 40 minutes duration
+      let serviceId: string | null = null;
+      for (const category of categories) {
+        const item = category.availableItems?.find((item: any) => 
+          item.name?.toLowerCase().includes('facial') && 
+          item.listDuration >= 30 && 
+          item.listDuration <= 50
+        );
+        if (item) {
+          serviceId = item.id;
+          console.log(`📋 Using service: ${item.name} (${item.listDuration} min)`);
+          break;
+        }
+      }
+      
+      // Fallback: use first bookable service
+      if (!serviceId && categories.length > 0) {
+        const firstCategory = categories[0];
+        const firstItem = firstCategory.availableItems?.[0];
+        if (firstItem) {
+          serviceId = firstItem.id;
+          console.log(`📋 Using fallback service: ${firstItem.name}`);
+        }
+      }
+
+      if (!serviceId) {
+        console.error('❌ No suitable service found');
+        return null;
+      }
+
+      // Step 3: Add service to cart
+      const added = await this.addBookableItemToCart(cartId, serviceId);
+      if (!added) {
+        console.error('❌ Failed to add service to cart');
+        return null;
+      }
+
+      // Step 4: Get available times
+      const times = await this.getCartBookableTimes(cartId, date);
+      
+      const result = {
+        availableSlots: times.map(t => ({
+          startTime: t.startTime,
+          id: t.id,
+          score: t.score
+        })),
+        totalSlots: times.length
+      };
+
+      // Cache the result
+      this.setCachedAvailability(cacheKey, result);
+
+      return result;
+    } catch (error) {
+      console.error('❌ Error getting Client API availability:', error);
+      return null;
     }
   }
 
