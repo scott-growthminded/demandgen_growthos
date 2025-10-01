@@ -500,8 +500,9 @@ export class BlvdService {
       console.log(`📦 Raw shifts response:`, JSON.stringify(response, null, 2));
       
       // Extract shifts from nested structure
-      const shiftsArray = (response.data as any)?.shifts || [];
-      const allShifts = shiftsArray.flatMap((item: any) => item.shifts || []);
+      // The API returns: { data: { shifts: { shifts: [...] } } }
+      const shiftsData = (response.data as any)?.shifts;
+      const allShifts = shiftsData?.shifts || [];
       
       console.log(`✅ Found ${allShifts.length} shift templates`);
       
