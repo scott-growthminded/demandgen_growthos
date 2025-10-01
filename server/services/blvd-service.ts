@@ -352,8 +352,93 @@ export class BlvdService {
     return await this.makeGraphqlRequest(adminAppointmentsQuery, variables);
   }
 
+  private static shiftsSchemaDiscovered = false;
+
+  async discoverShiftsSchema(): Promise<void> {
+    if (BlvdService.shiftsSchemaDiscovered) return;
+    BlvdService.shiftsSchemaDiscovered = true;
+    
+    console.log('🔍 Using GraphQL introspection to discover shifts query schema...');
+    
+    const introspectionQuery = `
+      {
+        __type(name: "Query") {
+          fields {
+            name
+            args {
+              name
+              type {
+                name
+                kind
+              }
+            }
+            type {
+              name
+              kind
+              ofType {
+                name
+                kind
+              }
+            }
+          }
+        }
+      }
+    `;
+    
+    try {
+      const response = await this.makeGraphqlRequest(introspectionQuery, {});
+      const queryFields = (response.data as any)?.__type?.fields || [];
+      const shiftsField = queryFields.find((f: any) => f.name === 'shifts');
+      
+      if (shiftsField) {
+        console.log('✅ Found shifts query in schema:');
+        console.log('  Return type:', shiftsField.type?.name || shiftsField.type?.ofType?.name);
+        console.log('  Arguments:', JSON.stringify(shiftsField.args, null, 2));
+        
+        // Now introspect the return type
+        const returnTypeName = shiftsField.type?.name || shiftsField.type?.ofType?.name;
+        if (returnTypeName) {
+          const typeQuery = `
+            {
+              __type(name: "${returnTypeName}") {
+                name
+                kind
+                fields {
+                  name
+                  type {
+                    name
+                    kind
+                    ofType {
+                      name
+                      kind
+                    }
+                  }
+                }
+              }
+            }
+          `;
+          const typeResponse = await this.makeGraphqlRequest(typeQuery, {});
+          console.log('✅ Shifts return type structure:', JSON.stringify(typeResponse.data, null, 2));
+        }
+      } else {
+        console.log('❌ No shifts field found in Query type');
+        const availableFields = queryFields.filter((f: any) => 
+          f.name.toLowerCase().includes('shift') || 
+          f.name.toLowerCase().includes('schedule') ||
+          f.name.toLowerCase().includes('staff')
+        );
+        console.log('Related query fields:', availableFields.map((f: any) => f.name).join(', '));
+      }
+    } catch (error) {
+      console.error('❌ Error during introspection:', error);
+    }
+  }
+
   async getStaffShifts(locationId: string, startDate: string, endDate: string, staffId?: string): Promise<any[]> {
     console.log(`🔄 Querying staff shifts for ${locationId} from ${startDate} to ${endDate}`);
+    
+    // Discover schema on first call
+    await this.discoverShiftsSchema();
     
     // Format dates as YYYY-MM-DD for Boulevard API
     const startDateOnly = startDate.split('T')[0];
