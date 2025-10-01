@@ -657,15 +657,24 @@ export class BlvdService {
         let bookedMinutes = 0;
         
         for (const apt of appointments) {
-          const aptStart = new Date(apt.startAt);
-          const aptEnd = new Date(apt.endAt);
+          // Parse timezone-aware times directly (e.g., "2025-10-07T08:00:00-04:00")
+          // Extract the local time portion, ignoring timezone offset
+          const startMatch = apt.startAt.match(/T(\d{2}):(\d{2})/);
+          const endMatch = apt.endAt.match(/T(\d{2}):(\d{2})/);
           
-          const aptStartHour = aptStart.getHours() + (aptStart.getMinutes() / 60);
-          const aptEndHour = aptEnd.getHours() + (aptEnd.getMinutes() / 60);
+          if (!startMatch || !endMatch) continue;
+          
+          const aptStartHour = parseInt(startMatch[1]);
+          const aptStartMin = parseInt(startMatch[2]);
+          const aptEndHour = parseInt(endMatch[1]);
+          const aptEndMin = parseInt(endMatch[2]);
+          
+          const aptStartDecimal = aptStartHour + (aptStartMin / 60);
+          const aptEndDecimal = aptEndHour + (aptEndMin / 60);
           
           // Calculate overlap with current hour
-          const overlapStart = Math.max(aptStartHour, hour);
-          const overlapEnd = Math.min(aptEndHour, hour + 1);
+          const overlapStart = Math.max(aptStartDecimal, hour);
+          const overlapEnd = Math.min(aptEndDecimal, hour + 1);
           
           if (overlapEnd > overlapStart) {
             bookedMinutes += Math.round((overlapEnd - overlapStart) * 60);
@@ -709,12 +718,15 @@ export class BlvdService {
     try {
       // Use new hourly availability calculation
       const date = startDate.split('T')[0];
+      console.log(`🔍 About to call calculateHourlyAvailability with date: ${date}`);
       const result = await this.calculateHourlyAvailability(locationId, date, appointments);
+      console.log(`✅ Hourly calculation returned: ${result.totalAvailable} available slots`);
       
       return appointments.length + result.totalAvailable;
       
     } catch (error) {
-      console.error('❌ Error calculating schedule capacity:', error);
+      console.error('❌ Error in calculateScheduleCapacity:', error);
+      console.error('Stack trace:', (error as Error).stack);
       return this.calculateTheoreticalCapacity(appointments);
     }
   }
@@ -1493,32 +1505,24 @@ export class BlvdService {
             } : null
           }));
 
-          // Calculate availability metrics (for backward compatibility)
+          // Calculate availability metrics
           const bookedCount = bookedAppointments.length;
-          let totalCapacity: number;
-          if (bookedCount >= 40) {
-            totalCapacity = Math.max(bookedCount + 20, 76);
-          } else if (bookedCount >= 25) {
-            totalCapacity = Math.max(bookedCount + 18, 60);
-          } else if (bookedCount >= 15) {
-            totalCapacity = Math.max(bookedCount + 15, 45);
-          } else {
-            totalCapacity = Math.max(bookedCount + 10, 30);
-          }
-          const availableSlots = Math.max(0, totalCapacity - bookedCount);
-          const availabilityPercent = totalCapacity > 0 ? (availableSlots / totalCapacity) * 100 : 0;
           
           // Generate potential booking times with proper timezone handling
           const locationTimeZone = this.inferLocationTimeZone(location.name, location.address);
           const availableTimeSlots = this.generateAvailableTimeSlots(timeSlots, businessHours, startDate, locationTimeZone);
           
-          // Calculate schedule capacity based on ACTUAL staff shifts
+          // Calculate schedule capacity based on ACTUAL staff shifts using CSV formula
           const scheduleCapacity = await this.calculateScheduleCapacity(
             location.id,
             startDate,
             endDate,
             bookedAppointments
           );
+          
+          // Calculate available slots from schedule capacity (capacity includes booked + available)
+          const availableSlots = Math.max(0, scheduleCapacity - bookedCount);
+          const availabilityPercent = scheduleCapacity > 0 ? (availableSlots / scheduleCapacity) * 100 : 0;
           
           // Create service-specific booking URL (placeholder for now)
           const bookingBaseUrl = `https://widget.boulevard.io/${this.config.businessId}`;
@@ -1527,9 +1531,9 @@ export class BlvdService {
             locationId: location.id,
             locationName: location.name,
             availabilityPercent: Math.round(availabilityPercent * 100) / 100,
-            totalAppointments: totalCapacity,
+            totalAppointments: scheduleCapacity,
             bookedAppointments: bookedCount,
-            schedule: scheduleCapacity,
+            availableSlots: availableSlots,
             date: startDate.split('T')[0],
             // NEW: Individual time slot data
             bookedTimeSlots: timeSlots,
@@ -1537,7 +1541,7 @@ export class BlvdService {
             bookingUrl: `${bookingBaseUrl}?location=${location.id}`
           });
           
-          console.log(`📊 FINAL RESULTS for ${location.name}: ${availableTimeSlots.length} available time slots`);
+          console.log(`📊 FINAL RESULTS for ${location.name}: ${availableSlots} available appointments (CSV formula)`);
           console.log(`🏢 ========== END PROCESSING: ${location.name} ==========\n`);
         } catch (error) {
           console.error(`❌ ERROR processing location ${location.name}:`, error);
