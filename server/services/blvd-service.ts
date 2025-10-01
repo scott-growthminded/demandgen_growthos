@@ -585,93 +585,133 @@ export class BlvdService {
     }
   }
 
+  /**
+   * Calculate hourly availability using CSV formula: Available = (Scheduled Minutes - Booked Minutes) / 40
+   */
+  async calculateHourlyAvailability(
+    locationId: string, 
+    date: string, 
+    appointments: any[]
+  ): Promise<{
+    hourlyBreakdown: Array<{
+      hour: number;
+      scheduledMinutes: number;
+      bookedMinutes: number;
+      availableSlots: number;
+    }>;
+    totalAvailable: number;
+  }> {
+    console.log(`📊 Calculating hourly availability for ${date} using CSV formula`);
+    
+    try {
+      // Get staff shifts for the date
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+      
+      const shifts = await this.getStaffShifts(locationId, startDate.toISOString(), endDate.toISOString());
+      
+      if (shifts.length === 0) {
+        console.log('⚠️ No shifts found for date');
+        return {
+          hourlyBreakdown: [],
+          totalAvailable: 0
+        };
+      }
+      
+      console.log(`✅ Found ${shifts.length} shifts for the day`);
+      
+      // Business hours: 8 AM to 9 PM (13 hours)
+      const hourlyBreakdown = [];
+      let totalAvailable = 0;
+      
+      for (let hour = 8; hour <= 20; hour++) {
+        // Calculate scheduled minutes for this hour
+        let scheduledMinutes = 0;
+        
+        for (const shift of shifts) {
+          // Skip unavailable shifts
+          if (!shift.available) continue;
+          
+          // Parse shift times (format: "HH:MM:SS")
+          const [inHour, inMin] = shift.clockIn.split(':').map(Number);
+          const [outHour, outMin] = shift.clockOut.split(':').map(Number);
+          
+          const shiftStartMinutes = inHour * 60 + inMin;
+          const shiftEndMinutes = outHour * 60 + outMin;
+          
+          // Calculate overlap with current hour
+          const hourStartMinutes = hour * 60;
+          const hourEndMinutes = (hour + 1) * 60;
+          
+          const overlapStart = Math.max(shiftStartMinutes, hourStartMinutes);
+          const overlapEnd = Math.min(shiftEndMinutes, hourEndMinutes);
+          
+          if (overlapEnd > overlapStart) {
+            scheduledMinutes += (overlapEnd - overlapStart);
+          }
+        }
+        
+        // Calculate booked minutes for this hour
+        let bookedMinutes = 0;
+        
+        for (const apt of appointments) {
+          const aptStart = new Date(apt.startAt);
+          const aptEnd = new Date(apt.endAt);
+          
+          const aptStartHour = aptStart.getHours() + (aptStart.getMinutes() / 60);
+          const aptEndHour = aptEnd.getHours() + (aptEnd.getMinutes() / 60);
+          
+          // Calculate overlap with current hour
+          const overlapStart = Math.max(aptStartHour, hour);
+          const overlapEnd = Math.min(aptEndHour, hour + 1);
+          
+          if (overlapEnd > overlapStart) {
+            bookedMinutes += Math.round((overlapEnd - overlapStart) * 60);
+          }
+        }
+        
+        // Apply CSV formula: Available = (Scheduled - Booked) / 40
+        const availableSlots = Math.max(0, Math.floor((scheduledMinutes - bookedMinutes) / 40));
+        
+        hourlyBreakdown.push({
+          hour,
+          scheduledMinutes,
+          bookedMinutes,
+          availableSlots
+        });
+        
+        totalAvailable += availableSlots;
+        
+        console.log(`  ${hour}:00 - Scheduled: ${scheduledMinutes}min, Booked: ${bookedMinutes}min, Available: ${availableSlots} slots`);
+      }
+      
+      console.log(`📊 Total available slots for the day: ${totalAvailable}`);
+      
+      return {
+        hourlyBreakdown,
+        totalAvailable
+      };
+      
+    } catch (error) {
+      console.error('❌ Error calculating hourly availability:', error);
+      return {
+        hourlyBreakdown: [],
+        totalAvailable: 0
+      };
+    }
+  }
+
   async calculateScheduleCapacity(locationId: string, startDate: string, endDate: string, appointments: any[]): Promise<number> {
     console.log(`📊 Calculating schedule capacity for ${locationId} based on actual staff shifts`);
     
     try {
-      // 1. Get staff shifts (working windows)
-      const shifts = await this.getStaffShifts(locationId, startDate, endDate);
+      // Use new hourly availability calculation
+      const date = startDate.split('T')[0];
+      const result = await this.calculateHourlyAvailability(locationId, date, appointments);
       
-      if (shifts.length === 0) {
-        console.log('⚠️ No shifts found, falling back to theoretical calculation');
-        return this.calculateTheoreticalCapacity(appointments);
-      }
-      
-      // 2. Get timeblocks (breaks, HOLDs, PTO)
-      const timeblocks = await this.getTimeblocks(locationId, startDate, endDate);
-      
-      // 3. Prepare appointments as blocking intervals
-      const BLOCKING_STATUSES = ['BOOKED', 'CONFIRMED', 'CHECKED_IN', 'ACTIVE'];
-      const blockingAppointments = appointments
-        .filter((apt: any) => {
-          const status = String(apt.state || '').toUpperCase();
-          return BLOCKING_STATUSES.includes(status);
-        })
-        .map((apt: any) => ({
-          startsAt: apt.startAt,
-          endsAt: apt.endAt
-        }));
-      
-      // 4. Calculate open slots using interval math
-      const durationMin = 30; // Service duration
-      const stepMin = 15; // Grid step
-      const bufferBeforeMin = 0;
-      const bufferAfterMin = 10; // 10-minute buffer
-      
-      const windowStart = this.toMs(startDate);
-      const windowEnd = this.toMs(endDate);
-      const serviceMs = durationMin * 60_000;
-      const stepMs = stepMin * 60_000;
-      const padBefore = bufferBeforeMin * 60_000;
-      const padAfter = bufferAfterMin * 60_000;
-      
-      // Convert shifts to working intervals
-      const working = this.mergeIntervals(shifts.map((s: any) => ({
-        startsAt: s.startsAt,
-        endsAt: s.endsAt
-      })))
-        .map(iv => ({
-          startMs: Math.max(iv.startMs, windowStart),
-          endMs: Math.min(iv.endMs, windowEnd)
-        }))
-        .filter(iv => iv.endMs > iv.startMs);
-      
-      // Merge blocking intervals (timeblocks + appointments)
-      const blockIntervals = this.mergeIntervals([...timeblocks, ...blockingAppointments])
-        .map(iv => ({
-          startMs: Math.max(iv.startMs, windowStart),
-          endMs: Math.min(iv.endMs, windowEnd)
-        }))
-        .filter(iv => iv.endMs > iv.startMs);
-      
-      // Calculate free windows
-      const freeWindows = this.subtractIntervals(working, blockIntervals);
-      
-      // Count available slots
-      let slotCount = 0;
-      for (const w of freeWindows) {
-        const earliest = Math.max(w.startMs + padBefore, windowStart);
-        const latestStart = w.endMs - (serviceMs + padAfter);
-        if (latestStart < earliest) continue;
-        
-        let t = this.ceilToStep(earliest, stepMs, 0);
-        for (; t <= latestStart; t += stepMs) {
-          slotCount++;
-        }
-      }
-      
-      // Total capacity = booked + available slots
-      const bookedCount = appointments.length;
-      const totalCapacity = bookedCount + slotCount;
-      
-      console.log(`📊 Schedule capacity calculation:`);
-      console.log(`  Shifts found: ${shifts.length}`);
-      console.log(`  Timeblocks: ${timeblocks.length}`);
-      console.log(`  Booked appointments: ${bookedCount}`);
-      console.log(`  Available slots: ${slotCount}`);
-      console.log(`  Total capacity: ${totalCapacity}`);
-      
-      return totalCapacity;
+      return appointments.length + result.totalAvailable;
       
     } catch (error) {
       console.error('❌ Error calculating schedule capacity:', error);
