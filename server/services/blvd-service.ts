@@ -437,15 +437,13 @@ export class BlvdService {
   async getStaffShifts(locationId: string, startDate: string, endDate: string, staffId?: string): Promise<any[]> {
     console.log(`🔄 Querying staff shifts for ${locationId} from ${startDate} to ${endDate}`);
     
-    // Discover schema on first call
-    await this.discoverShiftsSchema();
-    
     // Format dates as YYYY-MM-DD for Boulevard API
     const startDateOnly = startDate.split('T')[0];
     const endDateOnly = endDate.split('T')[0];
     
     console.log(`📅 Formatted dates for shifts query: startIso8601=${startDateOnly}, endIso8601=${endDateOnly}`);
     
+    // Based on Boulevard docs: shifts returns [ListOfStaffShifts] which has a shifts field
     const shiftsQuery = `
       query Shifts($locationId: ID!, $startIso8601: Date!, $endIso8601: Date!) {
         shifts(
@@ -453,15 +451,18 @@ export class BlvdService {
           startIso8601: $startIso8601
           endIso8601: $endIso8601
         ) {
-          nodes {
-            id
-            startsAt
-            endsAt
-            staff {
-              id
-              firstName
-              lastName
-            }
+          shifts {
+            staffId
+            clockIn
+            clockOut
+            day
+            recurrence
+            recurrenceInterval
+            recurrenceStart
+            recurrenceEnd
+            available
+            locationId
+            unavailableReason
           }
         }
       }
@@ -473,13 +474,30 @@ export class BlvdService {
       endIso8601: endDateOnly
     };
     
+    if (staffId) {
+      variables.staffIds = [staffId];
+    }
+    
     console.log(`📤 Shifts query variables:`, JSON.stringify(variables, null, 2));
 
     try {
       const response = await this.makeGraphqlRequest(shiftsQuery, variables);
-      const shifts = (response.data as any)?.shifts?.nodes || [];
-      console.log(`✅ Found ${shifts.length} shifts`);
-      return shifts;
+      
+      // Log the raw response for debugging
+      console.log(`📦 Raw shifts response:`, JSON.stringify(response, null, 2));
+      
+      // Extract shifts from nested structure
+      const shiftsArray = (response.data as any)?.shifts || [];
+      const allShifts = shiftsArray.flatMap((item: any) => item.shifts || []);
+      
+      console.log(`✅ Found ${allShifts.length} shift templates`);
+      
+      // Log first shift for inspection
+      if (allShifts.length > 0) {
+        console.log(`🔍 Sample shift:`, JSON.stringify(allShifts[0], null, 2));
+      }
+      
+      return allShifts;
     } catch (error) {
       console.error('❌ Error fetching shifts:', error);
       return [];
@@ -489,38 +507,66 @@ export class BlvdService {
   async getTimeblocks(locationId: string, startDate: string, endDate: string, staffId?: string): Promise<any[]> {
     console.log(`⏱️ Querying timeblocks for ${locationId} from ${startDate} to ${endDate}`);
     
-    // Format dates as YYYY-MM-DD for Boulevard API
-    const startDateOnly = startDate.split('T')[0];
-    const endDateOnly = endDate.split('T')[0];
-    
+    // Based on Boulevard docs: timeblocks uses connection pattern with edges
+    // Supports query filters: staffId, startAt, cancelled
     const timeblocksQuery = `
-      query Timeblocks($locationId: ID!, $startIso8601: Date!, $endIso8601: Date!) {
+      query Timeblocks($locationId: ID!, $startAt: DateTime!, $endAt: DateTime!) {
         timeblocks(
           locationId: $locationId
-          startIso8601: $startIso8601
-          endIso8601: $endIso8601
+          first: 100
         ) {
-          id
-          startsAt
-          endsAt
-          reason
+          edges {
+            node {
+              id
+              startAt
+              endAt
+              duration
+              cancelled
+              staffId
+              title
+              reason
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
         }
       }
     `;
 
     const variables: any = {
       locationId,
-      startIso8601: startDateOnly,
-      endIso8601: endDateOnly
+      startAt: new Date(startDate).toISOString(),
+      endAt: new Date(endDate).toISOString()
     };
+    
+    if (staffId) {
+      variables.staffId = staffId;
+    }
+    
+    console.log(`📤 Timeblocks query variables:`, JSON.stringify(variables, null, 2));
 
     try {
       const response = await this.makeGraphqlRequest(timeblocksQuery, variables);
-      const timeblocks = (response.data as any)?.timeblocks || [];
-      console.log(`✅ Found ${timeblocks.length} timeblocks`);
+      
+      // Log the raw response for debugging
+      console.log(`📦 Raw timeblocks response:`, JSON.stringify(response, null, 2));
+      
+      const edges = (response.data as any)?.timeblocks?.edges || [];
+      const timeblocks = edges.map((edge: any) => edge.node);
+      
+      console.log(`✅ Found ${timeblocks.length} active timeblocks`);
+      
+      // Log first timeblock for inspection
+      if (timeblocks.length > 0) {
+        console.log(`🔍 Sample timeblock:`, JSON.stringify(timeblocks[0], null, 2));
+      }
+      
       return timeblocks;
     } catch (error) {
-      console.log('⚠️ Timeblocks query failed (may not be supported), continuing without timeblocks');
+      console.error('❌ Timeblocks query failed:', error);
+      console.log('⚠️ Continuing without timeblocks data');
       return [];
     }
   }

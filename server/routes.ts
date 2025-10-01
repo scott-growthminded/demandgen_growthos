@@ -252,6 +252,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint: Query shifts and timeblocks for a specific location and date
+  app.post("/api/blvd/test-shifts-and-timeblocks", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const hasServerConfig = serverConfig.apiUrl && serverConfig.apiKey && serverConfig.secretKey && serverConfig.businessId;
+      
+      if (!hasServerConfig) {
+        return res.status(500).json({
+          error: "Server configuration missing"
+        });
+      }
+      
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { locationId, date } = req.body;
+      
+      if (!locationId || !date) {
+        return res.status(400).json({
+          error: "Missing required fields: locationId, date"
+        });
+      }
+      
+      // Parse date and create date range
+      const targetDate = new Date(date);
+      const startDate = new Date(targetDate);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(targetDate);
+      endDate.setHours(23, 59, 59, 999);
+      
+      console.log(`\n========== TESTING SHIFTS & TIMEBLOCKS ==========`);
+      console.log(`Location: ${locationId}`);
+      console.log(`Date: ${date}`);
+      console.log(`Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      
+      // Query shifts
+      const shifts = await blvdService.getStaffShifts(locationId, startDate.toISOString(), endDate.toISOString());
+      
+      // Query timeblocks
+      const timeblocks = await blvdService.getTimeblocks(locationId, startDate.toISOString(), endDate.toISOString());
+      
+      console.log(`\n✅ SHIFTS FOUND: ${shifts.length}`);
+      console.log(`✅ TIMEBLOCKS FOUND: ${timeblocks.length}`);
+      console.log(`================================================\n`);
+      
+      res.json({
+        locationId,
+        date,
+        shifts: shifts,
+        timeblocks: timeblocks,
+        shiftsCount: shifts.length,
+        timeblocksCount: timeblocks.length
+      });
+      
+    } catch (error) {
+      console.error('Test shifts/timeblocks error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Test failed"
+      });
+    }
+  });
+
   // Get available locations with 25% or more availability for tomorrow
   app.post("/api/blvd/availability", async (req, res) => {
     try {
