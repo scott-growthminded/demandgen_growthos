@@ -181,7 +181,7 @@ export default function BlvdApiTest() {
                             {location.bookedAppointments}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-available-${index}`}>
-                            {Math.max(0, Math.round(location.schedule || 0) - (location.bookedAppointments || 0))}
+                            {location.availableSlots || 0}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-availability-${index}`}>
                             {Math.round(location.availabilityPercent)}%
