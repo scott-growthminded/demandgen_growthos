@@ -780,25 +780,14 @@ export class BlvdService {
     console.log(`📊 Calculating hourly availability for ${date} using CSV formula with shift expansion`);
     
     try {
-      // Get staff shifts for the date
-      // Use explicit timezone-aware boundaries to avoid UTC clipping
-      const year = parseInt(date.substring(0, 4));
-      const month = parseInt(date.substring(5, 7));
-      const day = parseInt(date.substring(8, 10));
+      // Get staff shifts for the date  
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
       
-      // Build timezone-aware start (00:00 local) and end (23:59:59.999 local)
-      const startOffset = this.getTimezoneOffsetForLocalTime(year, month, day, 0, 0, 0, 'America/New_York');
-      const endOffset = this.getTimezoneOffsetForLocalTime(year, month, day, 23, 59, 59, 'America/New_York');
-      
-      const startStr = `${date}T00:00:00${startOffset}`;
-      const endStr = `${date}T23:59:59.999${endOffset}`;
-      
-      const dayStartMs = this.toMs(startStr);
-      const dayEndMs = this.toMs(endStr);
-      
-      // For API queries, use Date objects
-      const startDate = new Date(dayStartMs);
-      const endDate = new Date(dayEndMs);
+      const dayStartMs = startDate.getTime();
+      const dayEndMs = endDate.getTime();
       
       const shifts = await this.getStaffShifts(locationId, startDate.toISOString(), endDate.toISOString());
       const timeblocks = await this.getTimeblocks(locationId, startDate.toISOString(), endDate.toISOString());
@@ -892,21 +881,15 @@ export class BlvdService {
         let scheduledMinutes = 0;
         const staffContributions: Array<{staffId: string, minutes: number}> = [];
         
-        // Calculate hour boundaries in location's local time
-        // Parse the date in the location's timezone directly
-        const hourStart = `${date}T${String(hour).padStart(2, '0')}:00:00`;
-        const hourEnd = `${date}T${String(hour + 1).padStart(2, '0')}:00:00`;
+        // Calculate hour boundaries in UTC
+        // Since we're comparing against shift windows that are also in UTC milliseconds
+        const hourStartDate = new Date(date);
+        hourStartDate.setHours(hour, 0, 0, 0);
+        const hourEndDate = new Date(date);
+        hourEndDate.setHours(hour + 1, 0, 0, 0);
         
-        // Get timezone offset for these specific times
-        const year = new Date(date).getUTCFullYear();
-        const month = new Date(date).getUTCMonth() + 1;
-        const day = new Date(date).getUTCDate();
-        
-        const startOffset = this.getTimezoneOffsetForLocalTime(year, month, day, hour, 0, 0, 'America/New_York');
-        const endOffset = this.getTimezoneOffsetForLocalTime(year, month, day, hour + 1, 0, 0, 'America/New_York');
-        
-        const hourStartMs = this.toMs(`${hourStart}${startOffset}`);
-        const hourEndMs = this.toMs(`${hourEnd}${endOffset}`);
+        const hourStartMs = hourStartDate.getTime();
+        const hourEndMs = hourEndDate.getTime();
         
         for (const [staffId, windows] of netWorkingWindows.entries()) {
           let staffMinutesThisHour = 0;
