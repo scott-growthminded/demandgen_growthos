@@ -780,14 +780,27 @@ export class BlvdService {
     console.log(`📊 Calculating hourly availability for ${date} using CSV formula with shift expansion`);
     
     try {
-      // Get staff shifts for the date  
-      const startDate = new Date(date);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(date);
-      endDate.setHours(23, 59, 59, 999);
+      // Get staff shifts for the date
+      // CRITICAL: Build timezone-aware day boundaries to avoid clipping shifts
+      // Parse date components
+      const year = parseInt(date.substring(0, 4));
+      const month = parseInt(date.substring(5, 7));
+      const day = parseInt(date.substring(8, 10));
       
-      const dayStartMs = startDate.getTime();
-      const dayEndMs = endDate.getTime();
+      // Get timezone offsets for start (00:00) and end (23:59:59) of day
+      const startOffset = this.getTimezoneOffsetForLocalTime(year, month, day, 0, 0, 0, 'America/New_York');
+      const endOffset = this.getTimezoneOffsetForLocalTime(year, month, day, 23, 59, 59, 'America/New_York');
+      
+      // Build timezone-aware boundaries
+      const startStr = `${date}T00:00:00${startOffset}`;
+      const endStr = `${date}T23:59:59.999${endOffset}`;
+      
+      const dayStartMs = this.toMs(startStr);
+      const dayEndMs = this.toMs(endStr);
+      
+      // For API queries
+      const startDate = new Date(dayStartMs);
+      const endDate = new Date(dayEndMs);
       
       const shifts = await this.getStaffShifts(locationId, startDate.toISOString(), endDate.toISOString());
       const timeblocks = await this.getTimeblocks(locationId, startDate.toISOString(), endDate.toISOString());
@@ -875,9 +888,6 @@ export class BlvdService {
       console.log('\n🔍 ========== DETAILED AVAILABILITY BREAKDOWN ==========');
       
       // Get timezone offset once (all hours on same day have same offset, DST transitions at 2 AM)
-      const year = parseInt(date.substring(0, 4));
-      const month = parseInt(date.substring(5, 7));
-      const day = parseInt(date.substring(8, 10));
       const dayOffset = this.getTimezoneOffsetForLocalTime(year, month, day, 8, 0, 0, 'America/New_York');
       
       for (let hour = 8; hour <= 20; hour++) {
