@@ -774,6 +774,8 @@ export class BlvdService {
       availableSlots: number;
     }>;
     totalAvailable: number;
+    totalScheduledMinutes: number;
+    totalBookedMinutes: number;
   }> {
     console.log(`📊 Calculating hourly availability for ${date} using CSV formula with shift expansion`);
     
@@ -867,6 +869,8 @@ export class BlvdService {
       // STEP 3: Calculate hourly breakdown using net working windows
       const hourlyBreakdown = [];
       let totalAvailable = 0;
+      let totalScheduledMinutes = 0;
+      let totalBookedMinutes = 0;
       
       console.log('\n🔍 ========== DETAILED AVAILABILITY BREAKDOWN ==========');
       
@@ -975,23 +979,33 @@ export class BlvdService {
         });
         
         totalAvailable += availableSlots;
+        totalScheduledMinutes += scheduledMinutes;
+        totalBookedMinutes += bookedMinutes;
       }
       
-      console.log(`\n🎯 DAILY TOTAL: ${totalAvailable} available 40-minute appointment slots`);
+      console.log(`\n🎯 DAILY TOTALS:`);
+      console.log(`   Total Scheduled: ${Math.round(totalScheduledMinutes)} minutes`);
+      console.log(`   Total Booked: ${totalBookedMinutes} minutes`);
+      console.log(`   Total Schedule Capacity: ${(totalScheduledMinutes / 40).toFixed(2)} slots`);
+      console.log(`   Total Available (after bookings): ${totalAvailable} slots`);
       console.log('========== END DETAILED BREAKDOWN ==========\n');
       
       console.log(`📊 Total available slots for the day: ${totalAvailable}`);
       
       return {
         hourlyBreakdown,
-        totalAvailable
+        totalAvailable,
+        totalScheduledMinutes,
+        totalBookedMinutes
       };
       
     } catch (error) {
       console.error('❌ Error calculating hourly availability:', error);
       return {
         hourlyBreakdown: [],
-        totalAvailable: 0
+        totalAvailable: 0,
+        totalScheduledMinutes: 0,
+        totalBookedMinutes: 0
       };
     }
   }
@@ -1004,9 +1018,18 @@ export class BlvdService {
       const date = startDate.split('T')[0];
       console.log(`🔍 About to call calculateHourlyAvailability with date: ${date}`);
       const result = await this.calculateHourlyAvailability(locationId, date, appointments);
-      console.log(`✅ Hourly calculation returned: ${result.totalAvailable} available slots`);
       
-      return appointments.length + result.totalAvailable;
+      // Calculate total capacity using CSV formula: Total Scheduled Minutes / 40
+      // This matches the CSV's "Schedule" column exactly
+      const totalCapacity = result.totalScheduledMinutes / 40;
+      
+      console.log(`✅ Hourly calculation complete:`);
+      console.log(`   Scheduled Minutes: ${Math.round(result.totalScheduledMinutes)}`);
+      console.log(`   Booked Minutes: ${result.totalBookedMinutes}`);
+      console.log(`   Total Capacity (Schedule): ${totalCapacity.toFixed(2)} slots`);
+      console.log(`   Available slots: ${result.totalAvailable}`);
+      
+      return totalCapacity;
       
     } catch (error) {
       console.error('❌ Error in calculateScheduleCapacity:', error);
