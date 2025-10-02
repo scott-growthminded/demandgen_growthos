@@ -874,6 +874,12 @@ export class BlvdService {
       
       console.log('\n🔍 ========== DETAILED AVAILABILITY BREAKDOWN ==========');
       
+      // Get timezone offset once (all hours on same day have same offset, DST transitions at 2 AM)
+      const year = parseInt(date.substring(0, 4));
+      const month = parseInt(date.substring(5, 7));
+      const day = parseInt(date.substring(8, 10));
+      const dayOffset = this.getTimezoneOffsetForLocalTime(year, month, day, 8, 0, 0, 'America/New_York');
+      
       for (let hour = 8; hour <= 20; hour++) {
         console.log(`\n📊 HOUR ${hour}:00-${hour+1}:00 CALCULATION:`);
         
@@ -881,15 +887,12 @@ export class BlvdService {
         let scheduledMinutes = 0;
         const staffContributions: Array<{staffId: string, minutes: number}> = [];
         
-        // Calculate hour boundaries in UTC
-        // Since we're comparing against shift windows that are also in UTC milliseconds
-        const hourStartDate = new Date(date);
-        hourStartDate.setHours(hour, 0, 0, 0);
-        const hourEndDate = new Date(date);
-        hourEndDate.setHours(hour + 1, 0, 0, 0);
+        // Build timezone-aware hour boundaries using the day's offset
+        const hourStart = `${date}T${String(hour).padStart(2, '0')}:00:00${dayOffset}`;
+        const hourEnd = `${date}T${String(hour + 1).padStart(2, '0')}:00:00${dayOffset}`;
         
-        const hourStartMs = hourStartDate.getTime();
-        const hourEndMs = hourEndDate.getTime();
+        const hourStartMs = this.toMs(hourStart);
+        const hourEndMs = this.toMs(hourEnd);
         
         for (const [staffId, windows] of netWorkingWindows.entries()) {
           let staffMinutesThisHour = 0;
