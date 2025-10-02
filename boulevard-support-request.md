@@ -84,8 +84,24 @@ Are callouts/sick time stored:
 - Associated with a different staff member (e.g., "Blocked by" vs actual staff)?
 - Requiring additional query parameters or filters?
 
-## Business Impact
-Without accurate timeblock data, our availability calculations show **71 slots** when there should only be **61 slots** at Upper East Side on October 10th. This 10-slot discrepancy comes from the missing 320-minute callout, which represents significant revenue forecasting errors.
+## Business Impact & Root Cause Analysis
+
+### The Core Problem
+Callouts/sick time should **reduce schedule capacity** (not just block availability), but the API provides no way to access this data.
+
+**Upper East Side - October 10, 2025:**
+- **Our API Calculation**: 71 schedule slots (from shift templates)
+- **Actual Reality**: 61 schedule slots (from operational data)
+- **10-slot gap** = Natalia's 320-minute callout
+
+### What's Happening
+1. The `shifts` query returns shift **templates** (theoretical schedule)
+2. When Natalia calls out, Boulevard UI correctly shows reduced capacity
+3. But the API still returns her full shift template
+4. The callout doesn't appear in `timeblocks` query results
+5. Our calculations use the theoretical 71 slots instead of actual 61 slots
+
+This affects **every location** - we can't accurately forecast availability without callout data, leading to significant revenue forecasting errors.
 
 ## API Access Details
 - **Business ID**: `${process.env.BLVD_BUSINESS_ID}`
