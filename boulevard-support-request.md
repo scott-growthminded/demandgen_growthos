@@ -9,6 +9,19 @@ We're building an availability forecasting service using the Boulevard Admin Gra
 **Staff Member**: Natalia  
 **Issue**: A callout from 3:20 PM - 8:40 PM (320 minutes) appears in the Boulevard UI with note "Call Out (Winnie Covering)" and is marked as "Blocked by Mailonie Smith - PERSONAL", but this timeblock does **not appear** in our API query results.
 
+## Investigation Summary
+
+### Confirmed Findings
+1. ✅ **Call out exists in Boulevard UI**: Natalia's 3:20 PM - 8:40 PM callout (320 minutes) visible in dashboard schedule view
+2. ✅ **Callout impacts capacity**: Upper East Side shows 61 actual slots vs 71 theoretical slots (10-slot gap = 320min ÷ 40min/slot)
+3. ❌ **Callout NOT in API**: Extensive timeblocks queries return only breaks, not callouts
+4. ❌ **Not a filter issue**: Removing cancelled filter, searching all fields, checking multiple patterns - callout never appears
+
+### Key Discovery
+- Breaks appear as: `title: "Note: Break (clock out)"`, `reason: "PERSONAL"` ✅ Returned by API
+- Callouts appear as: `title: "Note: Call Out (...)"`, `reason: "PERSONAL"` ❌ NOT returned by API
+- Both types reduce availability, but callouts reduce **schedule capacity** (not just available time)
+
 ## What We've Tried
 
 ### Current Timeblocks Query
