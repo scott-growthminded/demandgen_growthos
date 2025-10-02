@@ -817,19 +817,32 @@ export class BlvdService {
       
       // STEP 1: Expand recurring shifts to actual working windows for this specific date
       const expandedShifts: Array<{ startMs: number; endMs: number; staffId: string }> = [];
+      let skippedUnavailable = 0;
       
       for (const shift of shifts) {
+        // Log shift details for debugging
+        const staffIdShort = shift.staffId.includes(':') ? shift.staffId.split(':').pop() : shift.staffId;
+        console.log(`  📌 Shift: staff=${staffIdShort}, available=${shift.available}, clockIn=${shift.clockInTime}, clockOut=${shift.clockOutTime}`);
+        
         // Skip unavailable shifts
-        if (!shift.available) continue;
+        if (!shift.available) {
+          skippedUnavailable++;
+          console.log(`    ❌ SKIPPING - shift marked unavailable`);
+          continue;
+        }
         
         // All locations use America/New_York timezone
         const expanded = this.expandShiftToDate(shift, dayStartMs, dayEndMs, 'America/New_York');
         if (expanded) {
           expandedShifts.push(expanded);
+          console.log(`    ✅ Expanded to ${new Date(expanded.startMs).toISOString()} - ${new Date(expanded.endMs).toISOString()}`);
+        } else {
+          console.log(`    ⏭️ No match for date ${date}`);
         }
       }
       
-      console.log(`✅ Expanded to ${expandedShifts.length} actual working shifts for ${date}`);
+      console.log(`✅ Expanded to ${expandedShifts.length} actual working shifts for ${date} (skipped ${skippedUnavailable} unavailable)`);
+
       
       if (expandedShifts.length === 0) {
         console.log('⚠️ No staff actually working on this date after expansion');
