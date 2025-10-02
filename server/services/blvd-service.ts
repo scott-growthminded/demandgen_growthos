@@ -1091,7 +1091,7 @@ export class BlvdService {
    */
 
   private availabilityCache: Map<string, { data: any; timestamp: number }> = new Map();
-  private readonly CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour cache
+  private readonly CACHE_TTL_MS = 0; // DEBUGGING: Disable cache to get fresh data
 
   private getCachedAvailability(key: string): any | null {
     const cached = this.availabilityCache.get(key);
