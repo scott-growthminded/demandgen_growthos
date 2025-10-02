@@ -89,6 +89,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint for raw GraphQL query execution
+  app.post("/api/blvd/test-query", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { query, variables } = req.body;
+      const result = await blvdService.makeGraphqlRequest(query, variables);
+      res.json(result);
+    } catch (error) {
+      console.error('Test query error:', error);
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Query execution failed",
+      });
+    }
+  });
+
   // Get environment info
   app.get("/api/env-info", (req, res) => {
     res.json({

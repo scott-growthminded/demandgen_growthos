@@ -721,6 +721,8 @@ export class BlvdService {
     `;
 
     // Build query string for filtering by date range
+    // NOTE: We filter ONLY by date and cancelled status - we want ALL timeblocks regardless of reason
+    // This includes PERSONAL, BUSINESS, SICK, CALLOUT, and any other types
     let queryFilter = `cancelled = false AND startAt >= '${startISO}' AND startAt < '${endISO}'`;
     if (staffId) {
       queryFilter += ` AND staffId = '${staffId}'`;
@@ -748,6 +750,14 @@ export class BlvdService {
       // Log first timeblock for inspection
       if (timeblocks.length > 0) {
         console.log(`🔍 Sample timeblock:`, JSON.stringify(timeblocks[0], null, 2));
+      }
+      
+      // DEBUGGING: Log ALL timeblocks for Upper East Side
+      if (locationId.includes('215b817e-8633-4edb-b5e5-e290d999eeb6')) {
+        console.log('🔎 DEBUGGING UPPER EAST SIDE TIMEBLOCKS:');
+        timeblocks.forEach((tb, i) => {
+          console.log(`  ${i+1}. ${tb.startAt} to ${tb.endAt} (${tb.duration}min) - ${tb.reason} - ${tb.title} - Staff: ${tb.staffId}`);
+        });
       }
       
       return timeblocks;
