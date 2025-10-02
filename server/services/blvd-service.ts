@@ -868,9 +868,14 @@ export class BlvdService {
       const hourlyBreakdown = [];
       let totalAvailable = 0;
       
+      console.log('\n🔍 ========== DETAILED AVAILABILITY BREAKDOWN ==========');
+      
       for (let hour = 8; hour <= 20; hour++) {
+        console.log(`\n📊 HOUR ${hour}:00-${hour+1}:00 CALCULATION:`);
+        
         // Calculate scheduled minutes from net working windows
         let scheduledMinutes = 0;
+        const staffContributions: Array<{staffId: string, minutes: number}> = [];
         
         // Calculate timezone offset for this specific hour to handle DST transitions
         const year = new Date(dayStartMs).getUTCFullYear();
@@ -887,19 +892,34 @@ export class BlvdService {
         const hourEndMs = hourStartMs + 3600000;
         
         for (const [staffId, windows] of netWorkingWindows.entries()) {
+          let staffMinutesThisHour = 0;
           for (const window of windows) {
             const overlapStart = Math.max(window.startMs, hourStartMs);
             const overlapEnd = Math.min(window.endMs, hourEndMs);
             
             if (overlapEnd > overlapStart) {
               const overlapMinutes = (overlapEnd - overlapStart) / 60000;
-              scheduledMinutes += Math.min(overlapMinutes, 60); // Cap at 60 min per staff per hour
+              const cappedMinutes = Math.min(overlapMinutes, 60); // Cap at 60 min per staff per hour
+              staffMinutesThisHour += cappedMinutes;
+              scheduledMinutes += cappedMinutes;
             }
           }
+          if (staffMinutesThisHour > 0) {
+            staffContributions.push({staffId: staffId.substring(0, 8), minutes: Math.round(staffMinutesThisHour)});
+          }
+        }
+        
+        console.log(`   📅 SCHEDULED CAPACITY:`);
+        console.log(`      Total: ${Math.round(scheduledMinutes)} minutes from ${staffContributions.length} staff`);
+        if (staffContributions.length > 0) {
+          staffContributions.forEach(sc => {
+            console.log(`         • Staff ${sc.staffId}... contributes ${sc.minutes}min`);
+          });
         }
         
         // Calculate booked minutes for this hour
         let bookedMinutes = 0;
+        const bookingsThisHour: Array<{time: string, minutes: number}> = [];
         
         for (const apt of appointments) {
           // Parse timezone-aware times directly (e.g., "2025-10-07T08:00:00-04:00")
@@ -922,12 +942,30 @@ export class BlvdService {
           const overlapEnd = Math.min(aptEndDecimal, hour + 1);
           
           if (overlapEnd > overlapStart) {
-            bookedMinutes += Math.round((overlapEnd - overlapStart) * 60);
+            const overlapMins = Math.round((overlapEnd - overlapStart) * 60);
+            bookedMinutes += overlapMins;
+            bookingsThisHour.push({
+              time: `${String(aptStartHour).padStart(2,'0')}:${String(aptStartMin).padStart(2,'0')}`,
+              minutes: overlapMins
+            });
           }
         }
         
+        console.log(`   🔒 BOOKED APPOINTMENTS:`);
+        console.log(`      Total: ${bookedMinutes} minutes from ${bookingsThisHour.length} appointments`);
+        if (bookingsThisHour.length > 0) {
+          bookingsThisHour.forEach(b => {
+            console.log(`         • Appointment at ${b.time} uses ${b.minutes}min this hour`);
+          });
+        }
+        
         // Apply CSV formula: Available = (Scheduled - Booked) / 40
-        const availableSlots = Math.max(0, Math.floor((scheduledMinutes - bookedMinutes) / 40));
+        const netMinutes = scheduledMinutes - bookedMinutes;
+        const availableSlots = Math.max(0, Math.floor(netMinutes / 40));
+        
+        console.log(`   ✨ CSV FORMULA CALCULATION:`);
+        console.log(`      (${Math.round(scheduledMinutes)}min scheduled - ${bookedMinutes}min booked) ÷ 40 = ${availableSlots} slots`);
+        console.log(`      Net available: ${Math.round(netMinutes)} minutes = ${availableSlots} x 40-minute slots`);
         
         hourlyBreakdown.push({
           hour,
@@ -937,9 +975,10 @@ export class BlvdService {
         });
         
         totalAvailable += availableSlots;
-        
-        console.log(`  ${hour}:00 - Scheduled: ${scheduledMinutes}min, Booked: ${bookedMinutes}min, Available: ${availableSlots} slots`);
       }
+      
+      console.log(`\n🎯 DAILY TOTAL: ${totalAvailable} available 40-minute appointment slots`);
+      console.log('========== END DETAILED BREAKDOWN ==========\n');
       
       console.log(`📊 Total available slots for the day: ${totalAvailable}`);
       
