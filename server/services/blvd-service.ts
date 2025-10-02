@@ -1736,7 +1736,7 @@ export class BlvdService {
           // Filter out cancelled appointments AND filter by target date AND filter out training facials
           const targetDate = startDate.split('T')[0];
           const bookedAppointments = appointments.filter((apt: any) => {
-            // Skip cancelled appointments
+            // Skip cancelled appointments (include both CONFIRMED and HOLD as booked time)
             if (apt.cancelled || apt.state === 'CANCELLED') return false;
             
             // Only include appointments that start on the target date
@@ -1753,12 +1753,20 @@ export class BlvdService {
             return true;
           });
           
+          // Count appointment states for debugging
+          const stateCounts = appointments.reduce((acc: any, apt: any) => {
+            const state = apt.state || 'UNKNOWN';
+            acc[state] = (acc[state] || 0) + 1;
+            return acc;
+          }, {});
+          
           console.log(`✅ Active appointments for ${location.name}: ${bookedAppointments.length}`);
           
           // DEBUG: Log detailed appointment data for validation
           console.log(`🔍 ${location.name} appointments for ${targetDate}:`);
           console.log(`  Raw API response: ${appointments.length} appointments`);
-          console.log(`  After filtering cancelled & date: ${bookedAppointments.length} target date appointments`);
+          console.log(`  📊 Appointment states:`, stateCounts);
+          console.log(`  After filtering cancelled & date: ${bookedAppointments.length} target date appointments (includes CONFIRMED + HOLD)`);
           
           // Verify all appointments are for the correct date
           const dateMismatches = appointments.filter(apt => {
