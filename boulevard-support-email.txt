@@ -1,0 +1,62 @@
+Subject: Admin API Support Request - Missing Callout/Sick Time Data in Timeblocks Query
+
+Hi Boulevard Support Team,
+
+We're building an availability forecasting service using your Admin GraphQL API, and we've discovered a critical data gap that's preventing accurate calculations.
+
+THE ISSUE:
+Staff callouts and sick time that are visible in the Boulevard UI are NOT being returned by the timeblocks API query, causing our availability calculations to be significantly incorrect.
+
+SPECIFIC EXAMPLE:
+• Location: Upper East Side (urn:blvd:Location:215b817e-8633-4edb-b5e5-e290d999eeb6)
+• Date: October 10, 2025
+• Staff: Natalia has a callout from 3:20 PM - 8:40 PM (320 minutes)
+• The callout shows in your UI as "Call Out (Winnie Covering)" marked "Blocked by Mailonie Smith - PERSONAL"
+• Result: This callout does NOT appear in our timeblocks API query results
+
+THE IMPACT:
+• Our API calculates: 71 available appointment slots (from shift templates)
+• Actual reality: 61 available slots (10-slot discrepancy = missing callout)
+• This affects every location and represents significant forecasting errors
+
+WHAT WE'VE TRIED:
+✓ Removed cancelled filter from query - still no callout data
+✓ Verified date ranges cover full 24 hours in location timezone
+✓ Confirmed authentication works (other data returns correctly)
+✓ Tested multiple locations - same issue everywhere
+
+ROOT CAUSE:
+The shifts query returns shift TEMPLATES (theoretical schedule), but when staff call out, there's no way to access this information via the API. The timeblocks query doesn't return callouts/sick time.
+
+WHAT WE NEED:
+1. The correct GraphQL query structure to fetch ALL time-blocking scenarios including callouts and sick time
+2. Documentation on how callouts/sick time are stored in your API
+3. Any additional filters or parameters needed to capture complete data
+
+OR, if this data isn't available via the current API:
+4. Confirmation of this limitation and recommended alternatives (webhooks, exports, etc.)
+
+ATTACHED:
+I've included a detailed technical document (boulevard-support-request.md) with:
+• Complete API queries we've tested
+• Screenshots from your UI showing the missing callout
+• Exact discrepancy numbers
+• Full analysis of the issue
+
+API ACCESS DETAILS:
+• Using: Admin GraphQL API (dashboard.boulevard.io/api/2020-01/admin)
+• Business ID: [Your Business ID from env]
+• Authentication: Basic Auth with API key
+
+This is blocking our ability to provide accurate availability forecasting. Any guidance you can provide would be greatly appreciated!
+
+Thank you,
+[Your Name]
+[Your Contact Info]
+
+---
+Attachments to include:
+1. boulevard-support-request.md (detailed technical documentation)
+2. Screenshot 2025-10-02 at 11.25.56 AM (showing callout in UI)
+3. Screenshot 2025-10-02 at 11.27.38 AM (showing callout details)
+4. Screenshots of CSV showing correct numbers vs API calculations
