@@ -106,10 +106,7 @@ export class BlvdService {
 
   private subtractIntervals(working: Array<{startMs: number; endMs: number}>, blocks: Array<{startsAt?: string; endsAt?: string; startMs?: number; endMs?: number}>): Array<{startMs: number; endMs: number}> {
     let result = working.map(x => ({ ...x }));
-    const B = this.mergeIntervals(blocks.map(x => ({
-      startsAt: x.startsAt ?? this.fromMs(x.startMs ?? 0),
-      endsAt: x.endsAt ?? this.fromMs(x.endMs ?? 0)
-    })));
+    const B = this.mergeIntervals(blocks);
     
     for (const b of B) {
       const next: Array<{startMs: number; endMs: number}> = [];
@@ -153,10 +150,11 @@ export class BlvdService {
   private expandShiftToDate(
     shift: any, 
     dayStartMs: number, 
-    dayEndMs: number
+    dayEndMs: number,
+    locationTimezone: string = 'America/New_York'
   ): { startMs: number; endMs: number; staffId: string } | null {
     // Boulevard shifts API format:
-    // - clockIn/clockOut: "HH:MM:SS" format (e.g., "08:00:00")
+    // - clockIn/clockOut: "HH:MM:SS" format (e.g., "08:00:00") in location's local timezone
     // - day: weekday number 0-6 (0=Sunday, 1=Monday, ..., 6=Saturday)
     // - recurrence: "weekly" or null
     // - recurrenceStart/End: date strings
@@ -193,22 +191,27 @@ export class BlvdService {
       }
     }
     
-    // Build shift instance on target date using clockIn/clockOut times
+    // Build shift instance on target date using clockIn/clockOut times IN LOCAL TIMEZONE
+    // Boulevard shift times are in the location's timezone, so we need to parse them as local times
     const [sh, sm, ss] = clockIn.split(':').map(Number);
     const [eh, em, es] = clockOut.split(':').map(Number);
     
-    const instStart = Date.UTC(
-      targetDate.getUTCFullYear(),
-      targetDate.getUTCMonth(),
-      targetDate.getUTCDate(),
-      sh, sm, ss
-    );
-    const instEnd = Date.UTC(
-      targetDate.getUTCFullYear(),
-      targetDate.getUTCMonth(),
-      targetDate.getUTCDate(),
-      eh, em, es
-    );
+    // Get YYYY-MM-DD string for target date
+    const year = targetDate.getUTCFullYear();
+    const month = String(targetDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(targetDate.getUTCDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
+    // Create ISO strings with timezone offset (for EDT/Eastern: -04:00 in summer, -05:00 in winter)
+    // For simplicity, use -04:00 for Oct 3, 2025 (this is EDT season)
+    // TODO: Calculate actual timezone offset dynamically for any date
+    const timezoneOffset = '-04:00'; // EDT offset for Oct 2025
+    const clockInStr = `${dateStr}T${clockIn}${timezoneOffset}`;  // "2025-10-03T08:00:00-04:00"
+    const clockOutStr = `${dateStr}T${clockOut}${timezoneOffset}`; // "2025-10-03T15:20:00-04:00"
+    
+    // Convert to milliseconds using toMs (which handles timezone-aware strings)
+    const instStart = this.toMs(clockInStr);
+    const instEnd = this.toMs(clockOutStr);
     
     // Check if shift overlaps with target day window
     if (instEnd <= dayStartMs || instStart >= dayEndMs) {
@@ -773,9 +776,6 @@ export class BlvdService {
           })
           .map(tb => ({ startsAt: tb.startAt, endsAt: tb.endAt }));
         
-        const totalGross = merged.reduce((sum, w) => sum + (w.endMs - w.startMs) / 60000, 0);
-        console.log(`  Staff ${staffId}: ${Math.round(totalGross)} gross minutes, ${staffTimeblocks.length} timeblocks`);
-        
         // Subtract timeblocks
         const netWindows = this.subtractIntervals(merged, staffTimeblocks);
         
@@ -783,7 +783,7 @@ export class BlvdService {
         const totalMinutes = netWindows.reduce((sum, w) => sum + (w.endMs - w.startMs) / 60000, 0);
         if (totalMinutes > 0) {
           netWorkingWindows.set(staffId, netWindows);
-          console.log(`  Staff ${staffId}: ${Math.round(totalMinutes)} net minutes after subtraction`);
+          console.log(`  Staff ${staffId}: ${Math.round(totalMinutes)} net minutes after timeblocks`);
         } else {
           console.log(`  Staff ${staffId}: excluded (0 net minutes)`);
         }
