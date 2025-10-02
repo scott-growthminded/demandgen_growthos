@@ -134,6 +134,94 @@ export class BlvdService {
     return ms + ((stepMs - ((ms - anchorMs) % stepMs)) % stepMs);
   }
 
+  private hmsFromISO(iso: string): { h: number; m: number; s: number } {
+    const d = new Date(iso);
+    return { h: d.getUTCHours(), m: d.getUTCMinutes(), s: d.getUTCSeconds() };
+  }
+
+  private weekdayUTC(ms: number): number {
+    return new Date(ms).getUTCDay();
+  }
+
+  private byWeekdayMatches(byWeekday: string[] | undefined, targetWkday: number): boolean {
+    if (!byWeekday || byWeekday.length === 0) return false;
+    const map: Record<string, number> = { SU:0, MO:1, TU:2, WE:3, TH:4, FR:5, SA:6 };
+    const set = new Set((byWeekday || []).map(x => map[String(x).slice(0,2).toUpperCase()]).filter(v => v!=null));
+    return set.has(targetWkday);
+  }
+
+  private expandShiftToDate(
+    shift: any, 
+    dayStartMs: number, 
+    dayEndMs: number
+  ): { startMs: number; endMs: number; staffId: string } | null {
+    // Boulevard shifts API format:
+    // - clockIn/clockOut: "HH:MM:SS" format (e.g., "08:00:00")
+    // - day: weekday number 0-6 (0=Sunday, 1=Monday, ..., 6=Saturday)
+    // - recurrence: "weekly" or null
+    // - recurrenceStart/End: date strings
+    
+    const clockIn = shift.clockIn;
+    const clockOut = shift.clockOut;
+    const recurrence = shift.recurrence;
+    const shiftDayOfWeek = shift.day; // 0-6 weekday number
+    const recurrenceStart = shift.recurrenceStart;
+    const recurrenceEnd = shift.recurrenceEnd;
+    
+    // Get target date weekday (0=Sunday, 1=Monday, ..., 6=Saturday)
+    const targetDate = new Date(dayStartMs);
+    const targetDow = targetDate.getUTCDay();
+    
+    // Check if this shift applies to the target weekday
+    if (typeof shiftDayOfWeek === 'number' && shiftDayOfWeek !== targetDow) {
+      return null;
+    }
+    
+    // For recurring shifts, check if target date falls within recurrence period
+    if (recurrence && recurrence.toLowerCase() === 'weekly') {
+      if (recurrenceStart) {
+        const startDate = new Date(recurrenceStart);
+        if (targetDate < startDate) {
+          return null; // Target is before recurrence starts
+        }
+      }
+      if (recurrenceEnd) {
+        const endDate = new Date(recurrenceEnd);
+        if (targetDate > endDate) {
+          return null; // Target is after recurrence ends
+        }
+      }
+    }
+    
+    // Build shift instance on target date using clockIn/clockOut times
+    const [sh, sm, ss] = clockIn.split(':').map(Number);
+    const [eh, em, es] = clockOut.split(':').map(Number);
+    
+    const instStart = Date.UTC(
+      targetDate.getUTCFullYear(),
+      targetDate.getUTCMonth(),
+      targetDate.getUTCDate(),
+      sh, sm, ss
+    );
+    const instEnd = Date.UTC(
+      targetDate.getUTCFullYear(),
+      targetDate.getUTCMonth(),
+      targetDate.getUTCDate(),
+      eh, em, es
+    );
+    
+    // Check if shift overlaps with target day window
+    if (instEnd <= dayStartMs || instStart >= dayEndMs) {
+      return null;
+    }
+    
+    return { 
+      startMs: Math.max(instStart, dayStartMs), 
+      endMs: Math.min(instEnd, dayEndMs),
+      staffId: shift.staffId
+    };
+  }
+
   private createBoulevardToken(): string {
     // Boulevard API authentication according to official docs
     const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -522,12 +610,16 @@ export class BlvdService {
     console.log(`⏱️ Querying timeblocks for ${locationId} from ${startDate} to ${endDate}`);
     
     // Based on Boulevard docs: timeblocks uses connection pattern with edges
-    // Supports query filters: staffId, startAt, cancelled
+    // The query parameter accepts a filter string like appointments
+    const startISO = new Date(startDate).toISOString();
+    const endISO = new Date(endDate).toISOString();
+    
     const timeblocksQuery = `
-      query Timeblocks($locationId: ID!, $startAt: DateTime!, $endAt: DateTime!) {
+      query Timeblocks($locationId: ID!, $query: String, $first: Int) {
         timeblocks(
           locationId: $locationId
-          first: 100
+          query: $query
+          first: $first
         ) {
           edges {
             node {
@@ -549,15 +641,17 @@ export class BlvdService {
       }
     `;
 
+    // Build query string for filtering by date range
+    let queryFilter = `cancelled = false AND startAt >= '${startISO}' AND startAt < '${endISO}'`;
+    if (staffId) {
+      queryFilter += ` AND staffId = '${staffId}'`;
+    }
+    
     const variables: any = {
       locationId,
-      startAt: new Date(startDate).toISOString(),
-      endAt: new Date(endDate).toISOString()
+      query: queryFilter,
+      first: 100
     };
-    
-    if (staffId) {
-      variables.staffId = staffId;
-    }
     
     console.log(`📤 Timeblocks query variables:`, JSON.stringify(variables, null, 2));
 
@@ -587,6 +681,7 @@ export class BlvdService {
 
   /**
    * Calculate hourly availability using CSV formula: Available = (Scheduled Minutes - Booked Minutes) / 40
+   * Now uses shift expansion logic to count only staff actually working on the target date
    */
   async calculateHourlyAvailability(
     locationId: string, 
@@ -601,7 +696,7 @@ export class BlvdService {
     }>;
     totalAvailable: number;
   }> {
-    console.log(`📊 Calculating hourly availability for ${date} using CSV formula`);
+    console.log(`📊 Calculating hourly availability for ${date} using CSV formula with shift expansion`);
     
     try {
       // Get staff shifts for the date
@@ -610,49 +705,112 @@ export class BlvdService {
       const endDate = new Date(date);
       endDate.setHours(23, 59, 59, 999);
       
+      const dayStartMs = startDate.getTime();
+      const dayEndMs = endDate.getTime();
+      
       const shifts = await this.getStaffShifts(locationId, startDate.toISOString(), endDate.toISOString());
+      const timeblocks = await this.getTimeblocks(locationId, startDate.toISOString(), endDate.toISOString());
       
       if (shifts.length === 0) {
-        console.log('⚠️ No shifts found for date');
+        console.log('⚠️ No shift templates found for date');
         return {
           hourlyBreakdown: [],
           totalAvailable: 0
         };
       }
       
-      console.log(`✅ Found ${shifts.length} shifts for the day`);
+      console.log(`📋 Found ${shifts.length} shift templates`);
       
-      // Business hours: 8 AM to 9 PM (13 hours)
+      // STEP 1: Expand recurring shifts to actual working windows for this specific date
+      const expandedShifts: Array<{ startMs: number; endMs: number; staffId: string }> = [];
+      
+      for (const shift of shifts) {
+        // Skip unavailable shifts
+        if (!shift.available) continue;
+        
+        const expanded = this.expandShiftToDate(shift, dayStartMs, dayEndMs);
+        if (expanded) {
+          expandedShifts.push(expanded);
+        }
+      }
+      
+      console.log(`✅ Expanded to ${expandedShifts.length} actual working shifts for ${date}`);
+      
+      if (expandedShifts.length === 0) {
+        console.log('⚠️ No staff actually working on this date after expansion');
+        return {
+          hourlyBreakdown: [],
+          totalAvailable: 0
+        };
+      }
+      
+      // STEP 2: Group shifts by staff and subtract timeblocks
+      const staffWorkingWindows = new Map<string, Array<{ startMs: number; endMs: number }>>();
+      
+      for (const shift of expandedShifts) {
+        if (!staffWorkingWindows.has(shift.staffId)) {
+          staffWorkingWindows.set(shift.staffId, []);
+        }
+        staffWorkingWindows.get(shift.staffId)!.push({ startMs: shift.startMs, endMs: shift.endMs });
+      }
+      
+      // Subtract timeblocks from each staff member's working windows
+      const netWorkingWindows = new Map<string, Array<{ startMs: number; endMs: number }>>();
+      
+      for (const [staffId, windows] of staffWorkingWindows.entries()) {
+        const merged = this.mergeIntervals(windows.map(w => ({ startMs: w.startMs, endMs: w.endMs })));
+        
+        // Get timeblocks for this staff
+        // Note: timeblocks staffId is in URN format (urn:blvd:Staff:...) while shifts use short ID
+        const staffTimeblocks = timeblocks
+          .filter(tb => {
+            const tbStaffId = tb.staffId.includes(':') ? tb.staffId.split(':').pop() : tb.staffId;
+            const matches = tbStaffId === staffId && !tb.cancelled;
+            if (matches) {
+              console.log(`    Matched timeblock for staff ${staffId}: ${tb.startAt} - ${tb.endAt}`);
+            }
+            return matches;
+          })
+          .map(tb => ({ startsAt: tb.startAt, endsAt: tb.endAt }));
+        
+        const totalGross = merged.reduce((sum, w) => sum + (w.endMs - w.startMs) / 60000, 0);
+        console.log(`  Staff ${staffId}: ${Math.round(totalGross)} gross minutes, ${staffTimeblocks.length} timeblocks`);
+        
+        // Subtract timeblocks
+        const netWindows = this.subtractIntervals(merged, staffTimeblocks);
+        
+        // Only include staff with net working time > 0
+        const totalMinutes = netWindows.reduce((sum, w) => sum + (w.endMs - w.startMs) / 60000, 0);
+        if (totalMinutes > 0) {
+          netWorkingWindows.set(staffId, netWindows);
+          console.log(`  Staff ${staffId}: ${Math.round(totalMinutes)} net minutes after subtraction`);
+        } else {
+          console.log(`  Staff ${staffId}: excluded (0 net minutes)`);
+        }
+      }
+      
+      console.log(`✅ ${netWorkingWindows.size} staff actually working with net time > 0`);
+      
+      // STEP 3: Calculate hourly breakdown using net working windows
       const hourlyBreakdown = [];
       let totalAvailable = 0;
       
       for (let hour = 8; hour <= 20; hour++) {
-        // Calculate total overlap minutes for all staff during this hour
-        // Each room can provide maximum 60 minutes of capacity per hour
+        // Calculate scheduled minutes from net working windows
         let scheduledMinutes = 0;
         
-        for (const shift of shifts) {
-          // Skip unavailable shifts
-          if (!shift.available) continue;
-          
-          // Parse shift times (format: "HH:MM:SS")
-          const [inHour, inMin] = shift.clockIn.split(':').map(Number);
-          const [outHour, outMin] = shift.clockOut.split(':').map(Number);
-          
-          const shiftStartMinutes = inHour * 60 + inMin;
-          const shiftEndMinutes = outHour * 60 + outMin;
-          
-          // Calculate overlap with current hour
-          const hourStartMinutes = hour * 60;
-          const hourEndMinutes = (hour + 1) * 60;
-          
-          const overlapStart = Math.max(shiftStartMinutes, hourStartMinutes);
-          const overlapEnd = Math.min(shiftEndMinutes, hourEndMinutes);
-          
-          // Add actual overlap minutes (max 60 per staff member per hour)
-          if (overlapEnd > overlapStart) {
-            const overlapMinutes = overlapEnd - overlapStart;
-            scheduledMinutes += Math.min(overlapMinutes, 60); // Cap at 60 min per room
+        const hourStartMs = dayStartMs + (hour - 0) * 3600000; // hour 8 = 8*3600000 ms from dayStart
+        const hourEndMs = hourStartMs + 3600000;
+        
+        for (const [staffId, windows] of netWorkingWindows.entries()) {
+          for (const window of windows) {
+            const overlapStart = Math.max(window.startMs, hourStartMs);
+            const overlapEnd = Math.min(window.endMs, hourEndMs);
+            
+            if (overlapEnd > overlapStart) {
+              const overlapMinutes = (overlapEnd - overlapStart) / 60000;
+              scheduledMinutes += Math.min(overlapMinutes, 60); // Cap at 60 min per staff per hour
+            }
           }
         }
         
