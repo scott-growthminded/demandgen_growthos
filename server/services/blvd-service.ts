@@ -1816,6 +1816,7 @@ export class BlvdService {
             locationName: location.name,
             availabilityPercent: Math.round(availabilityPercent * 100) / 100,
             totalAppointments: scheduleCapacity,
+            schedule: scheduleCapacity, // Add this field for frontend
             bookedAppointments: bookedCount,
             availableSlots: availableSlots,
             date: startDate.split('T')[0],
