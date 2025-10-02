@@ -780,30 +780,25 @@ export class BlvdService {
     console.log(`📊 Calculating hourly availability for ${date} using CSV formula with shift expansion`);
     
     try {
-      // Parse the date and compute day boundaries in location's local time (not UTC)
-      // This ensures shifts ending after 7:59 PM local aren't clipped
+      // Get staff shifts for the date
+      // Use explicit timezone-aware boundaries to avoid UTC clipping
       const year = parseInt(date.substring(0, 4));
       const month = parseInt(date.substring(5, 7));
       const day = parseInt(date.substring(8, 10));
       
-      // Get timezone offset for midnight local time (start of day)
+      // Build timezone-aware start (00:00 local) and end (23:59:59.999 local)
       const startOffset = this.getTimezoneOffsetForLocalTime(year, month, day, 0, 0, 0, 'America/New_York');
-      const startStr = `${date}T00:00:00${startOffset}`;
-      const dayStartMs = this.toMs(startStr);
+      const endOffset = this.getTimezoneOffsetForLocalTime(year, month, day, 23, 59, 59, 'America/New_York');
       
-      // Get timezone offset for midnight of next day (exclusive end)
-      const nextDay = new Date(year, month - 1, day + 1);
-      const nextYear = nextDay.getFullYear();
-      const nextMonth = nextDay.getMonth() + 1;
-      const nextDayNum = nextDay.getDate();
-      const nextDateStr = `${nextYear}-${String(nextMonth).padStart(2, '0')}-${String(nextDayNum).padStart(2, '0')}`;
-      const endOffset = this.getTimezoneOffsetForLocalTime(nextYear, nextMonth, nextDayNum, 0, 0, 0, 'America/New_York');
-      const endStr = `${nextDateStr}T00:00:00${endOffset}`;
+      const startStr = `${date}T00:00:00${startOffset}`;
+      const endStr = `${date}T23:59:59.999${endOffset}`;
+      
+      const dayStartMs = this.toMs(startStr);
       const dayEndMs = this.toMs(endStr);
       
-      // For API queries, use simple date strings (API handles timezone)
+      // For API queries, use Date objects
       const startDate = new Date(dayStartMs);
-      const endDate = new Date(dayEndMs - 1); // Subtract 1ms to stay within the day
+      const endDate = new Date(dayEndMs);
       
       const shifts = await this.getStaffShifts(locationId, startDate.toISOString(), endDate.toISOString());
       const timeblocks = await this.getTimeblocks(locationId, startDate.toISOString(), endDate.toISOString());
