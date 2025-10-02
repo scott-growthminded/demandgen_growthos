@@ -1,0 +1,358 @@
+/**
+ * Boulevard Admin GraphQL — Daily Roster (who’s actually working on DATE)
+ * Strategy:
+ *  - fetch shifts for the day
+ *  - expand recurring shifts onto the ONE target date
+ *  - subtract timeblocks (and optionally appointments)
+ *  - keep staff with net working time > 0
+ *
+ * No external deps. Node 18+ (global fetch).
+ */
+
+//////////////////// env ////////////////////
+const ENDPOINT = process.env.BLVD_ADMIN_ENDPOINT;
+const TOKEN    = process.env.BLVD_ADMIN_TOKEN;
+const SCHEME   = (process.env.BLVD_AUTH_SCHEME || "Basic").trim();
+const LOCATION = process.env.BLVD_LOCATION_ID;
+const FROM     = process.env.FROM_ISO; // UTC start of target day window
+const TO       = process.env.TO_ISO;   // UTC end of target day window
+const STAFF_ID = process.env.STAFF_ID || null;
+
+const INCLUDE_TIMEBLOCKS   = String(process.env.INCLUDE_TIMEBLOCKS ?? "1") === "1";
+const INCLUDE_APPOINTMENTS = String(process.env.INCLUDE_APPOINTMENTS ?? "0") === "1";
+const BLOCK_STATUSES = (process.env.BLOCK_STATUSES || "BOOKED,CONFIRMED,CHECKED_IN")
+  .split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+
+// Optional: if you want to also emit grid-aligned “bookable starts”:
+const SERVICE_DURATION_MIN = Number(process.env.SERVICE_DURATION_MIN || 0); // 0 = disabled
+const GRID_STEP_MIN = 15;
+
+if (!ENDPOINT || !TOKEN || !LOCATION || !FROM || !TO) {
+  console.error("Missing required env: BLVD_ADMIN_ENDPOINT, BLVD_ADMIN_TOKEN, BLVD_LOCATION_ID, FROM_ISO, TO_ISO");
+  process.exit(1);
+}
+
+const headers = {
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Authorization": SCHEME === "Basic"
+    ? `Basic ${Buffer.from(`${TOKEN}:`).toString("base64")}`
+    : `Bearer ${TOKEN}`,
+};
+
+//////////////////// gql helpers ////////////////////
+async function gql(query, variables = {}) {
+  const res = await fetch(ENDPOINT, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ query, variables }),
+  });
+  const json = await res.json();
+  if (!res.ok || json.errors) {
+    const msg = (json.errors || []).map(e => e.message).join(" | ") || res.statusText;
+    throw new Error(msg);
+  }
+  return json.data;
+}
+
+async function gatherConnection(query, pathKeys, variables, pageSize = 100) {
+  let after = null, all = [];
+  while (true) {
+    const data = await gql(query, { ...variables, first: pageSize, after });
+    let conn = data;
+    for (const k of pathKeys) conn = conn?.[k];
+    if (!conn) throw new Error("Connection path not found: " + pathKeys.join("."));
+    const { edges = [], pageInfo = {} } = conn;
+    all.push(...edges.map(e => e.node));
+    if (!pageInfo.hasNextPage) break;
+    after = pageInfo.endCursor;
+  }
+  return all;
+}
+
+//////////////////// queries ////////////////////
+const STAFF_QUERY = `
+  query Staff($locationId: ID!, $first: Int!, $after: String) {
+    staff(locationId: $locationId, first: $first, after: $after) {
+      edges { node { id firstName lastName } }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+const SHIFTS_QUERY = `
+  query Shifts($locationId: ID!, $staffId: ID, $from: DateTime!, $to: DateTime!, $first: Int!, $after: String) {
+    shifts(
+      locationId: $locationId,
+      staffId: $staffId,
+      startsAt_GTE: $from,
+      endsAt_LTE: $to,
+      first: $first,
+      after: $after
+    ) {
+      edges {
+        node {
+          id
+          startsAt
+          endsAt
+          # If exposed, recurrence describes the template rule (e.g., WEEKLY).
+          recurrence { frequency interval byWeekday }
+          staff { id firstName lastName }
+        }
+      }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+const TIMEBLOCKS_QUERY_PLURAL = `
+  query Timeblocks($locationId: ID!, $staffId: ID, $from: DateTime!, $to: DateTime!, $first: Int!, $after: String) {
+    timeblocks(locationId: $locationId, staffId: $staffId, startsAt_GTE: $from, endsAt_LTE: $to, first: $first, after: $after) {
+      edges { node { id startsAt endsAt reason } }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+const TIMEBLOCKS_QUERY_SINGULAR = `
+  query Timeblock($locationId: ID!, $staffId: ID, $from: DateTime!, $to: DateTime!, $first: Int!, $after: String) {
+    timeblock(locationId: $locationId, staffId: $staffId, startsAt_GTE: $from, endsAt_LTE: $to, first: $first, after: $after) {
+      edges { node { id startsAt endsAt reason } }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+const APPTS_QUERY = `
+  query Appts($locationId: ID!, $staffId: ID, $from: DateTime!, $to: DateTime!, $first: Int!, $after: String) {
+    appointments(locationId: $locationId, staffId: $staffId, startsAt_GTE: $from, endsAt_LTE: $to, first: $first, after: $after) {
+      edges { node { id startsAt endsAt status } }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+//////////////////// time utils ////////////////////
+const toMs = (iso) => new Date(iso).getTime();
+const fromMs = (ms) => new Date(ms).toISOString();
+
+function mergeIntervals(list) {
+  const sorted = list
+    .map(iv => {
+      const startMs = toMs(iv.startsAt ?? iv.start ?? iv.startMs);
+      const endMs   = toMs(iv.endsAt   ?? iv.end   ?? iv.endMs);
+      return { startMs, endMs };
+    })
+    .filter(iv => Number.isFinite(iv.startMs) && Number.isFinite(iv.endMs) && iv.endMs > iv.startMs)
+    .sort((a,b) => a.startMs - b.startMs);
+
+  const out = [];
+  for (const iv of sorted) {
+    if (!out.length || iv.startMs > out[out.length-1].endMs) {
+      out.push({ ...iv });
+    } else {
+      out[out.length-1].endMs = Math.max(out[out.length-1].endMs, iv.endMs);
+    }
+  }
+  return out;
+}
+
+function subtractIntervals(working, blocks) {
+  let result = working.map(x => ({ startMs: x.startMs, endMs: x.endMs }));
+  const B = mergeIntervals(blocks);
+  for (const b of B) {
+    const next = [];
+    for (const a of result) {
+      if (b.endMs <= a.startMs || b.startMs >= a.endMs) { next.push(a); continue; }
+      if (b.startMs > a.startMs) next.push({ startMs: a.startMs, endMs: Math.min(b.startMs, a.endMs) });
+      if (b.endMs < a.endMs)     next.push({ startMs: Math.max(b.endMs, a.startMs), endMs: a.endMs });
+    }
+    result = next;
+  }
+  return result;
+}
+
+//////////////////// recurrence → single-day expansion ////////////////////
+// We only care about whether a shift applies on THE target date. We’ll expand
+// recurring WEEKLY shifts to an instance on that date, keeping original time-of-day.
+
+function hmsFromISO(iso) {
+  const d = new Date(iso);
+  return { h: d.getUTCHours(), m: d.getUTCMinutes(), s: d.getUTCSeconds() };
+}
+
+function sameDayUTC(msA, msB) {
+  const a = new Date(msA), b = new Date(msB);
+  return a.getUTCFullYear() === b.getUTCFullYear()
+      && a.getUTCMonth() === b.getUTCMonth()
+      && a.getUTCDate() === b.getUTCDate();
+}
+
+function weekdayUTC(ms) {
+  // 0=Sun ... 6=Sat in UTC
+  return new Date(ms).getUTCDay();
+}
+
+function byWeekdayMatches(byWeekday, targetWkday) {
+  // byWeekday usually like ["MO","TU",...]; we’ll map to 0..6
+  const map = { SU:0, MO:1, TU:2, WE:3, TH:4, FR:5, SA:6 };
+  const set = new Set((byWeekday || []).map(x => map[String(x).slice(0,2).toUpperCase()]).filter(v => v!=null));
+  return set.has(targetWkday);
+}
+
+function expandShiftToDate(node, dayStartMs, dayEndMs) {
+  const startMs = toMs(node.startsAt);
+  const endMs   = toMs(node.endsAt);
+
+  // If non-recurring: include only if it overlaps [dayStart, dayEnd)
+  if (!node.recurrence) {
+    const overlaps = endMs > dayStartMs && startMs < dayEndMs;
+    if (!overlaps) return null;
+    // Clamp to the day
+    return { startMs: Math.max(startMs, dayStartMs), endMs: Math.min(endMs, dayEndMs) };
+  }
+
+  // Recurring (assume WEEKLY rule with byWeekday)
+  const { frequency, byWeekday } = node.recurrence || {};
+  if ((frequency || "").toUpperCase() !== "WEEKLY") {
+    // For other frequencies, fallback to “same weekday/time” heuristic:
+    // treat it as weekly match on the target day.
+  }
+  const targetDow = weekdayUTC(dayStartMs);
+  if (!byWeekdayMatches(byWeekday, targetDow)) return null;
+
+  // Build an instance on the target date, reusing time-of-day from original startsAt/endsAt
+  const { h: sh, m: sm, s: ss } = hmsFromISO(node.startsAt);
+  const { h: eh, m: em, s: es } = hmsFromISO(node.endsAt);
+
+  const instStart = Date.UTC(new Date(dayStartMs).getUTCFullYear(), new Date(dayStartMs).getUTCMonth(), new Date(dayStartMs).getUTCDate(), sh, sm, ss);
+  const instEnd   = Date.UTC(new Date(dayStartMs).getUTCFullYear(), new Date(dayStartMs).getUTCMonth(), new Date(dayStartMs).getUTCDate(), eh, em, es);
+
+  if (instEnd <= dayStartMs || instStart >= dayEndMs) return null;
+  return { startMs: Math.max(instStart, dayStartMs), endMs: Math.min(instEnd, dayEndMs) };
+}
+
+//////////////////// optional: slot grid ////////////////////
+const ceilToStep = (ms, stepMs, anchorMs = 0) => ms + ((stepMs - ((ms - anchorMs) % stepMs)) % stepMs);
+
+function computeStartsFromWindows(windows, durationMin, stepMin = 15) {
+  if (!durationMin) return [];
+  const serviceMs = durationMin * 60_000;
+  const stepMs = stepMin * 60_000;
+  const out = [];
+  for (const w of windows) {
+    const latest = w.endMs - serviceMs;
+    let t = ceilToStep(w.startMs, stepMs, 0);
+    for (; t <= latest; t += stepMs) out.push(fromMs(t));
+  }
+  return out;
+}
+
+function isBlockingAppointment(appt) {
+  return BLOCK_STATUSES.includes(String(appt.status || "").toUpperCase());
+}
+
+//////////////////// main ////////////////////
+(async () => {
+  try {
+    const dayStartMs = toMs(FROM);
+    const dayEndMs   = toMs(TO);
+
+    // Fetch staff (or respect STAFF_ID)
+    let staffList = [];
+    if (STAFF_ID) {
+      staffList = [{ id: STAFF_ID, firstName: "", lastName: "" }];
+    } else {
+      staffList = await gatherConnection(STAFF_QUERY, ["staff"], { locationId: LOCATION }, 100);
+    }
+
+    const roster = [];
+
+    for (const s of staffList) {
+      const staffId = s.id;
+
+      // 1) Shifts for this day (server filters by the range; we expand recurrences to the date)
+      const shiftNodes = await gatherConnection(
+        SHIFTS_QUERY, ["shifts"],
+        { locationId: LOCATION, staffId, from: FROM, to: TO }, 100
+      );
+
+      // Expand to the target date only
+      const expanded = [];
+      for (const n of shiftNodes) {
+        const inst = expandShiftToDate(n, dayStartMs, dayEndMs);
+        if (inst) expanded.push(inst);
+      }
+      const working = mergeIntervals(expanded);
+
+      // 2) Timeblocks for the date (optional)
+      let timeblocks = [];
+      if (INCLUDE_TIMEBLOCKS) {
+        try {
+          const tbPlural = await gatherConnection(
+            TIMEBLOCKS_QUERY_PLURAL, ["timeblocks"],
+            { locationId: LOCATION, staffId, from: FROM, to: TO }, 100
+          );
+          timeblocks = tbPlural.map(n => ({ startsAt: n.startsAt, endsAt: n.endsAt }));
+        } catch {
+          const tbSing = await gatherConnection(
+            TIMEBLOCKS_QUERY_SINGULAR, ["timeblock"],
+            { locationId: LOCATION, staffId, from: FROM, to: TO }, 100
+          );
+          timeblocks = tbSing.map(n => ({ startsAt: n.startsAt, endsAt: n.endsAt }));
+        }
+      }
+
+      // 3) Appointments (optional, if you want net capacity)
+      let appts = [];
+      if (INCLUDE_APPOINTMENTS) {
+        const nodes = await gatherConnection(
+          APPTS_QUERY, ["appointments"],
+          { locationId: LOCATION, staffId, from: FROM, to: TO }, 100
+        );
+        appts = nodes
+          .filter(n => isBlockingAppointment(n))
+          .map(n => ({ startsAt: n.startsAt, endsAt: n.endsAt }));
+      }
+
+      // 4) Net working windows
+      const blocks = mergeIntervals([...timeblocks, ...appts]);
+      const freeWindows = subtractIntervals(working, blocks);
+
+      // Consider “scheduled that day” iff ANY net time remains
+      const netMs = freeWindows.reduce((sum, w) => sum + (w.endMs - w.startMs), 0);
+
+      // Optionally emit starts for a duration (off by default)
+      const starts = SERVICE_DURATION_MIN
+        ? computeStartsFromWindows(freeWindows, SERVICE_DURATION_MIN, GRID_STEP_MIN)
+        : [];
+
+      roster.push({
+        staffId,
+        name: [s.firstName, s.lastName].filter(Boolean).join(" "),
+        hadRawShifts: working.length > 0,
+        netMinutes: Math.round(netMs / 60000),
+        windows: freeWindows.map(w => ({ start: fromMs(w.startMs), end: fromMs(w.endMs) })),
+        starts
+      });
+    }
+
+    // Keep only staff with actual net minutes > 0 (i.e., truly scheduled/available that day)
+    const scheduled = roster.filter(r => r.netMinutes > 0);
+
+    console.log(JSON.stringify({
+      locationId: LOCATION,
+      dateWindow: { from: FROM, to: TO },
+      include: { timeblocks: INCLUDE_TIMEBLOCKS, appointments: INCLUDE_APPOINTMENTS },
+      blockingStatuses: BLOCK_STATUSES,
+      results: {
+        scheduled,                 // === your daily roster
+        allStaffEvaluated: roster  // includes people who net to 0 (for debugging)
+      }
+    }, null, 2));
+  } catch (err) {
+    console.error("Error:", err.message);
+    console.error("\nIf your schema’s field names differ, run this to list available query roots:\n");
+    console.error("query { __schema { queryType { fields { name } } } }");
+  }
+})();
