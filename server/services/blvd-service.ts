@@ -787,13 +787,13 @@ export class BlvdService {
       const month = parseInt(date.substring(5, 7));
       const day = parseInt(date.substring(8, 10));
       
-      // Get timezone offsets for start (00:00) and end (23:59:59) of day
-      const startOffset = this.getTimezoneOffsetForLocalTime(year, month, day, 0, 0, 0, 'America/New_York');
-      const endOffset = this.getTimezoneOffsetForLocalTime(year, month, day, 23, 59, 59, 'America/New_York');
+      // Get timezone offset at 8 AM (always exists, DST transitions at 2 AM)
+      // Use same offset for all times on this day since DST doesn't change during business hours
+      const dayOffset = this.getTimezoneOffsetForLocalTime(year, month, day, 8, 0, 0, 'America/New_York');
       
-      // Build timezone-aware boundaries
-      const startStr = `${date}T00:00:00${startOffset}`;
-      const endStr = `${date}T23:59:59.999${endOffset}`;
+      // Build timezone-aware boundaries using the 8 AM offset
+      const startStr = `${date}T00:00:00${dayOffset}`;
+      const endStr = `${date}T23:59:59.999${dayOffset}`;
       
       const dayStartMs = this.toMs(startStr);
       const dayEndMs = this.toMs(endStr);
@@ -887,8 +887,7 @@ export class BlvdService {
       
       console.log('\n🔍 ========== DETAILED AVAILABILITY BREAKDOWN ==========');
       
-      // Get timezone offset once (all hours on same day have same offset, DST transitions at 2 AM)
-      const dayOffset = this.getTimezoneOffsetForLocalTime(year, month, day, 8, 0, 0, 'America/New_York');
+      // dayOffset already calculated above (using 8 AM to avoid DST edge cases at midnight)
       
       for (let hour = 8; hour <= 20; hour++) {
         console.log(`\n📊 HOUR ${hour}:00-${hour+1}:00 CALCULATION:`);
