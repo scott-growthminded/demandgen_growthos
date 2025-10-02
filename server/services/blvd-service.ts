@@ -147,6 +147,81 @@ export class BlvdService {
     return set.has(targetWkday);
   }
 
+  /**
+   * Get timezone offset string for converting a local time to UTC
+   * Handles DST transitions by probing candidate UTC instants
+   */
+  private getTimezoneOffsetForLocalTime(
+    year: number, 
+    month: number,  // 1-12
+    day: number,
+    hour: number,
+    minute: number,
+    second: number,
+    timezone: string
+  ): string {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    
+    // Test function to check if a UTC instant matches the desired local time
+    const testUtcInstant = (utcMs: number): boolean => {
+      const parts = formatter.formatToParts(new Date(utcMs));
+      const localYear = parseInt(parts.find(p => p.type === 'year')!.value);
+      const localMonth = parseInt(parts.find(p => p.type === 'month')!.value);
+      const localDay = parseInt(parts.find(p => p.type === 'day')!.value);
+      const localHour = parseInt(parts.find(p => p.type === 'hour')!.value);
+      const localMinute = parseInt(parts.find(p => p.type === 'minute')!.value);
+      const localSecond = parseInt(parts.find(p => p.type === 'second')!.value);
+      
+      return localYear === year && localMonth === month && localDay === day &&
+             localHour === hour && localMinute === minute && localSecond === second;
+    };
+    
+    // Build local datetime string
+    const localStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+    const localAsUtcMs = new Date(localStr + 'Z').getTime();
+    
+    // Probe candidate UTC instants systematically covering all IANA timezone offsets
+    // Sweep total minutes from UTC-14:00 (-840 min) to UTC+14:00 (+840 min) in 15-minute steps
+    // This correctly handles all fractional offsets including negative ones:
+    // Examples: -03:30 Newfoundland, +05:45 Nepal, +12:45 Chatham Islands
+    const candidateOffsets: number[] = [];
+    for (let totalMinutes = -840; totalMinutes <= 840; totalMinutes += 15) {
+      // For timezone offset like "-04:00": local = UTC - 04:00, so UTC = local + 04:00
+      // We negate totalMinutes because: if tz offset is -4hr (-240min), we add +240min to local to get UTC
+      candidateOffsets.push(-totalMinutes * 60000);
+    }
+    
+    for (const offsetMs of candidateOffsets) {
+      const candidateUtcMs = localAsUtcMs + offsetMs;
+      if (testUtcInstant(candidateUtcMs)) {
+        // Found matching instant - calculate and return offset
+        // The offset string represents "local = UTC + offset", so offset = local - UTC
+        // But we have: UTC = local + offsetMs, so local = UTC - offsetMs
+        // Therefore: offset = -offsetMs
+        const actualOffsetMs = -offsetMs;
+        const sign = actualOffsetMs >= 0 ? '+' : '-';
+        const absOffsetMs = Math.abs(actualOffsetMs);
+        const offsetHours = Math.trunc(absOffsetMs / 3600000);
+        const offsetMinutes = Math.trunc((absOffsetMs % 3600000) / 60000);
+        
+        return `${sign}${String(offsetHours).padStart(2, '0')}:${String(offsetMinutes).padStart(2, '0')}`;
+      }
+    }
+    
+    // If no exact match found (e.g., spring-forward gap where local time doesn't exist),
+    // throw an error so caller can handle it explicitly
+    throw new Error(`Cannot resolve local time ${localStr} in timezone ${timezone} - time may not exist (spring-forward gap)`);
+  }
+
   private expandShiftToDate(
     shift: any, 
     dayStartMs: number, 
@@ -196,18 +271,19 @@ export class BlvdService {
     const [sh, sm, ss] = clockIn.split(':').map(Number);
     const [eh, em, es] = clockOut.split(':').map(Number);
     
-    // Get YYYY-MM-DD string for target date
+    // Get date components for target date
     const year = targetDate.getUTCFullYear();
-    const month = String(targetDate.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(targetDate.getUTCDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
+    const month = targetDate.getUTCMonth() + 1; // JavaScript months are 0-indexed
+    const day = targetDate.getUTCDate();
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     
-    // Create ISO strings with timezone offset (for EDT/Eastern: -04:00 in summer, -05:00 in winter)
-    // For simplicity, use -04:00 for Oct 3, 2025 (this is EDT season)
-    // TODO: Calculate actual timezone offset dynamically for any date
-    const timezoneOffset = '-04:00'; // EDT offset for Oct 2025
-    const clockInStr = `${dateStr}T${clockIn}${timezoneOffset}`;  // "2025-10-03T08:00:00-04:00"
-    const clockOutStr = `${dateStr}T${clockOut}${timezoneOffset}`; // "2025-10-03T15:20:00-04:00"
+    // Calculate timezone offset for each specific timestamp using iterative approach
+    // This correctly handles DST transitions and ambiguous times
+    const clockInOffset = this.getTimezoneOffsetForLocalTime(year, month, day, sh, sm, ss, locationTimezone);
+    const clockOutOffset = this.getTimezoneOffsetForLocalTime(year, month, day, eh, em, es, locationTimezone);
+    
+    const clockInStr = `${dateStr}T${clockIn}${clockInOffset}`;  // "2025-10-03T08:00:00-04:00"
+    const clockOutStr = `${dateStr}T${clockOut}${clockOutOffset}`; // "2025-10-03T15:20:00-04:00"
     
     // Convert to milliseconds using toMs (which handles timezone-aware strings)
     const instStart = this.toMs(clockInStr);
@@ -731,7 +807,8 @@ export class BlvdService {
         // Skip unavailable shifts
         if (!shift.available) continue;
         
-        const expanded = this.expandShiftToDate(shift, dayStartMs, dayEndMs);
+        // All locations use America/New_York timezone
+        const expanded = this.expandShiftToDate(shift, dayStartMs, dayEndMs, 'America/New_York');
         if (expanded) {
           expandedShifts.push(expanded);
         }
@@ -768,11 +845,7 @@ export class BlvdService {
         const staffTimeblocks = timeblocks
           .filter(tb => {
             const tbStaffId = tb.staffId.includes(':') ? tb.staffId.split(':').pop() : tb.staffId;
-            const matches = tbStaffId === staffId && !tb.cancelled;
-            if (matches) {
-              console.log(`    Matched timeblock for staff ${staffId}: ${tb.startAt} - ${tb.endAt}`);
-            }
-            return matches;
+            return tbStaffId === staffId && !tb.cancelled;
           })
           .map(tb => ({ startsAt: tb.startAt, endsAt: tb.endAt }));
         
@@ -799,7 +872,18 @@ export class BlvdService {
         // Calculate scheduled minutes from net working windows
         let scheduledMinutes = 0;
         
-        const hourStartMs = dayStartMs + (hour - 0) * 3600000; // hour 8 = 8*3600000 ms from dayStart
+        // Calculate timezone offset for this specific hour to handle DST transitions
+        const year = new Date(dayStartMs).getUTCFullYear();
+        const month = new Date(dayStartMs).getUTCMonth() + 1;
+        const day = new Date(dayStartMs).getUTCDate();
+        
+        // Get offset for this specific hour using iterative approach
+        const hourOffsetStr = this.getTimezoneOffsetForLocalTime(year, month, day, hour, 0, 0, 'America/New_York');
+        const offsetHours = parseInt(hourOffsetStr.slice(0, 3));
+        const timezoneOffsetMs = Math.abs(offsetHours) * 3600000;
+        
+        // Align hourly buckets with location timezone
+        const hourStartMs = dayStartMs + timezoneOffsetMs + (hour * 3600000);
         const hourEndMs = hourStartMs + 3600000;
         
         for (const [staffId, windows] of netWorkingWindows.entries()) {
