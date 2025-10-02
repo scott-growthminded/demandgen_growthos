@@ -752,12 +752,18 @@ export class BlvdService {
         console.log(`🔍 Sample timeblock:`, JSON.stringify(timeblocks[0], null, 2));
       }
       
-      // DEBUGGING: Log ALL timeblocks for Upper East Side
+      // DEBUGGING: Log ALL timeblocks for Upper East Side with full details
       if (locationId.includes('215b817e-8633-4edb-b5e5-e290d999eeb6')) {
-        console.log('🔎 DEBUGGING UPPER EAST SIDE TIMEBLOCKS:');
-        timeblocks.forEach((tb, i) => {
-          console.log(`  ${i+1}. ${tb.startAt} to ${tb.endAt} (${tb.duration}min) - ${tb.reason} - ${tb.title} - Staff: ${tb.staffId}`);
+        console.log('🔎 ========== UPPER EAST SIDE TIMEBLOCKS DEBUG ==========');
+        console.log(`🔎 Total timeblocks found: ${timeblocks.length}`);
+        timeblocks.forEach((tb: any, i: number) => {
+          console.log(`🔎 ${i+1}. ${tb.title || 'No title'}`);
+          console.log(`   Start: ${tb.startAt} | End: ${tb.endAt} | Duration: ${tb.duration}min`);
+          console.log(`   Reason: ${tb.reason} | Cancelled: ${tb.cancelled}`);
+          console.log(`   Staff ID: ${tb.staffId}`);
+          console.log(`   Full timeblock: ${JSON.stringify(tb, null, 2)}`);
         });
+        console.log('🔎 ========== END UPPER EAST SIDE TIMEBLOCKS DEBUG ==========');
       }
       
       return timeblocks;
