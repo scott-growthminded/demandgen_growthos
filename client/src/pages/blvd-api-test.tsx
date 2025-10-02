@@ -175,7 +175,7 @@ export default function BlvdApiTest() {
                             {location.locationName}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-schedule-${index}`}>
-                            {location.schedule || 0}
+                            {Math.round(location.schedule || 0)}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-booked-${index}`}>
                             {location.bookedAppointments}
@@ -184,7 +184,7 @@ export default function BlvdApiTest() {
                             {location.availableTimeSlots?.length || 0}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-availability-${index}`}>
-                            {location.availabilityPercent.toFixed(1)}%
+                            {Math.round(location.availabilityPercent)}%
                           </td>
                           <td className="p-2 text-center">
                             <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
@@ -214,7 +214,7 @@ export default function BlvdApiTest() {
                   <div className="p-6 border-b">
                     <h3 className="text-lg font-semibold mb-2" data-testid="detail-location-name">{selectedLocation.locationName}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {selectedLocation.schedule || 0} total schedule • {selectedLocation.bookedAppointments} booked • {selectedLocation.availableTimeSlots?.length || 0} available openings
+                      {Math.round(selectedLocation.schedule || 0)} total schedule • {selectedLocation.bookedAppointments} booked • {selectedLocation.availableTimeSlots?.length || 0} available openings
                     </p>
                   </div>
                   <div className="p-6">
