@@ -181,7 +181,7 @@ export default function BlvdApiTest() {
                             {location.bookedAppointments}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-available-${index}`}>
-                            {location.availableTimeSlots?.length || 0}
+                            {Math.max(0, Math.round(location.schedule || 0) - (location.bookedAppointments || 0))}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-availability-${index}`}>
                             {Math.round(location.availabilityPercent)}%
@@ -214,7 +214,7 @@ export default function BlvdApiTest() {
                   <div className="p-6 border-b">
                     <h3 className="text-lg font-semibold mb-2" data-testid="detail-location-name">{selectedLocation.locationName}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {Math.round(selectedLocation.schedule || 0)} total schedule • {selectedLocation.bookedAppointments} booked • {selectedLocation.availableTimeSlots?.length || 0} available openings
+                      {Math.round(selectedLocation.schedule || 0)} total schedule • {selectedLocation.bookedAppointments} booked • {Math.max(0, Math.round(selectedLocation.schedule || 0) - (selectedLocation.bookedAppointments || 0))} available openings
                     </p>
                   </div>
                   <div className="p-6">
