@@ -881,19 +881,21 @@ export class BlvdService {
         let scheduledMinutes = 0;
         const staffContributions: Array<{staffId: string, minutes: number}> = [];
         
-        // Calculate timezone offset for this specific hour to handle DST transitions
-        const year = new Date(dayStartMs).getUTCFullYear();
-        const month = new Date(dayStartMs).getUTCMonth() + 1;
-        const day = new Date(dayStartMs).getUTCDate();
+        // Calculate hour boundaries in location's local time
+        // Parse the date in the location's timezone directly
+        const hourStart = `${date}T${String(hour).padStart(2, '0')}:00:00`;
+        const hourEnd = `${date}T${String(hour + 1).padStart(2, '0')}:00:00`;
         
-        // Get offset for this specific hour using iterative approach
-        const hourOffsetStr = this.getTimezoneOffsetForLocalTime(year, month, day, hour, 0, 0, 'America/New_York');
-        const offsetHours = parseInt(hourOffsetStr.slice(0, 3));
-        const timezoneOffsetMs = Math.abs(offsetHours) * 3600000;
+        // Get timezone offset for these specific times
+        const year = new Date(date).getUTCFullYear();
+        const month = new Date(date).getUTCMonth() + 1;
+        const day = new Date(date).getUTCDate();
         
-        // Align hourly buckets with location timezone
-        const hourStartMs = dayStartMs + timezoneOffsetMs + (hour * 3600000);
-        const hourEndMs = hourStartMs + 3600000;
+        const startOffset = this.getTimezoneOffsetForLocalTime(year, month, day, hour, 0, 0, 'America/New_York');
+        const endOffset = this.getTimezoneOffsetForLocalTime(year, month, day, hour + 1, 0, 0, 'America/New_York');
+        
+        const hourStartMs = this.toMs(`${hourStart}${startOffset}`);
+        const hourEndMs = this.toMs(`${hourEnd}${endOffset}`);
         
         for (const [staffId, windows] of netWorkingWindows.entries()) {
           let staffMinutesThisHour = 0;

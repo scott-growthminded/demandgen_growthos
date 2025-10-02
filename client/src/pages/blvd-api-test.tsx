@@ -175,7 +175,7 @@ export default function BlvdApiTest() {
                             {location.locationName}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-schedule-${index}`}>
-                            {Math.round(location.schedule || 0)}
+                            {(location.schedule || 0).toFixed(1)}
                           </td>
                           <td className="p-2 text-right" data-testid={`text-booked-${index}`}>
                             {location.bookedAppointments}
@@ -214,7 +214,7 @@ export default function BlvdApiTest() {
                   <div className="p-6 border-b">
                     <h3 className="text-lg font-semibold mb-2" data-testid="detail-location-name">{selectedLocation.locationName}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {Math.round(selectedLocation.schedule || 0)} total schedule • {selectedLocation.bookedAppointments} booked • {Math.max(0, Math.round(selectedLocation.schedule || 0) - (selectedLocation.bookedAppointments || 0))} available openings
+                      {(selectedLocation.schedule || 0).toFixed(1)} total schedule • {selectedLocation.bookedAppointments} booked • {Math.max(0, (selectedLocation.schedule || 0) - (selectedLocation.bookedAppointments || 0)).toFixed(1)} available openings
                     </p>
                   </div>
                   <div className="p-6">
