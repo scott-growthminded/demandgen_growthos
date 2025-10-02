@@ -721,9 +721,9 @@ export class BlvdService {
     `;
 
     // Build query string for filtering by date range
-    // NOTE: We filter ONLY by date and cancelled status - we want ALL timeblocks regardless of reason
-    // This includes PERSONAL, BUSINESS, SICK, CALLOUT, and any other types
-    let queryFilter = `cancelled = false AND startAt >= '${startISO}' AND startAt < '${endISO}'`;
+    // TEMPORARY DEBUG: Remove cancelled filter to see if callouts are marked as cancelled
+    // let queryFilter = `cancelled = false AND startAt >= '${startISO}' AND startAt < '${endISO}'`;
+    let queryFilter = `startAt >= '${startISO}' AND startAt < '${endISO}'`;
     if (staffId) {
       queryFilter += ` AND staffId = '${staffId}'`;
     }
