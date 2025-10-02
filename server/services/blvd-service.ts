@@ -896,19 +896,23 @@ export class BlvdService {
         
         for (const [staffId, windows] of netWorkingWindows.entries()) {
           let staffMinutesThisHour = 0;
+          
+          // Sum all window overlaps for this staff member in this hour
           for (const window of windows) {
             const overlapStart = Math.max(window.startMs, hourStartMs);
             const overlapEnd = Math.min(window.endMs, hourEndMs);
             
             if (overlapEnd > overlapStart) {
               const overlapMinutes = (overlapEnd - overlapStart) / 60000;
-              const cappedMinutes = Math.min(overlapMinutes, 60); // Cap at 60 min per staff per hour
-              staffMinutesThisHour += cappedMinutes;
-              scheduledMinutes += cappedMinutes;
+              staffMinutesThisHour += overlapMinutes;
             }
           }
+          
+          // Cap each staff member's contribution at 60 minutes per hour
           if (staffMinutesThisHour > 0) {
-            staffContributions.push({staffId: staffId.substring(0, 8), minutes: Math.round(staffMinutesThisHour)});
+            const cappedStaffMinutes = Math.min(staffMinutesThisHour, 60);
+            scheduledMinutes += cappedStaffMinutes;
+            staffContributions.push({staffId: staffId.substring(0, 8), minutes: Math.round(cappedStaffMinutes)});
           }
         }
         
