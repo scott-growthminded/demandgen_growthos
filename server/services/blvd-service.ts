@@ -1852,16 +1852,12 @@ export class BlvdService {
           const locationTimeZone = this.inferLocationTimeZone(location.name, location.address);
           const availableTimeSlots = this.generateAvailableTimeSlots(timeSlots, businessHours, startDate, locationTimeZone);
           
-          // Calculate schedule capacity based on ACTUAL staff shifts using CSV formula
-          const scheduleCapacity = await this.calculateScheduleCapacity(
-            location.id,
-            startDate,
-            endDate,
-            bookedAppointments
-          );
+          // Calculate schedule capacity AND available slots based on ACTUAL staff shifts using CSV formula
+          const date = startDate.split('T')[0];
+          const hourlyResult = await this.calculateHourlyAvailability(location.id, date, bookedAppointments);
           
-          // Calculate available slots from schedule capacity (capacity includes booked + available)
-          const availableSlots = Math.max(0, scheduleCapacity - bookedCount);
+          const scheduleCapacity = hourlyResult.totalScheduledMinutes / 40;
+          const availableSlots = hourlyResult.totalAvailable;
           const availabilityPercent = scheduleCapacity > 0 ? (availableSlots / scheduleCapacity) * 100 : 0;
           
           // Create service-specific booking URL (placeholder for now)
