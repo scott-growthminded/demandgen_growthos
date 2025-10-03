@@ -250,19 +250,25 @@ export class BlvdService {
       return null;
     }
     
-    // For recurring shifts, check if target date falls within recurrence period
-    if (recurrence && recurrence.toLowerCase() === 'weekly') {
-      if (recurrenceStart) {
-        const startDate = new Date(recurrenceStart);
-        if (targetDate < startDate) {
-          return null; // Target is before recurrence starts
-        }
+    // Check if target date falls within recurrence period (for BOTH recurring and non-recurring shifts)
+    // Non-recurring shifts have recurrence=null but still use recurrenceStart/End to define their date range
+    // Extract target date string in YYYY-MM-DD format for comparison
+    const targetYear = targetDate.getUTCFullYear();
+    const targetMonth = targetDate.getUTCMonth() + 1;
+    const targetDay = targetDate.getUTCDate();
+    const targetDateStr = `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
+    
+    if (recurrenceStart) {
+      // Compare date strings directly (both in YYYY-MM-DD format)
+      if (targetDateStr < recurrenceStart) {
+        return null; // Target is before recurrence starts
       }
-      if (recurrenceEnd) {
-        const endDate = new Date(recurrenceEnd);
-        if (targetDate > endDate) {
-          return null; // Target is after recurrence ends
-        }
+    }
+    
+    if (recurrenceEnd) {
+      // Compare date strings directly (both in YYYY-MM-DD format)
+      if (targetDateStr > recurrenceEnd) {
+        return null; // Target is after recurrence ends
       }
     }
     
