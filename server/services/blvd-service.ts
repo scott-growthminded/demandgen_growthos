@@ -448,6 +448,127 @@ export class BlvdService {
     }
   }
 
+  /**
+   * Test alternative API resources that might contain callout data
+   * Explores: staff availabilities, attendance records, alternative timeblock queries
+   */
+  async testCalloutDataSources(locationId: string, startDate: string, endDate: string): Promise<any> {
+    console.log('🔬 TESTING ALTERNATIVE DATA SOURCES FOR CALLOUTS...');
+    const results: any = {};
+    
+    // Test 1: Try timeblocks with different reason filters
+    console.log('\n📋 Test 1: Timeblocks with explicit REASON filters');
+    try {
+      const reasons = ['SICK', 'CALLOUT', 'ABSENCE', 'UNAVAILABLE', 'PERSONAL', 'OTHER'];
+      for (const reason of reasons) {
+        const query = `
+          query GetTimeblocksByReason($locationId: ID!, $query: String, $first: Int!) {
+            timeblocks(locationId: $locationId, query: $query, first: $first) {
+              edges {
+                node {
+                  id
+                  title
+                  reason
+                  startAt
+                  endAt
+                  staffId
+                  cancelled
+                }
+              }
+              pageInfo { hasNextPage }
+            }
+          }
+        `;
+        const variables = {
+          locationId: `urn:blvd:Location:${locationId}`,
+          query: `startAt >= '${startDate}' AND startAt < '${endDate}' AND reason = '${reason}'`,
+          first: 100
+        };
+        const response = await this.makeGraphqlRequest(query, variables);
+        const count = (response.data as any)?.timeblocks?.edges?.length || 0;
+        if (count > 0) {
+          results[`timeblocks_reason_${reason}`] = { count, sample: (response.data as any)?.timeblocks?.edges?.[0] };
+        }
+        console.log(`  ${reason}: ${count} timeblocks`);
+      }
+    } catch (error) {
+      console.log('  ❌ Failed:', error);
+      results.timeblocks_with_reason = { error: String(error) };
+    }
+
+    // Test 2: Try schema introspection for staff-related queries
+    console.log('\n📋 Test 2: Schema introspection for staff absence/availability fields');
+    try {
+      const introspectionQuery = `
+        {
+          __type(name: "Staff") {
+            fields {
+              name
+              type {
+                name
+                kind
+              }
+            }
+          }
+        }
+      `;
+      const response = await this.makeGraphqlRequest(introspectionQuery, {});
+      const staffFields = (response.data as any)?.__type?.fields || [];
+      const relevantFields = staffFields.filter((f: any) => 
+        f.name.toLowerCase().includes('absence') ||
+        f.name.toLowerCase().includes('available') ||
+        f.name.toLowerCase().includes('callout') ||
+        f.name.toLowerCase().includes('unavailable') ||
+        f.name.toLowerCase().includes('schedule')
+      );
+      results.staff_schema_fields = relevantFields;
+      console.log(`  Found ${relevantFields.length} potentially relevant Staff fields:`, relevantFields.map((f: any) => f.name));
+    } catch (error) {
+      console.log('  ❌ Failed:', error);
+      results.staff_schema = { error: String(error) };
+    }
+
+    // Test 3: Try alternative root query fields
+    console.log('\n📋 Test 3: Schema introspection for root queries about absences/unavailability');
+    try {
+      const introspectionQuery = `
+        {
+          __schema {
+            queryType {
+              fields {
+                name
+                args {
+                  name
+                  type {
+                    name
+                    kind
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+      const response = await this.makeGraphqlRequest(introspectionQuery, {});
+      const queryFields = (response.data as any)?.__schema?.queryType?.fields || [];
+      const relevantQueries = queryFields.filter((f: any) =>
+        f.name.toLowerCase().includes('absence') ||
+        f.name.toLowerCase().includes('attendance') ||
+        f.name.toLowerCase().includes('callout') ||
+        f.name.toLowerCase().includes('unavailable') ||
+        f.name.toLowerCase().includes('staff')
+      );
+      results.root_query_fields = relevantQueries;
+      console.log(`  Found ${relevantQueries.length} potentially relevant root queries:`, relevantQueries.map((f: any) => f.name));
+    } catch (error) {
+      console.log('  ❌ Failed:', error);
+      results.root_queries = { error: String(error) };
+    }
+
+    console.log('\n✅ CALLOUT DATA SOURCE TESTING COMPLETE\n');
+    return results;
+  }
+
   async queryAdminAPIAppointments(locationId: string, startDate: string, endDate: string): Promise<GraphqlResponse> {
     // Use the CORRECT Admin API appointments query that provides business-level access to all appointment data
     console.log('📋 Using Admin API appointments query (business-level access)...');

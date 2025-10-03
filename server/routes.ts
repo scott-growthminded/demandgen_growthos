@@ -107,6 +107,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test alternative data sources for callout information
+  app.post("/api/blvd/test-callout-sources", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { locationId, startDate, endDate } = req.body;
+      const result = await blvdService.testCalloutDataSources(locationId, startDate, endDate);
+      res.json({ success: true, data: result });
+    } catch (error) {
+      console.error('Test callout sources error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Testing failed",
+      });
+    }
+  });
+
   // Get environment info
   app.get("/api/env-info", (req, res) => {
     res.json({
