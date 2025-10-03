@@ -741,6 +741,67 @@ export class BlvdService {
     }
   }
 
+  async introspectDailyRosterAPI(): Promise<void> {
+    console.log('🔍 Introspecting schema for dailyRoster query...');
+    
+    const introspectionQuery = `
+      {
+        __type(name: "Query") {
+          fields {
+            name
+            description
+            args {
+              name
+              type {
+                name
+                kind
+                ofType {
+                  name
+                  kind
+                }
+              }
+            }
+            type {
+              name
+              kind
+              fields {
+                name
+                type {
+                  name
+                  kind
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+    
+    try {
+      const response = await this.makeGraphqlRequest(introspectionQuery, {});
+      const queryFields = (response.data as any)?.__type?.fields || [];
+      
+      // Look for dailyRoster, roster, or similar
+      const rosterFields = queryFields.filter((f: any) => 
+        f.name.toLowerCase().includes('roster') ||
+        f.name.toLowerCase().includes('schedule') ||
+        f.name.toLowerCase().includes('daily')
+      );
+      
+      console.log('📋 Found roster-related fields:', rosterFields.map((f: any) => f.name).join(', '));
+      
+      // If dailyRoster exists, log its structure
+      const dailyRoster = queryFields.find((f: any) => f.name === 'dailyRoster' || f.name === 'locationDailyRoster');
+      if (dailyRoster) {
+        console.log('✅ Found dailyRoster field:', JSON.stringify(dailyRoster, null, 2));
+      } else {
+        console.log('❌ dailyRoster field not found in schema');
+      }
+    } catch (error) {
+      console.error('❌ Error during introspection:', error);
+    }
+  }
+
   async getStaffShifts(locationId: string, startDate: string, endDate: string, staffId?: string): Promise<any[]> {
     console.log(`🔄 Querying staff shifts for ${locationId} from ${startDate} to ${endDate}`);
     
@@ -750,7 +811,63 @@ export class BlvdService {
     
     console.log(`📅 Formatted dates for shifts query: startIso8601=${startDateOnly}, endIso8601=${endDateOnly}`);
     
-    // Based on Boulevard docs: shifts returns [ListOfStaffShifts] which has a shifts field
+    // FIRST: Try using dailyRoster to get actual scheduled staff (not templates)
+    try {
+      console.log('🎯 Attempting to use dailyRoster API for actual scheduled staff...');
+      const dailyRosterQuery = `
+        query DailyRoster($locationId: ID!, $date: Date!) {
+          dailyRoster(locationId: $locationId, date: $date) {
+            staff {
+              id
+              firstName
+              lastName
+            }
+            shift {
+              clockIn
+              clockOut
+              available
+            }
+            status
+          }
+        }
+      `;
+      
+      const rosterResponse = await this.makeGraphqlRequest(dailyRosterQuery, {
+        locationId,
+        date: startDateOnly
+      });
+      
+      if (rosterResponse.data && !(rosterResponse.data as any).errors) {
+        console.log('✅ Successfully used dailyRoster API');
+        console.log('📦 Daily roster response:', JSON.stringify(rosterResponse, null, 2));
+        
+        const rosterData = (rosterResponse.data as any)?.dailyRoster || [];
+        // Convert roster format to shifts format for compatibility
+        const actualShifts = rosterData
+          .filter((entry: any) => entry.status === 'WORKING' && entry.shift?.available)
+          .map((entry: any) => ({
+            staffId: entry.staff.id.replace('urn:blvd:Staff:', ''),
+            clockIn: entry.shift.clockIn,
+            clockOut: entry.shift.clockOut,
+            available: entry.shift.available,
+            locationId: locationId.replace('urn:blvd:Location:', ''),
+            day: new Date(startDateOnly).getDay(),
+            recurrence: null,
+            recurrenceInterval: null,
+            recurrenceStart: startDateOnly,
+            recurrenceEnd: startDateOnly,
+            unavailableReason: null
+          }));
+        
+        console.log(`✅ Found ${actualShifts.length} ACTUAL scheduled staff (not templates)`);
+        return actualShifts;
+      }
+    } catch (rosterError) {
+      console.log('⚠️ dailyRoster API not available, falling back to shifts templates:', rosterError);
+    }
+    
+    // FALLBACK: Use shifts templates (has the template vs actual shift problem)
+    console.log('📋 Using shifts templates API (may include phantom shifts from old recurring patterns)');
     const shiftsQuery = `
       query Shifts($locationId: ID!, $startIso8601: Date!, $endIso8601: Date!) {
         shifts(
