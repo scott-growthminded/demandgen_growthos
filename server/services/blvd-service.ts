@@ -804,6 +804,7 @@ export class BlvdService {
 
   async getStaffShifts(locationId: string, startDate: string, endDate: string, staffId?: string): Promise<any[]> {
     console.log(`🔄 Querying staff shifts for ${locationId} from ${startDate} to ${endDate}`);
+    console.log('🚀 CODE VERSION: phantom-filter-90days-v3');
     
     // Format dates as YYYY-MM-DD for Boulevard API
     const startDateOnly = startDate.split('T')[0];
@@ -811,63 +812,9 @@ export class BlvdService {
     
     console.log(`📅 Formatted dates for shifts query: startIso8601=${startDateOnly}, endIso8601=${endDateOnly}`);
     
-    // FIRST: Try using dailyRoster to get actual scheduled staff (not templates)
-    try {
-      console.log('🎯 Attempting to use dailyRoster API for actual scheduled staff...');
-      const dailyRosterQuery = `
-        query DailyRoster($locationId: ID!, $date: Date!) {
-          dailyRoster(locationId: $locationId, date: $date) {
-            staff {
-              id
-              firstName
-              lastName
-            }
-            shift {
-              clockIn
-              clockOut
-              available
-            }
-            status
-          }
-        }
-      `;
-      
-      const rosterResponse = await this.makeGraphqlRequest(dailyRosterQuery, {
-        locationId,
-        date: startDateOnly
-      });
-      
-      if (rosterResponse.data && !(rosterResponse.data as any).errors) {
-        console.log('✅ Successfully used dailyRoster API');
-        console.log('📦 Daily roster response:', JSON.stringify(rosterResponse, null, 2));
-        
-        const rosterData = (rosterResponse.data as any)?.dailyRoster || [];
-        // Convert roster format to shifts format for compatibility
-        const actualShifts = rosterData
-          .filter((entry: any) => entry.status === 'WORKING' && entry.shift?.available)
-          .map((entry: any) => ({
-            staffId: entry.staff.id.replace('urn:blvd:Staff:', ''),
-            clockIn: entry.shift.clockIn,
-            clockOut: entry.shift.clockOut,
-            available: entry.shift.available,
-            locationId: locationId.replace('urn:blvd:Location:', ''),
-            day: new Date(startDateOnly).getDay(),
-            recurrence: null,
-            recurrenceInterval: null,
-            recurrenceStart: startDateOnly,
-            recurrenceEnd: startDateOnly,
-            unavailableReason: null
-          }));
-        
-        console.log(`✅ Found ${actualShifts.length} ACTUAL scheduled staff (not templates)`);
-        return actualShifts;
-      }
-    } catch (rosterError) {
-      console.log('⚠️ dailyRoster API not available, falling back to shifts templates:', rosterError);
-    }
-    
-    // FALLBACK: Use shifts templates (has the template vs actual shift problem)
-    console.log('📋 Using shifts templates API (may include phantom shifts from old recurring patterns)');
+    // NOTE: Boulevard's API doesn't have dailyRoster - we must use shifts templates
+    // Problem: Recurring shifts from years ago still appear as "templates"
+    // Solution: Filter out recurring shifts where recurrenceStart is >90 days old
     const shiftsQuery = `
       query Shifts($locationId: ID!, $startIso8601: Date!, $endIso8601: Date!) {
         shifts(
@@ -917,12 +864,38 @@ export class BlvdService {
       
       console.log(`✅ Found ${allShifts.length} shift templates`);
       
+      // FILTER OUT PHANTOM SHIFTS: Recurring shifts from >90 days ago are likely stale templates
+      // Problem: Staff from 2023 recurring shifts still show up as "scheduled" even if not actually working
+      // Solution: Only keep recurring shifts if recurrenceStart is within last 90 days, OR if shift is non-recurring
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+      const ninetyDaysAgoStr = ninetyDaysAgo.toISOString().split('T')[0];
+      
+      const filteredShifts = allShifts.filter((shift: any) => {
+        // Keep non-recurring shifts (these are actual scheduled shifts for specific dates)
+        if (!shift.recurrence || shift.recurrence === null) {
+          return true;
+        }
+        
+        // For recurring shifts, only keep if recurrenceStart is recent (<90 days old)
+        // This filters out phantom shifts from years ago
+        const isRecent = shift.recurrenceStart >= ninetyDaysAgoStr;
+        
+        if (!isRecent) {
+          console.log(`🚫 FILTERING OUT old recurring shift: staff=${shift.staffId}, recurrence=${shift.recurrence}, recurrenceStart=${shift.recurrenceStart} (older than 90 days)`);
+        }
+        
+        return isRecent;
+      });
+      
+      console.log(`✅ After filtering old recurring shifts: ${filteredShifts.length} shifts (removed ${allShifts.length - filteredShifts.length} phantom shifts)`);
+      
       // Log first shift for inspection
-      if (allShifts.length > 0) {
-        console.log(`🔍 Sample shift:`, JSON.stringify(allShifts[0], null, 2));
+      if (filteredShifts.length > 0) {
+        console.log(`🔍 Sample shift:`, JSON.stringify(filteredShifts[0], null, 2));
       }
       
-      return allShifts;
+      return filteredShifts;
     } catch (error) {
       console.error('❌ Error fetching shifts:', error);
       return [];
