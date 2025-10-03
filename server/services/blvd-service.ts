@@ -1832,7 +1832,7 @@ export class BlvdService {
   /**
    * Find available time slots for each location starting from now + 1 hour
    */
-  async getAvailableLocations(minAvailabilityPercent: number = 25, date?: string): Promise<any> {
+  async getAvailableLocations(minAvailabilityPercent: number = 25, date?: string, locationId?: string): Promise<any> {
     try {
       // Validate input date before processing
       if (date) {
@@ -1849,7 +1849,16 @@ export class BlvdService {
         throw new Error('Failed to fetch locations');
       }
 
-      const locations = (locationsResponse.data as any).locations.edges.map((edge: any) => edge.node);
+      let locations = (locationsResponse.data as any).locations.edges.map((edge: any) => edge.node);
+      
+      // Filter by locationId if provided
+      if (locationId) {
+        locations = locations.filter((loc: any) => loc.id === locationId);
+        if (locations.length === 0) {
+          throw new Error(`Location with ID ${locationId} not found`);
+        }
+      }
+      
       const { startDate, endDate } = date ? this.getDateRange(date) : this.getTomorrowDateRange();
       
       console.log(`🔍 TOTAL LOCATIONS TO PROCESS: ${locations.length}`);
