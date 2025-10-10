@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChevronLeft, ChevronRight, MapPin, List } from "lucide-react";
 import { format } from "date-fns";
 
 interface TimeSlot {
@@ -24,35 +25,44 @@ interface Esthetician {
   avatar?: string;
 }
 
+interface Location {
+  id: string;
+  name: string;
+  address?: {
+    city: string;
+    state: string;
+    line1?: string;
+    line2?: string;
+  };
+}
+
 interface BookingState {
-  locationId: string;
-  locationName: string;
-  date: Date;
+  locationId?: string;
+  locationName?: string;
+  date?: Date;
   timeSlot?: TimeSlot;
   estheticianId?: string;
-  step: 'date' | 'time' | 'review' | 'account';
+  step: 'location' | 'date' | 'time' | 'review' | 'account';
 }
 
 export default function BookingWidget() {
   const [, setLocation] = useLocation();
-  
-  // Get URL parameters
-  const urlParams = new URLSearchParams(window.location.search);
-  const initialLocationId = urlParams.get('location') || '';
-  const initialDate = urlParams.get('date') ? new Date(urlParams.get('date')!) : new Date();
 
   const [bookingState, setBookingState] = useState<BookingState>({
-    locationId: initialLocationId,
-    locationName: '',
-    date: initialDate,
-    step: 'date',
+    step: 'location',
   });
 
-  const [selectedEstheticianId, setSelectedEstheticianId] = useState<string>('any');
+  // Track esthetician selection separately during time selection
+  const [tempEstheticianId, setTempEstheticianId] = useState<string>('any');
 
-  // Fetch availability data
-  const { data: availabilityData, isLoading } = useQuery({
-    queryKey: ['/api/booking/availability', bookingState.locationId, format(bookingState.date, 'yyyy-MM-dd')],
+  // Fetch all locations grouped by state and city
+  const { data: locationsData, isLoading: locationsLoading } = useQuery({
+    queryKey: ['/api/booking/locations'],
+  });
+
+  // Fetch availability data (only when location and date are selected)
+  const { data: availabilityData, isLoading: availabilityLoading } = useQuery({
+    queryKey: ['/api/booking/availability', bookingState.locationId, bookingState.date ? format(bookingState.date, 'yyyy-MM-dd') : ''],
     enabled: !!bookingState.locationId && !!bookingState.date,
     queryFn: async () => {
       const response = await fetch('/api/booking/availability', {
@@ -60,8 +70,8 @@ export default function BookingWidget() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           locationId: bookingState.locationId,
-          date: format(bookingState.date, 'yyyy-MM-dd'),
-          maxDistance: 5
+          date: format(bookingState.date!, 'yyyy-MM-dd'),
+          maxDistance: 10
         })
       });
       
@@ -72,16 +82,6 @@ export default function BookingWidget() {
       return response.json();
     }
   });
-
-  // Update location name when availability data is loaded
-  useEffect(() => {
-    if (availabilityData?.location?.name && !bookingState.locationName) {
-      setBookingState(prev => ({
-        ...prev,
-        locationName: availabilityData.location.name
-      }));
-    }
-  }, [availabilityData, bookingState.locationName]);
 
   // Group time slots by time of day
   const groupTimeSlotsByPeriod = (slots: TimeSlot[]) => {
@@ -108,14 +108,27 @@ export default function BookingWidget() {
   const estheticians = availabilityData?.estheticians || [];
   const alternativeLocations = availabilityData?.alternativeLocations || [];
 
+  const handleLocationSelect = (locationId: string, locationName: string) => {
+    setBookingState({
+      locationId,
+      locationName,
+      step: 'date',
+    });
+    // Reset esthetician when location changes
+    setTempEstheticianId('any');
+  };
+
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setBookingState(prev => ({
         ...prev,
         date,
         step: 'time',
-        timeSlot: undefined
+        timeSlot: undefined,
+        estheticianId: undefined
       }));
+      // Reset esthetician selection when date changes
+      setTempEstheticianId('any');
     }
   };
 
@@ -123,12 +136,12 @@ export default function BookingWidget() {
     setBookingState(prev => ({
       ...prev,
       timeSlot: slot,
-      step: 'review',
-      estheticianId: selectedEstheticianId === 'any' ? undefined : selectedEstheticianId
+      estheticianId: tempEstheticianId === 'any' ? undefined : tempEstheticianId,
+      step: 'review'
     }));
   };
 
-  const handleConfirmBooking = () => {
+  const handleProceedToAccount = () => {
     setBookingState(prev => ({
       ...prev,
       step: 'account'
@@ -136,58 +149,121 @@ export default function BookingWidget() {
   };
 
   const handleBack = () => {
-    if (bookingState.step === 'time') {
-      setBookingState(prev => ({ ...prev, step: 'date' }));
+    if (bookingState.step === 'date') {
+      setBookingState(prev => ({ ...prev, step: 'location', locationId: undefined, locationName: undefined }));
+    } else if (bookingState.step === 'time') {
+      setBookingState(prev => ({ ...prev, step: 'date', date: undefined }));
     } else if (bookingState.step === 'review') {
-      setBookingState(prev => ({ ...prev, step: 'time' }));
+      setBookingState(prev => ({ ...prev, step: 'time', timeSlot: undefined }));
     } else if (bookingState.step === 'account') {
       setBookingState(prev => ({ ...prev, step: 'review' }));
     }
   };
 
-  if (!bookingState.locationId) {
+  // Location Selection Step
+  if (bookingState.step === 'location') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              No location specified. Please provide a location parameter in the URL.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2" data-testid="text-title">Choose Your Location</h1>
+            <p className="text-muted-foreground" data-testid="text-subtitle">Select a Glowbar location to start booking</p>
+          </div>
+
+          {locationsLoading ? (
+            <div className="text-center py-12" data-testid="text-loading">Loading locations...</div>
+          ) : (
+            <Tabs defaultValue="list" className="w-full">
+              <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+                <TabsTrigger value="list" data-testid="button-view-list">
+                  <List className="w-4 h-4 mr-2" />
+                  List View
+                </TabsTrigger>
+                <TabsTrigger value="map" data-testid="button-view-map">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  Map View
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="list" className="space-y-6">
+                {locationsData && (Object.entries(locationsData) as [string, any][]).map(([state, cities]: [string, any]) => (
+                  <div key={state} className="space-y-4">
+                    <h2 className="text-2xl font-semibold" data-testid={`text-state-${state}`}>{state}</h2>
+                    {(Object.entries(cities) as [string, any][]).map(([city, locations]: [string, any]) => (
+                      <div key={city} className="space-y-2">
+                        <h3 className="text-lg font-medium text-muted-foreground" data-testid={`text-city-${city}`}>{city}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {locations.map((location: Location) => (
+                            <Card
+                              key={location.id}
+                              className="cursor-pointer hover:border-primary transition-colors"
+                              onClick={() => handleLocationSelect(location.id, location.name)}
+                              data-testid={`card-location-${location.id}`}
+                            >
+                              <CardHeader>
+                                <CardTitle className="text-lg">{location.name}</CardTitle>
+                                {location.address && (
+                                  <CardDescription>
+                                    {location.address.line1 && <div>{location.address.line1}</div>}
+                                    <div>{location.address.city}, {location.address.state}</div>
+                                  </CardDescription>
+                                )}
+                              </CardHeader>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </TabsContent>
+
+              <TabsContent value="map">
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <MapPin className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">Map view coming soon</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          )}
+        </div>
       </div>
     );
   }
 
-  // Date selection step
+  // Date Selection Step
   if (bookingState.step === 'date') {
     return (
       <div className="min-h-screen bg-background p-4">
-        <div className="max-w-md mx-auto">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold" data-testid="text-page-title">
-              {format(bookingState.date, 'EEEE, MMM d')}
-            </h1>
-            {bookingState.locationName && (
-              <p className="text-muted-foreground flex items-center gap-1 mt-1">
-                <MapPin className="h-4 w-4" />
-                {bookingState.locationName}
-              </p>
-            )}
+        <div className="max-w-4xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            className="mb-4"
+            data-testid="button-back"
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back to Locations
+          </Button>
+
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2" data-testid="text-title">Select a Date</h1>
+            <p className="text-muted-foreground" data-testid="text-subtitle">
+              Booking at {bookingState.locationName}
+            </p>
           </div>
 
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-6">
               <Calendar
                 mode="single"
                 selected={bookingState.date}
                 onSelect={handleDateSelect}
                 disabled={(date) => date < new Date()}
                 className="rounded-md border"
-                data-testid="calendar-date-select"
+                data-testid="calendar-date-picker"
               />
             </CardContent>
           </Card>
@@ -196,135 +272,71 @@ export default function BookingWidget() {
     );
   }
 
-  // Time selection step
+  // Time Selection Step
   if (bookingState.step === 'time') {
+    const hasAvailability = timeSlots.length > 0;
+
     return (
       <div className="min-h-screen bg-background p-4">
-        <div className="max-w-md mx-auto">
-          <Button 
-            variant="ghost" 
-            onClick={handleBack} 
+        <div className="max-w-6xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={handleBack}
             className="mb-4"
             data-testid="button-back"
           >
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Back
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back to Date Selection
           </Button>
 
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold" data-testid="text-selected-date">
-              {format(bookingState.date, 'EEEE, MMM d')}
-            </h1>
-            {bookingState.locationName && (
-              <p className="text-muted-foreground flex items-center gap-1 mt-1">
-                <MapPin className="h-4 w-4" />
-                {bookingState.locationName}
-              </p>
-            )}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2" data-testid="text-title">Choose Your Time</h1>
+            <p className="text-muted-foreground" data-testid="text-subtitle">
+              {bookingState.locationName} - {bookingState.date && format(bookingState.date, 'EEEE, MMMM d, yyyy')}
+            </p>
           </div>
 
-          {/* Esthetician selector */}
-          <div className="mb-6">
-            <Label htmlFor="esthetician-select">Select Esthetician</Label>
-            <Select
-              value={selectedEstheticianId}
-              onValueChange={setSelectedEstheticianId}
-            >
-              <SelectTrigger 
-                id="esthetician-select" 
-                className="w-full mt-2"
+          {/* Esthetician Filter */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Select Esthetician (Optional)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select
+                value={tempEstheticianId}
+                onValueChange={setTempEstheticianId}
                 data-testid="select-esthetician"
               >
-                <SelectValue placeholder="Any Esthetician" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any" data-testid="option-any-esthetician">
-                  Any Esthetician
-                </SelectItem>
-                {estheticians.map((est: Esthetician) => (
-                  <SelectItem 
-                    key={est.id} 
-                    value={est.id}
-                    data-testid={`option-esthetician-${est.id}`}
-                  >
-                    {est.displayName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                <SelectTrigger>
+                  <SelectValue placeholder="Any esthetician" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any esthetician</SelectItem>
+                  {estheticians.map((esthetician: Esthetician) => (
+                    <SelectItem key={esthetician.id} value={esthetician.id}>
+                      {esthetician.displayName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
 
-          {isLoading && (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Loading available times...</p>
-            </div>
-          )}
-
-          {!isLoading && timeSlots.length === 0 && alternativeLocations.length === 0 && (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">
-                  No availability for this date. Please try another date.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {!isLoading && timeSlots.length === 0 && alternativeLocations.length > 0 && (
-            <div className="space-y-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground mb-4">
-                    No availability at {bookingState.locationName}
-                  </p>
-                  <p className="text-sm font-medium text-center mb-2">
-                    Available at nearby locations:
-                  </p>
-                </CardContent>
-              </Card>
-
-              {alternativeLocations.map((loc: any) => (
-                <Card key={loc.id} className="cursor-pointer hover:border-primary transition-colors">
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">{loc.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {loc.distance} miles away • {loc.availableSlots} slots available
-                        </p>
-                      </div>
-                      <Button
-                        onClick={() => {
-                          setBookingState(prev => ({
-                            ...prev,
-                            locationId: loc.id,
-                            locationName: loc.name,
-                            step: 'date'
-                          }));
-                        }}
-                        data-testid={`button-select-location-${loc.id}`}
-                      >
-                        Select
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {!isLoading && timeSlots.length > 0 && (
+          {availabilityLoading ? (
+            <div className="text-center py-12" data-testid="text-loading">Loading availability...</div>
+          ) : hasAvailability ? (
             <div className="space-y-6">
               {morning.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-3" data-testid="text-morning-header">Morning</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {morning.map(slot => (
+                  <h2 className="text-xl font-semibold mb-4" data-testid="text-period-morning">Morning</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {morning.map((slot) => (
                       <Button
                         key={slot.id}
                         variant="outline"
-                        className="h-12 text-base font-medium"
                         onClick={() => handleTimeSlotSelect(slot)}
+                        disabled={!slot.available}
+                        className="h-auto py-3"
                         data-testid={`button-timeslot-${slot.id}`}
                       >
                         {format(new Date(slot.startTime), 'h:mm a')}
@@ -336,14 +348,15 @@ export default function BookingWidget() {
 
               {afternoon.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-3" data-testid="text-afternoon-header">Afternoon</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {afternoon.map(slot => (
+                  <h2 className="text-xl font-semibold mb-4" data-testid="text-period-afternoon">Afternoon</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {afternoon.map((slot) => (
                       <Button
                         key={slot.id}
                         variant="outline"
-                        className="h-12 text-base font-medium"
                         onClick={() => handleTimeSlotSelect(slot)}
+                        disabled={!slot.available}
+                        className="h-auto py-3"
                         data-testid={`button-timeslot-${slot.id}`}
                       >
                         {format(new Date(slot.startTime), 'h:mm a')}
@@ -355,14 +368,15 @@ export default function BookingWidget() {
 
               {evening.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-3" data-testid="text-evening-header">Evening</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {evening.map(slot => (
+                  <h2 className="text-xl font-semibold mb-4" data-testid="text-period-evening">Evening</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    {evening.map((slot) => (
                       <Button
                         key={slot.id}
                         variant="outline"
-                        className="h-12 text-base font-medium"
                         onClick={() => handleTimeSlotSelect(slot)}
+                        disabled={!slot.available}
+                        className="h-auto py-3"
                         data-testid={`button-timeslot-${slot.id}`}
                       >
                         {format(new Date(slot.startTime), 'h:mm a')}
@@ -372,186 +386,182 @@ export default function BookingWidget() {
                 </div>
               )}
             </div>
+          ) : (
+            <Card>
+              <CardContent className="p-8">
+                <h3 className="text-xl font-semibold mb-4" data-testid="text-no-availability">
+                  No availability at {bookingState.locationName}
+                </h3>
+                {alternativeLocations.length > 0 && (
+                  <div>
+                    <p className="mb-4 text-muted-foreground">Try these nearby locations:</p>
+                    <div className="space-y-2">
+                      {alternativeLocations.map((loc: any) => (
+                        <Button
+                          key={loc.location.id}
+                          variant="outline"
+                          className="w-full justify-between"
+                          onClick={() => {
+                            setBookingState({
+                              locationId: loc.location.id,
+                              locationName: loc.location.name,
+                              date: bookingState.date,
+                              step: 'time'
+                            });
+                          }}
+                          data-testid={`button-alternative-${loc.location.id}`}
+                        >
+                          <span>{loc.location.name}</span>
+                          <span className="text-muted-foreground">
+                            {loc.distance.toFixed(1)} mi • {loc.availableSlots} slots
+                          </span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
     );
   }
 
-  // Review step
+  // Review Step
   if (bookingState.step === 'review') {
-    const selectedEsthetician = estheticians.find(
-      (e: Esthetician) => e.id === bookingState.estheticianId
-    );
-
     return (
       <div className="min-h-screen bg-background p-4">
-        <div className="max-w-md mx-auto">
-          <Button 
-            variant="ghost" 
-            onClick={handleBack} 
+        <div className="max-w-2xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={handleBack}
             className="mb-4"
             data-testid="button-back"
           >
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Back
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back to Time Selection
           </Button>
 
-          <h1 className="text-2xl font-bold mb-6" data-testid="text-review-title">
-            Review Your Booking
-          </h1>
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2" data-testid="text-title">Review Your Booking</h1>
+          </div>
 
-          <Card className="mb-6">
+          <Card>
             <CardHeader>
-              <CardTitle>Booking Details</CardTitle>
+              <CardTitle>Booking Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground">Location</p>
-                <p className="font-medium" data-testid="text-review-location">
-                  {bookingState.locationName}
-                </p>
+                <Label className="text-muted-foreground">Location</Label>
+                <p className="text-lg" data-testid="text-review-location">{bookingState.locationName}</p>
               </div>
-
               <div>
-                <p className="text-sm text-muted-foreground">Date & Time</p>
-                <p className="font-medium" data-testid="text-review-datetime">
-                  {format(bookingState.date, 'EEEE, MMMM d, yyyy')}
-                  {bookingState.timeSlot && (
-                    <> at {format(new Date(bookingState.timeSlot.startTime), 'h:mm a')}</>
-                  )}
+                <Label className="text-muted-foreground">Date & Time</Label>
+                <p className="text-lg" data-testid="text-review-datetime">
+                  {bookingState.date && format(bookingState.date, 'EEEE, MMMM d, yyyy')} at{' '}
+                  {bookingState.timeSlot && format(new Date(bookingState.timeSlot.startTime), 'h:mm a')}
                 </p>
               </div>
-
-              <div>
-                <p className="text-sm text-muted-foreground">Esthetician</p>
-                <p className="font-medium" data-testid="text-review-esthetician">
-                  {selectedEsthetician ? selectedEsthetician.displayName : 'Any Available Esthetician'}
-                </p>
-              </div>
+              {bookingState.estheticianId && (
+                <div>
+                  <Label className="text-muted-foreground">Esthetician</Label>
+                  <p className="text-lg" data-testid="text-review-esthetician">
+                    {estheticians.find((e: Esthetician) => e.id === bookingState.estheticianId)?.displayName || 'Selected esthetician'}
+                  </p>
+                </div>
+              )}
+              <Button
+                className="w-full mt-6"
+                onClick={handleProceedToAccount}
+                data-testid="button-proceed"
+              >
+                Continue to Account
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
             </CardContent>
           </Card>
-
-          <Button 
-            className="w-full h-12 text-base"
-            onClick={handleConfirmBooking}
-            data-testid="button-continue-to-account"
-          >
-            Continue to Account
-            <ChevronRight className="h-4 w-4 ml-2" />
-          </Button>
         </div>
       </div>
     );
   }
 
-  // Account creation/login step (stopping point)
+  // Account Creation/Login Step
   if (bookingState.step === 'account') {
     return (
       <div className="min-h-screen bg-background p-4">
         <div className="max-w-md mx-auto">
-          <Button 
-            variant="ghost" 
-            onClick={handleBack} 
+          <Button
+            variant="ghost"
+            onClick={handleBack}
             className="mb-4"
             data-testid="button-back"
           >
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Back
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back to Review
           </Button>
 
-          <h1 className="text-2xl font-bold mb-2" data-testid="text-account-title">
-            Create Account or Sign In
-          </h1>
-          <p className="text-muted-foreground mb-6">
-            You're almost done! Create an account or sign in to complete your booking.
-          </p>
-
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle>Create Account</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="first-name">First Name</Label>
-                <Input 
-                  id="first-name" 
-                  type="text" 
-                  className="mt-1"
-                  data-testid="input-first-name"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="last-name">Last Name</Label>
-                <Input 
-                  id="last-name" 
-                  type="text" 
-                  className="mt-1"
-                  data-testid="input-last-name"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  className="mt-1"
-                  data-testid="input-email"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input 
-                  id="phone" 
-                  type="tel" 
-                  className="mt-1"
-                  data-testid="input-phone"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  className="mt-1"
-                  data-testid="input-password"
-                />
-              </div>
-
-              <Button 
-                className="w-full"
-                data-testid="button-create-account"
-                disabled
-              >
-                Create Account & Complete Booking
-              </Button>
-            </CardContent>
-          </Card>
-
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-4">
-              Already have an account?
-            </p>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              data-testid="button-sign-in"
-              disabled
-            >
-              Sign In
-            </Button>
-          </div>
-
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground text-center">
-              <strong>Stopping Point:</strong> This is where the booking flow ends for testing. 
-              Account creation and payment will be implemented next.
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2" data-testid="text-title">Create Account or Sign In</h1>
+            <p className="text-muted-foreground" data-testid="text-subtitle">
+              Complete your booking by creating an account or signing in
             </p>
           </div>
+
+          <Tabs defaultValue="signup" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signup" data-testid="tab-signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="signin" data-testid="tab-signin">Sign In</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="signup" className="space-y-4">
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input id="firstName" placeholder="Enter your first name" data-testid="input-firstname" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input id="lastName" placeholder="Enter your last name" data-testid="input-lastname" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" placeholder="Enter your email" data-testid="input-email" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input id="phone" type="tel" placeholder="Enter your phone number" data-testid="input-phone" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input id="password" type="password" placeholder="Create a password" data-testid="input-password" />
+                  </div>
+                  <Button className="w-full" data-testid="button-signup">
+                    Create Account & Complete Booking
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="signin" className="space-y-4">
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-email">Email</Label>
+                    <Input id="signin-email" type="email" placeholder="Enter your email" data-testid="input-signin-email" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <Input id="signin-password" type="password" placeholder="Enter your password" data-testid="input-signin-password" />
+                  </div>
+                  <Button className="w-full" data-testid="button-signin">
+                    Sign In & Complete Booking
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     );

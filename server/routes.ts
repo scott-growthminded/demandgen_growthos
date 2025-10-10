@@ -479,6 +479,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Booking Widget API Routes
   
+  // Get all locations grouped by state and city
+  app.get("/api/booking/locations", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const locationsResponse = await blvdService.executeLocationsQuery();
+      const allLocations = (locationsResponse.data as any)?.locations?.edges?.map((edge: any) => edge.node) || [];
+      
+      // Filter out remote locations and group by state and city
+      const physicalLocations = allLocations.filter((loc: any) => !loc.isRemote);
+      
+      // Group by state and city
+      const grouped = physicalLocations.reduce((acc: any, loc: any) => {
+        const state = loc.address?.state || 'Other';
+        const city = loc.address?.city || 'Unknown';
+        
+        if (!acc[state]) {
+          acc[state] = {};
+        }
+        
+        if (!acc[state][city]) {
+          acc[state][city] = [];
+        }
+        
+        acc[state][city].push({
+          id: loc.id,
+          name: loc.name,
+          address: loc.address
+        });
+        
+        return acc;
+      }, {});
+      
+      res.json(grouped);
+    } catch (error) {
+      console.error('Error fetching locations:', error);
+      res.status(500).json({ error: 'Failed to fetch locations' });
+    }
+  });
+  
   // Get staff/estheticians for a location
   app.get("/api/booking/staff/:locationId", async (req, res) => {
     try {
