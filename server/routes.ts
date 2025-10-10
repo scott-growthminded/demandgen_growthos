@@ -607,11 +607,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       endDate.setHours(23, 59, 59, 999);
       
       // Fetch appointments for the date
-      const appointments = await blvdService.getLocationAppointments(
+      const appointmentsResponse = await blvdService.getLocationAppointments(
         locationId,
         startDate.toISOString(),
         endDate.toISOString()
       );
+      
+      // Extract appointments array from GraphQL response
+      const appointments = (appointmentsResponse.data as any)?.appointments?.edges?.map((edge: any) => edge.node) || [];
       
       const availabilityCalc = await blvdService.calculateHourlyAvailability(
         locationId,
@@ -657,11 +660,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Get availability for nearby locations
         for (const nearbyLoc of nearby.slice(0, 3)) { // Limit to top 3 nearest
-          const nearbyAppointments = await blvdService.getLocationAppointments(
+          const nearbyAppointmentsResponse = await blvdService.getLocationAppointments(
             nearbyLoc.id,
             startDate.toISOString(),
             endDate.toISOString()
           );
+          
+          // Extract appointments array from GraphQL response
+          const nearbyAppointments = (nearbyAppointmentsResponse.data as any)?.appointments?.edges?.map((edge: any) => edge.node) || [];
           
           const nearbyAvail = await blvdService.calculateHourlyAvailability(
             nearbyLoc.id,
