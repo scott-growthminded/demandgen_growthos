@@ -34,6 +34,7 @@ interface Location {
     line1?: string;
     line2?: string;
   };
+  staff?: Esthetician[];
 }
 
 interface BookingState {
@@ -209,6 +210,32 @@ export default function BookingWidget() {
                                     {location.address.line1 && <div>{location.address.line1}</div>}
                                     <div>{location.address.city}, {location.address.state}</div>
                                   </CardDescription>
+                                )}
+                                {location.staff && location.staff.length > 0 && (
+                                  <div className="mt-4 pt-4 border-t">
+                                    <div className="text-xs font-medium text-muted-foreground mb-2">
+                                      Estheticians ({location.staff.length})
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                      {location.staff.slice(0, 6).map((esthetician) => (
+                                        <div
+                                          key={esthetician.id}
+                                          className="flex items-center gap-2 bg-secondary/50 rounded-full px-3 py-1"
+                                          data-testid={`staff-${esthetician.id}`}
+                                        >
+                                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium">
+                                            {esthetician.firstName?.[0]}{esthetician.lastName?.[0]}
+                                          </div>
+                                          <span className="text-xs">{esthetician.displayName}</span>
+                                        </div>
+                                      ))}
+                                      {location.staff.length > 6 && (
+                                        <div className="flex items-center text-xs text-muted-foreground">
+                                          +{location.staff.length - 6} more
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
                                 )}
                               </CardHeader>
                             </Card>

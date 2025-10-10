@@ -492,8 +492,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filter out remote locations and group by state and city
       const physicalLocations = allLocations.filter((loc: any) => !loc.isRemote);
       
+      // Fetch staff for each location
+      const locationsWithStaff = await Promise.all(
+        physicalLocations.map(async (loc: any) => {
+          try {
+            const staff = await blvdService.getLocationStaff(loc.id);
+            return {
+              id: loc.id,
+              name: loc.name,
+              address: loc.address,
+              staff: staff.map((s: any) => ({
+                id: s.id,
+                firstName: s.firstName,
+                lastName: s.lastName,
+                displayName: s.displayName,
+                avatar: s.avatar
+              }))
+            };
+          } catch (error) {
+            console.error(`Error fetching staff for location ${loc.name}:`, error);
+            return {
+              id: loc.id,
+              name: loc.name,
+              address: loc.address,
+              staff: []
+            };
+          }
+        })
+      );
+      
       // Group by state and city
-      const grouped = physicalLocations.reduce((acc: any, loc: any) => {
+      const grouped = locationsWithStaff.reduce((acc: any, loc: any) => {
         const state = loc.address?.state || 'Other';
         const city = loc.address?.city || 'Unknown';
         
@@ -505,11 +534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           acc[state][city] = [];
         }
         
-        acc[state][city].push({
-          id: loc.id,
-          name: loc.name,
-          address: loc.address
-        });
+        acc[state][city].push(loc);
         
         return acc;
       }, {});
