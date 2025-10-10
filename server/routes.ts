@@ -641,11 +641,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Extract appointments array from GraphQL response
       const appointments = (appointmentsResponse.data as any)?.appointments?.edges?.map((edge: any) => edge.node) || [];
       
-      // Get bookable time slots per esthetician
-      const timeSlots = await blvdService.getBookableTimeSlots(locationId, date);
+      const availabilityCalc = await blvdService.calculateHourlyAvailability(
+        locationId,
+        startDate.toISOString().split('T')[0],
+        appointments
+      );
+      
+      // Get location timezone info for proper timestamp generation
+      const locationTimezone = blvdService.inferLocationTimeZone(
+        primaryLocation.name,
+        primaryLocation.address
+      );
+      
+      // Generate time slots per esthetician based on their working hours
+      const timeSlots: any[] = [];
+      const availableEstheticianIds = new Set();
+      
+      // Map staff short IDs to full staff objects
+      const staffByShortId = new Map();
+      staff.forEach((s: any) => {
+        const shortId = s.id.includes(':') ? s.id.split(':').pop() : s.id;
+        staffByShortId.set(shortId.substring(0, 8), s);
+      });
+      
+      // Generate slots using actual staff working during each hour
+      for (const hourData of availabilityCalc.hourlyBreakdown) {
+        const hour = hourData.hour;
+        const slotsInHour = hourData.availableSlots;
+        const staffWorkingIds = hourData.staffWorking || [];
+        
+        if (slotsInHour > 0 && staffWorkingIds.length > 0) {
+          // Generate slots for this hour at 20-minute intervals (max 3 per hour)
+          const possibleMinutes = [0, 20, 40];
+          const slotsToGenerate = Math.min(slotsInHour, 3); // Max 3 slots per hour
+          
+          for (let i = 0; i < slotsToGenerate; i++) {
+            const minute = possibleMinutes[i];
+            // Assign each slot to a different staff member working this hour
+            const staffShortId = staffWorkingIds[i % staffWorkingIds.length];
+            const staffMember = staffByShortId.get(staffShortId);
+            
+            // Create timestamp in location's timezone
+            const localTimeString = `${date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
+            
+            // Parse and adjust for timezone (EDT is UTC-4)
+            const slotDate = new Date(localTimeString);
+            const tzOffsetHours = 4; // EDT offset
+            slotDate.setHours(slotDate.getHours() + tzOffsetHours);
+            
+            timeSlots.push({
+              id: `${locationId}-${staffMember?.id || 'any'}-${slotDate.toISOString()}`,
+              startTime: slotDate.toISOString(),
+              available: true,
+              estheticianId: staffMember?.id
+            });
+            
+            if (staffMember?.id) {
+              availableEstheticianIds.add(staffMember.id);
+            }
+          }
+        }
+      }
       
       // Filter out only estheticians who have available slots
-      const availableEstheticianIds = new Set(timeSlots.map((slot: any) => slot.estheticianId));
       const availableEstheticians = staff.filter((s: any) => availableEstheticianIds.has(s.id));
 
       // If no availability, find nearby alternatives

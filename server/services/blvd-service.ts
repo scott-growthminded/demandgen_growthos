@@ -991,6 +991,7 @@ export class BlvdService {
       scheduledMinutes: number;
       bookedMinutes: number;
       availableSlots: number;
+      staffWorking: string[];
     }>;
     totalAvailable: number;
     totalScheduledMinutes: number;
@@ -1223,7 +1224,8 @@ export class BlvdService {
           hour,
           scheduledMinutes,
           bookedMinutes,
-          availableSlots
+          availableSlots,
+          staffWorking: staffContributions.map(sc => sc.staffId)
         });
         
         totalAvailable += availableSlots;
@@ -2441,52 +2443,40 @@ export class BlvdService {
   async getLocationStaff(locationId: string): Promise<any[]> {
     console.log(`👥 Getting staff for location: ${locationId}`);
     
-    // Query all staff and filter by location
-    const staffQuery = `
-      query GetStaffByLocation {
-        staff(first: 100) {
-          edges {
-            node {
-              id
-              firstName
-              lastName
-              displayName
-              avatar
-              role {
-                name
-              }
-              employments {
-                edges {
-                  node {
-                    location {
-                      id
-                    }
-                  }
+    try {
+      // Query all staff - we'll filter by location using shift data later
+      const staffQuery = `
+        query GetStaff {
+          staff(first: 100) {
+            edges {
+              node {
+                id
+                firstName
+                lastName
+                displayName
+                avatar
+                role {
+                  name
                 }
               }
             }
           }
         }
-      }
-    `;
-
-    try {
+      `;
+      
       const response = await this.makeGraphqlRequest(staffQuery, {});
       
       if (response.errors) {
         console.error('❌ Error getting staff:', response.errors);
         return [];
       }
-
-      // Filter staff by location
+      
+      // Return all staff - location filtering happens via shifts when calculating availability
       const allStaff = (response.data as any)?.staff?.edges?.map((edge: any) => edge.node) || [];
-      const locationStaff = allStaff.filter((staff: any) => {
-        return staff.employments?.edges?.some((emp: any) => emp.node.location.id === locationId);
-      });
       
-      console.log(`✅ Found ${locationStaff.length} staff members for location`);
+      console.log(`✅ Found ${allStaff.length} total staff members`);
       
-      return locationStaff;
+      return allStaff;
     } catch (error) {
       console.error('❌ Failed to get staff:', error);
       return [];
