@@ -622,33 +622,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appointments
       );
       
+      // Get location timezone info for proper timestamp generation
+      const locationTimezone = blvdService.inferLocationTimeZone(
+        primaryLocation.name,
+        primaryLocation.address
+      );
+      
       // Convert hourly breakdown to time slots (40-minute intervals)
       const timeSlots: any[] = [];
+      
       for (const hourData of availabilityCalc.hourlyBreakdown) {
-        if (hourData.availableSlots > 0) {
-          // Generate time slots for this hour
-          const hour = hourData.hour;
-          const slotsInHour = hourData.availableSlots;
+        const hour = hourData.hour;
+        const slotsInHour = hourData.availableSlots;
+        
+        // Generate slots for this hour at 20-minute intervals (max 3 per hour)
+        const possibleMinutes = [0, 20, 40];
+        const slotsToGenerate = Math.min(slotsInHour, 3); // Max 3 slots per hour
+        
+        for (let i = 0; i < slotsToGenerate; i++) {
+          const minute = possibleMinutes[i];
           
-          // Create 40-minute slots within this hour
-          // Start times: 0, 20, 40 minutes (max 3 per hour for 40-min slots)
-          const possibleMinutes = [0, 20, 40];
-          let slotsCreated = 0;
+          // Create timestamp in location's timezone
+          const localTimeString = `${date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
           
-          for (const minute of possibleMinutes) {
-            if (slotsCreated >= slotsInHour) break;
-            
-            const slotDate = new Date(startDate);
-            slotDate.setHours(hour, minute, 0, 0);
-            
-            timeSlots.push({
-              id: `${locationId}-${slotDate.toISOString()}`,
-              startTime: slotDate.toISOString(),
-              available: true
-            });
-            
-            slotsCreated++;
-          }
+          // Parse and adjust for timezone (EDT is UTC-4)
+          const slotDate = new Date(localTimeString);
+          const tzOffsetHours = 4; // EDT offset
+          slotDate.setHours(slotDate.getHours() + tzOffsetHours);
+          
+          timeSlots.push({
+            id: `${locationId}-${slotDate.toISOString()}`,
+            startTime: slotDate.toISOString(),
+            available: true
+          });
         }
       }
 
