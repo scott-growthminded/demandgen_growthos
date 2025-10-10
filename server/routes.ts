@@ -606,9 +606,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const endDate = new Date(date);
       endDate.setHours(23, 59, 59, 999);
       
+      // Fetch appointments for the date
+      const appointments = await blvdService.getLocationAppointments(
+        locationId,
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
+      
       const availabilityCalc = await blvdService.calculateHourlyAvailability(
         locationId,
-        startDate.toISOString().split('T')[0]
+        startDate.toISOString().split('T')[0],
+        appointments
       );
       
       // Convert hourly breakdown to time slots (40-minute intervals)
@@ -649,9 +657,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Get availability for nearby locations
         for (const nearbyLoc of nearby.slice(0, 3)) { // Limit to top 3 nearest
+          const nearbyAppointments = await blvdService.getLocationAppointments(
+            nearbyLoc.id,
+            startDate.toISOString(),
+            endDate.toISOString()
+          );
+          
           const nearbyAvail = await blvdService.calculateHourlyAvailability(
             nearbyLoc.id,
-            startDate.toISOString().split('T')[0]
+            startDate.toISOString().split('T')[0],
+            nearbyAppointments
           );
           
           if (nearbyAvail.totalAvailable > 0) {
