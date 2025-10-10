@@ -1028,7 +1028,9 @@ export class BlvdService {
         console.log('⚠️ No shift templates found for date');
         return {
           hourlyBreakdown: [],
-          totalAvailable: 0
+          totalAvailable: 0,
+          totalScheduledMinutes: 0,
+          totalBookedMinutes: 0
         };
       }
       
@@ -1067,7 +1069,9 @@ export class BlvdService {
         console.log('⚠️ No staff actually working on this date after expansion');
         return {
           hourlyBreakdown: [],
-          totalAvailable: 0
+          totalAvailable: 0,
+          totalScheduledMinutes: 0,
+          totalBookedMinutes: 0
         };
       }
       
@@ -1084,7 +1088,7 @@ export class BlvdService {
       // Subtract timeblocks from each staff member's working windows
       const netWorkingWindows = new Map<string, Array<{ startMs: number; endMs: number }>>();
       
-      for (const [staffId, windows] of staffWorkingWindows.entries()) {
+      for (const [staffId, windows] of Array.from(staffWorkingWindows.entries())) {
         const merged = this.mergeIntervals(windows.map(w => ({ startMs: w.startMs, endMs: w.endMs })));
         
         // Get timeblocks for this staff
@@ -1135,7 +1139,7 @@ export class BlvdService {
         const hourStartMs = this.toMs(hourStart);
         const hourEndMs = this.toMs(hourEnd);
         
-        for (const [staffId, windows] of netWorkingWindows.entries()) {
+        for (const [staffId, windows] of Array.from(netWorkingWindows.entries())) {
           let staffMinutesThisHour = 0;
           
           // Sum all window overlaps for this staff member in this hour
@@ -2424,6 +2428,263 @@ export class BlvdService {
         throw error;
       }
       throw new Error(`GraphQL request failed: ${String(error)}`);
+    }
+  }
+
+  /**
+   * BOOKING WIDGET METHODS
+   */
+
+  /**
+   * Get staff/estheticians for a location
+   */
+  async getLocationStaff(locationId: string): Promise<any[]> {
+    console.log(`👥 Getting staff for location: ${locationId}`);
+    
+    const staffQuery = `
+      query GetStaff($locationId: ID!) {
+        location(id: $locationId) {
+          id
+          name
+          staff {
+            edges {
+              node {
+                id
+                firstName
+                lastName
+                displayName
+                avatar
+                role {
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    try {
+      const response = await this.makeGraphqlRequest(staffQuery, { locationId });
+      
+      if (response.errors) {
+        console.error('❌ Error getting staff:', response.errors);
+        return [];
+      }
+
+      const staff = (response.data as any)?.location?.staff?.edges?.map((edge: any) => edge.node) || [];
+      console.log(`✅ Found ${staff.length} staff members`);
+      
+      return staff;
+    } catch (error) {
+      console.error('❌ Failed to get staff:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Calculate distance between two coordinates using Haversine formula
+   * Returns distance in miles
+   */
+  calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ): number {
+    const R = 3959; // Earth's radius in miles
+    const dLat = this.toRad(lat2 - lat1);
+    const dLon = this.toRad(lon2 - lon1);
+    
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRad(lat1)) * Math.cos(this.toRad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    
+    return Math.round(distance * 10) / 10; // Round to 1 decimal place
+  }
+
+  private toRad(degrees: number): number {
+    return degrees * (Math.PI / 180);
+  }
+
+  /**
+   * Get locations sorted by distance from a reference location
+   */
+  async getNearbyLocations(
+    referenceLocationId: string,
+    maxDistanceMiles: number = 10,
+    excludeLocationIds: string[] = []
+  ): Promise<any[]> {
+    console.log(`🔍 Finding locations within ${maxDistanceMiles} miles of ${referenceLocationId}`);
+    
+    // Get all locations
+    const locationsResponse = await this.executeLocationsQuery();
+    const allLocations = (locationsResponse.data as any)?.locations?.edges?.map((edge: any) => edge.node) || [];
+    
+    // Coordinates for major Glowbar locations - match by name keywords
+    const locationCoordinates: Record<string, { lat: number; lng: number; city: string; keywords: string[] }> = {
+      'philadelphia-center': { lat: 39.9526, lng: -75.1652, city: 'Philadelphia', keywords: ['center city', 'rittenhouse', 'philly', 'philadelphia'] },
+      'bryn-mawr': { lat: 40.0209, lng: -75.3127, city: 'Bryn Mawr', keywords: ['bryn mawr', 'brynmawr'] },
+      'manayunk': { lat: 40.0259, lng: -75.2238, city: 'Philadelphia', keywords: ['manayunk'] },
+      'tribeca': { lat: 40.7163, lng: -74.0086, city: 'New York', keywords: ['tribeca', 'new york', 'nyc', 'manhattan'] },
+      'georgetown': { lat: 38.9072, lng: -77.0369, city: 'Washington DC', keywords: ['georgetown', 'dc', 'washington'] },
+    };
+
+    // Find reference location coordinates
+    const refLocation = allLocations.find((loc: any) => loc.id === referenceLocationId);
+    if (!refLocation) {
+      console.error('❌ Reference location not found');
+      return [];
+    }
+
+    // Try to find coordinates based on location name/city
+    const refCoords = this.findLocationCoordinates(refLocation, locationCoordinates);
+    if (!refCoords) {
+      console.error('❌ Could not determine reference location coordinates');
+      return [];
+    }
+
+    // Calculate distances and filter
+    const nearbyLocations = allLocations
+      .filter((loc: any) => 
+        loc.id !== referenceLocationId && 
+        !excludeLocationIds.includes(loc.id) &&
+        !loc.isRemote
+      )
+      .map((loc: any): { id: string; name: string; address?: any; isRemote?: boolean; coordinates: { lat: number; lng: number }; distance: number } | null => {
+        const coords = this.findLocationCoordinates(loc, locationCoordinates);
+        if (!coords) return null;
+
+        const distance = this.calculateDistance(
+          refCoords.lat,
+          refCoords.lng,
+          coords.lat,
+          coords.lng
+        );
+
+        return {
+          ...loc,
+          coordinates: coords,
+          distance
+        };
+      })
+      .filter((loc): loc is NonNullable<typeof loc> => loc !== null && loc.distance <= maxDistanceMiles)
+      .sort((a: any, b: any) => a.distance - b.distance);
+
+    console.log(`✅ Found ${nearbyLocations.length} nearby locations`);
+    return nearbyLocations;
+  }
+
+  /**
+   * Helper to find coordinates for a location
+   */
+  private findLocationCoordinates(
+    location: any,
+    coordsMap: Record<string, { lat: number; lng: number; city: string; keywords: string[] }>
+  ): { lat: number; lng: number } | null {
+    const locationName = location.name?.toLowerCase() || '';
+    const locationCity = location.address?.city?.toLowerCase() || '';
+
+    // Try to match by keywords in location name
+    for (const coords of Object.values(coordsMap)) {
+      for (const keyword of coords.keywords) {
+        if (locationName.includes(keyword)) {
+          return { lat: coords.lat, lng: coords.lng };
+        }
+      }
+    }
+
+    // Try to match by city name
+    for (const coords of Object.values(coordsMap)) {
+      if (coords.city.toLowerCase() === locationCity) {
+        return { lat: coords.lat, lng: coords.lng };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Get bookable time slots for a location on a specific date
+   */
+  async getBookableTimeSlots(
+    locationId: string,
+    date: string,
+    serviceId?: string
+  ): Promise<any[]> {
+    console.log(`📅 Getting bookable times for ${locationId} on ${date}`);
+
+    try {
+      // Create cart for location
+      const cartId = await this.createCartForLocation(locationId);
+      if (!cartId) {
+        console.error('❌ Failed to create cart');
+        return [];
+      }
+
+      // Get or use provided service
+      let selectedServiceId = serviceId;
+      if (!selectedServiceId) {
+        const servicesResponse = await this.makeClientApiRequest(
+          `query GetServices($cartId: ID!) {
+            cart(id: $cartId) {
+              availableCategories {
+                name
+                availableItems {
+                  id
+                  name
+                  ... on CartAvailableBookableItem {
+                    listDuration
+                  }
+                }
+              }
+            }
+          }`,
+          { cartId }
+        );
+
+        const categories = (servicesResponse.data as any)?.cart?.availableCategories || [];
+        for (const category of categories) {
+          const facial = category.availableItems?.find((item: any) =>
+            item.name?.toLowerCase().includes('facial') &&
+            item.listDuration >= 30 &&
+            item.listDuration <= 50
+          );
+          if (facial) {
+            selectedServiceId = facial.id;
+            break;
+          }
+        }
+
+        if (!selectedServiceId && categories[0]?.availableItems?.[0]) {
+          selectedServiceId = categories[0].availableItems[0].id;
+        }
+      }
+
+      if (!selectedServiceId) {
+        console.error('❌ No service found');
+        return [];
+      }
+
+      // Add service to cart
+      await this.addBookableItemToCart(cartId, selectedServiceId);
+
+      // Get available times
+      const times = await this.getCartBookableTimes(cartId, date);
+      
+      return times.map((t: any) => ({
+        id: t.id,
+        startTime: t.startTime,
+        score: t.score,
+        available: true
+      }));
+    } catch (error) {
+      console.error('❌ Error getting bookable times:', error);
+      return [];
     }
   }
 

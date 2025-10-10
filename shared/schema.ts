@@ -61,3 +61,58 @@ export type Business = z.infer<typeof businessSchema>;
 export type GraphqlResponse = z.infer<typeof graphqlResponseSchema>;
 export type TestResult = z.infer<typeof testResultSchema>;
 export type ConnectionTestResult = z.infer<typeof connectionTestResultSchema>;
+
+// Booking Widget Types
+export const bookingLocationSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  address: z.object({
+    street: z.string().optional(),
+    city: z.string(),
+    state: z.string(),
+    zip: z.string().optional(),
+  }).optional(),
+  coordinates: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }).optional(),
+  timeZone: z.string().default('America/New_York'),
+});
+
+export const estheticianSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  displayName: z.string(),
+  avatar: z.string().optional(),
+});
+
+export const timeSlotSchema = z.object({
+  id: z.string(),
+  startTime: z.string(), // ISO string
+  endTime: z.string().optional(),
+  available: z.boolean(),
+  staffId: z.string().optional(),
+});
+
+export const bookingStateSchema = z.object({
+  locationId: z.string(),
+  date: z.string(), // YYYY-MM-DD format
+  timeSlot: timeSlotSchema.optional(),
+  estheticianId: z.string().optional(),
+  serviceId: z.string().optional(),
+});
+
+export const availabilityResponseSchema = z.object({
+  location: bookingLocationSchema,
+  date: z.string(),
+  timeSlots: z.array(timeSlotSchema),
+  estheticians: z.array(estheticianSchema),
+  alternativeLocations: z.array(bookingLocationSchema).optional(),
+});
+
+export type BookingLocation = z.infer<typeof bookingLocationSchema>;
+export type Esthetician = z.infer<typeof estheticianSchema>;
+export type TimeSlot = z.infer<typeof timeSlotSchema>;
+export type BookingState = z.infer<typeof bookingStateSchema>;
+export type AvailabilityResponse = z.infer<typeof availabilityResponseSchema>;

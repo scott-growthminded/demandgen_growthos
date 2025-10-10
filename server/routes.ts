@@ -477,6 +477,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+  // Booking Widget API Routes
+  
+  // Get staff/estheticians for a location
+  app.get("/api/booking/staff/:locationId", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { locationId } = req.params;
+      const staff = await blvdService.getLocationStaff(locationId);
+      
+      res.json({ 
+        success: true, 
+        staff: staff.map(s => ({
+          id: s.id,
+          firstName: s.firstName,
+          lastName: s.lastName,
+          displayName: s.displayName,
+          avatar: s.avatar
+        }))
+      });
+    } catch (error) {
+      console.error('Get staff error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to get staff"
+      });
+    }
+  });
+
+  // Get available time slots for a location on a specific date
+  app.get("/api/booking/timeslots/:locationId/:date", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { locationId, date } = req.params;
+      const timeSlots = await blvdService.getBookableTimeSlots(locationId, date);
+      
+      res.json({ 
+        success: true, 
+        timeSlots 
+      });
+    } catch (error) {
+      console.error('Get time slots error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to get time slots"
+      });
+    }
+  });
+
+  // Get booking availability with smart location fallback
+  app.post("/api/booking/availability", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { locationId, date, maxDistance = 5 } = req.body;
+      
+      if (!locationId || !date) {
+        return res.status(400).json({
+          error: "Missing required fields: locationId, date"
+        });
+      }
+
+      // Get primary location details
+      const locationsResponse = await blvdService.executeLocationsQuery();
+      const allLocations = (locationsResponse.data as any)?.locations?.edges?.map((edge: any) => edge.node) || [];
+      const primaryLocation = allLocations.find((loc: any) => loc.id === locationId);
+
+      if (!primaryLocation) {
+        return res.status(404).json({
+          error: "Location not found"
+        });
+      }
+
+      // Get time slots and staff for primary location
+      const [timeSlots, staff] = await Promise.all([
+        blvdService.getBookableTimeSlots(locationId, date),
+        blvdService.getLocationStaff(locationId)
+      ]);
+
+      // If no availability, find nearby alternatives
+      let alternativeLocations: any[] = [];
+      if (timeSlots.length === 0) {
+        console.log(`No availability at ${primaryLocation.name}, finding alternatives...`);
+        const nearby = await blvdService.getNearbyLocations(locationId, maxDistance);
+        
+        // Get availability for nearby locations
+        for (const nearbyLoc of nearby.slice(0, 3)) { // Limit to top 3 nearest
+          const nearbySlots = await blvdService.getBookableTimeSlots(nearbyLoc.id, date);
+          if (nearbySlots.length > 0) {
+            alternativeLocations.push({
+              ...nearbyLoc,
+              availableSlots: nearbySlots.length
+            });
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        location: {
+          id: primaryLocation.id,
+          name: primaryLocation.name,
+          address: primaryLocation.address,
+        },
+        date,
+        timeSlots,
+        estheticians: staff.map((s: any) => ({
+          id: s.id,
+          firstName: s.firstName,
+          lastName: s.lastName,
+          displayName: s.displayName,
+          avatar: s.avatar
+        })),
+        alternativeLocations: alternativeLocations.length > 0 ? alternativeLocations : undefined
+      });
+    } catch (error) {
+      console.error('Get availability error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to get availability"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

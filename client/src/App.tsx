@@ -5,11 +5,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import BlvdApiTest from "@/pages/blvd-api-test";
+import BookingWidget from "@/pages/booking-widget";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={BlvdApiTest} />
+      <Route path="/booking" component={BookingWidget} />
       <Route component={NotFound} />
     </Switch>
   );
