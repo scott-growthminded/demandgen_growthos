@@ -10,8 +10,7 @@ import BookingWidget from "@/pages/booking-widget";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={BlvdApiTest} />
-      <Route path="/booking" component={BookingWidget} />
+      <Route path="/" component={BookingWidget} />
       <Route component={NotFound} />
     </Switch>
   );
