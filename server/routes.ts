@@ -644,6 +644,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         staffByShortId.set(shortId.substring(0, 8), s);
       });
       
+      console.log(`📋 Mapped ${staffByShortId.size} staff members by short ID`);
+      
       // Generate slots using actual staff working during each hour
       for (const hourData of availabilityCalc.hourlyBreakdown) {
         const hour = hourData.hour;
@@ -651,6 +653,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const staffWorkingIds = hourData.staffWorking || [];
         
         if (slotsInHour > 0 && staffWorkingIds.length > 0) {
+          console.log(`⏰ Hour ${hour}: ${slotsInHour} slots, staff working: ${staffWorkingIds.join(', ')}`);
+          
           // Generate slots for this hour at 20-minute intervals (max 3 per hour)
           const possibleMinutes = [0, 20, 40];
           const slotsToGenerate = Math.min(slotsInHour, 3); // Max 3 slots per hour
@@ -660,6 +664,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Assign each slot to a different staff member working this hour
             const staffShortId = staffWorkingIds[i % staffWorkingIds.length];
             const staffMember = staffByShortId.get(staffShortId);
+            
+            if (!staffMember) {
+              console.log(`⚠️ Could not find staff member for ID: ${staffShortId}`);
+            }
             
             // Create timestamp in location's timezone
             const localTimeString = `${date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
@@ -683,8 +691,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      console.log(`✅ Generated ${timeSlots.length} time slots for ${availableEstheticianIds.size} estheticians`);
+      
       // Filter out only estheticians who have available slots
       const availableEstheticians = staff.filter((s: any) => availableEstheticianIds.has(s.id));
+      
+      console.log(`👥 Returning ${availableEstheticians.length} available estheticians:`, 
+        availableEstheticians.map(e => `${e.firstName} ${e.lastName} (${e.id.split(':').pop()?.substring(0, 8)})`).join(', '));
 
       // If no availability, find nearby alternatives
       let alternativeLocations: any[] = [];
