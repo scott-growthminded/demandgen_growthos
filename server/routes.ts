@@ -641,47 +641,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Extract appointments array from GraphQL response
       const appointments = (appointmentsResponse.data as any)?.appointments?.edges?.map((edge: any) => edge.node) || [];
       
-      const availabilityCalc = await blvdService.calculateHourlyAvailability(
-        locationId,
-        startDate.toISOString().split('T')[0],
-        appointments
-      );
+      // Get bookable time slots per esthetician
+      const timeSlots = await blvdService.getBookableTimeSlots(locationId, date);
       
-      // Get location timezone info for proper timestamp generation
-      const locationTimezone = blvdService.inferLocationTimeZone(
-        primaryLocation.name,
-        primaryLocation.address
-      );
-      
-      // Convert hourly breakdown to time slots (40-minute intervals)
-      const timeSlots: any[] = [];
-      
-      for (const hourData of availabilityCalc.hourlyBreakdown) {
-        const hour = hourData.hour;
-        const slotsInHour = hourData.availableSlots;
-        
-        // Generate slots for this hour at 20-minute intervals (max 3 per hour)
-        const possibleMinutes = [0, 20, 40];
-        const slotsToGenerate = Math.min(slotsInHour, 3); // Max 3 slots per hour
-        
-        for (let i = 0; i < slotsToGenerate; i++) {
-          const minute = possibleMinutes[i];
-          
-          // Create timestamp in location's timezone
-          const localTimeString = `${date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
-          
-          // Parse and adjust for timezone (EDT is UTC-4)
-          const slotDate = new Date(localTimeString);
-          const tzOffsetHours = 4; // EDT offset
-          slotDate.setHours(slotDate.getHours() + tzOffsetHours);
-          
-          timeSlots.push({
-            id: `${locationId}-${slotDate.toISOString()}`,
-            startTime: slotDate.toISOString(),
-            available: true
-          });
-        }
-      }
+      // Filter out only estheticians who have available slots
+      const availableEstheticianIds = new Set(timeSlots.map((slot: any) => slot.estheticianId));
+      const availableEstheticians = staff.filter((s: any) => availableEstheticianIds.has(s.id));
 
       // If no availability, find nearby alternatives
       let alternativeLocations: any[] = [];
@@ -725,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         date,
         timeSlots,
-        estheticians: staff.map((s: any) => ({
+        estheticians: availableEstheticians.map((s: any) => ({
           id: s.id,
           firstName: s.firstName,
           lastName: s.lastName,

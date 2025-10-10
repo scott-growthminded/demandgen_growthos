@@ -15,6 +15,7 @@ interface TimeSlot {
   id: string;
   startTime: string;
   available: boolean;
+  estheticianId?: string;
 }
 
 interface Esthetician {
@@ -104,10 +105,16 @@ export default function BookingWidget() {
     return { morning, afternoon, evening };
   };
 
-  const timeSlots = availabilityData?.timeSlots || [];
-  const { morning, afternoon, evening } = groupTimeSlotsByPeriod(timeSlots);
+  const allTimeSlots = availabilityData?.timeSlots || [];
   const estheticians = availabilityData?.estheticians || [];
   const alternativeLocations = availabilityData?.alternativeLocations || [];
+  
+  // Filter time slots by selected esthetician
+  const filteredTimeSlots = tempEstheticianId === 'any' 
+    ? allTimeSlots 
+    : allTimeSlots.filter(slot => slot.estheticianId === tempEstheticianId);
+  
+  const { morning, afternoon, evening } = groupTimeSlotsByPeriod(filteredTimeSlots);
 
   const handleLocationSelect = (locationId: string, locationName: string) => {
     setBookingState({
@@ -307,7 +314,7 @@ export default function BookingWidget() {
 
   // Time Selection Step
   if (bookingState.step === 'time') {
-    const hasAvailability = timeSlots.length > 0;
+    const hasAvailability = filteredTimeSlots.length > 0;
 
     return (
       <>
