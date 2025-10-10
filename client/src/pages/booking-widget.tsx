@@ -163,18 +163,20 @@ export default function BookingWidget() {
   // Location Selection Step
   if (bookingState.step === 'location') {
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2" data-testid="text-title">Choose Your Location</h1>
-            <p className="text-muted-foreground" data-testid="text-subtitle">Select a Glowbar location to start booking</p>
-          </div>
+      <>
+        <div className="h-[10px] bg-yellow-400" />
+        <div className="min-h-screen bg-background p-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2" data-testid="text-title">Choose Your Location</h1>
+              <p className="text-muted-foreground" data-testid="text-subtitle">Select a Glowbar location to start booking</p>
+            </div>
 
-          {locationsLoading ? (
-            <div className="text-center py-12" data-testid="text-loading">Loading locations...</div>
-          ) : (
-            <Tabs defaultValue="list" className="w-full">
-              <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+            {locationsLoading ? (
+              <div className="text-center py-12" data-testid="text-loading">Loading locations...</div>
+            ) : (
+              <Tabs defaultValue="list" className="w-full">
+                <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
                 <TabsTrigger value="list" data-testid="button-view-list">
                   <List className="w-4 h-4 mr-2" />
                   List View
@@ -230,14 +232,17 @@ export default function BookingWidget() {
           )}
         </div>
       </div>
+      </>
     );
   }
 
   // Date Selection Step
   if (bookingState.step === 'date') {
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-4xl mx-auto">
+      <>
+        <div className="h-[10px] bg-yellow-400" />
+        <div className="min-h-screen bg-background p-4">
+          <div className="max-w-4xl mx-auto">
           <Button
             variant="ghost"
             onClick={handleBack}
@@ -269,6 +274,7 @@ export default function BookingWidget() {
           </Card>
         </div>
       </div>
+      </>
     );
   }
 
@@ -277,8 +283,10 @@ export default function BookingWidget() {
     const hasAvailability = timeSlots.length > 0;
 
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-6xl mx-auto">
+      <>
+        <div className="h-[10px] bg-yellow-400" />
+        <div className="min-h-screen bg-background p-4">
+          <div className="max-w-6xl mx-auto">
           <Button
             variant="ghost"
             onClick={handleBack}
@@ -425,14 +433,17 @@ export default function BookingWidget() {
           )}
         </div>
       </div>
+      </>
     );
   }
 
   // Review Step
   if (bookingState.step === 'review') {
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-2xl mx-auto">
+      <>
+        <div className="h-[10px] bg-yellow-400" />
+        <div className="min-h-screen bg-background p-4">
+          <div className="max-w-2xl mx-auto">
           <Button
             variant="ghost"
             onClick={handleBack}
@@ -483,14 +494,17 @@ export default function BookingWidget() {
           </Card>
         </div>
       </div>
+      </>
     );
   }
 
   // Account Creation/Login Step
   if (bookingState.step === 'account') {
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-md mx-auto">
+      <>
+        <div className="h-[10px] bg-yellow-400" />
+        <div className="min-h-screen bg-background p-4">
+          <div className="max-w-md mx-auto">
           <Button
             variant="ghost"
             onClick={handleBack}
@@ -564,6 +578,7 @@ export default function BookingWidget() {
           </Tabs>
         </div>
       </div>
+      </>
     );
   }
 
