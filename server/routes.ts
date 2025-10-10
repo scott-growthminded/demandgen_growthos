@@ -597,11 +597,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get time slots and staff for primary location
-      const [timeSlots, staff] = await Promise.all([
-        blvdService.getBookableTimeSlots(locationId, date),
-        blvdService.getLocationStaff(locationId)
-      ]);
+      // Get staff for primary location
+      const staff = await blvdService.getLocationStaff(locationId);
+      
+      // Calculate availability using Admin API (shifts and appointments)
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+      
+      const availabilityCalc = await blvdService.calculateHourlyAvailability(
+        locationId,
+        startDate.toISOString().split('T')[0]
+      );
+      
+      // Convert hourly breakdown to time slots (40-minute intervals)
+      const timeSlots: any[] = [];
+      for (const hourData of availabilityCalc.hourlyBreakdown) {
+        if (hourData.availableSlots > 0) {
+          // Generate time slots for this hour
+          const hour = hourData.hour;
+          const slotsInHour = hourData.availableSlots;
+          
+          // Create 40-minute slots within this hour
+          // Start times: 0, 20, 40 minutes (max 3 per hour for 40-min slots)
+          const possibleMinutes = [0, 20, 40];
+          let slotsCreated = 0;
+          
+          for (const minute of possibleMinutes) {
+            if (slotsCreated >= slotsInHour) break;
+            
+            const slotDate = new Date(startDate);
+            slotDate.setHours(hour, minute, 0, 0);
+            
+            timeSlots.push({
+              id: `${locationId}-${slotDate.toISOString()}`,
+              startTime: slotDate.toISOString(),
+              available: true
+            });
+            
+            slotsCreated++;
+          }
+        }
+      }
 
       // If no availability, find nearby alternatives
       let alternativeLocations: any[] = [];
@@ -611,11 +649,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Get availability for nearby locations
         for (const nearbyLoc of nearby.slice(0, 3)) { // Limit to top 3 nearest
-          const nearbySlots = await blvdService.getBookableTimeSlots(nearbyLoc.id, date);
-          if (nearbySlots.length > 0) {
+          const nearbyAvail = await blvdService.calculateHourlyAvailability(
+            nearbyLoc.id,
+            startDate.toISOString().split('T')[0]
+          );
+          
+          if (nearbyAvail.totalAvailable > 0) {
             alternativeLocations.push({
-              ...nearbyLoc,
-              availableSlots: nearbySlots.length
+              location: nearbyLoc,
+              availableSlots: nearbyAvail.totalAvailable,
+              distance: nearbyLoc.distance
             });
           }
         }

@@ -2441,21 +2441,27 @@ export class BlvdService {
   async getLocationStaff(locationId: string): Promise<any[]> {
     console.log(`👥 Getting staff for location: ${locationId}`);
     
+    // Query all staff and filter by location
     const staffQuery = `
-      query GetStaff($locationId: ID!) {
-        location(id: $locationId) {
-          id
-          name
-          staff {
-            edges {
-              node {
-                id
-                firstName
-                lastName
-                displayName
-                avatar
-                role {
-                  name
+      query GetStaffByLocation {
+        staff(first: 100) {
+          edges {
+            node {
+              id
+              firstName
+              lastName
+              displayName
+              avatar
+              role {
+                name
+              }
+              employments {
+                edges {
+                  node {
+                    location {
+                      id
+                    }
+                  }
                 }
               }
             }
@@ -2465,17 +2471,22 @@ export class BlvdService {
     `;
 
     try {
-      const response = await this.makeGraphqlRequest(staffQuery, { locationId });
+      const response = await this.makeGraphqlRequest(staffQuery, {});
       
       if (response.errors) {
         console.error('❌ Error getting staff:', response.errors);
         return [];
       }
 
-      const staff = (response.data as any)?.location?.staff?.edges?.map((edge: any) => edge.node) || [];
-      console.log(`✅ Found ${staff.length} staff members`);
+      // Filter staff by location
+      const allStaff = (response.data as any)?.staff?.edges?.map((edge: any) => edge.node) || [];
+      const locationStaff = allStaff.filter((staff: any) => {
+        return staff.employments?.edges?.some((emp: any) => emp.node.location.id === locationId);
+      });
       
-      return staff;
+      console.log(`✅ Found ${locationStaff.length} staff members for location`);
+      
+      return locationStaff;
     } catch (error) {
       console.error('❌ Failed to get staff:', error);
       return [];
