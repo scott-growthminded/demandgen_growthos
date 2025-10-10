@@ -342,8 +342,12 @@ export default function BookingWidget() {
                 onValueChange={setTempEstheticianId}
                 data-testid="select-esthetician"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Any esthetician" />
+                <SelectTrigger className="w-full">
+                  <SelectValue>
+                    {tempEstheticianId === 'any' 
+                      ? 'Any esthetician' 
+                      : estheticians.find(e => e.id === tempEstheticianId)?.displayName || 'Select esthetician'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="any">Any esthetician</SelectItem>
