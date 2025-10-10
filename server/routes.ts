@@ -492,37 +492,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filter out remote locations and group by state and city
       const physicalLocations = allLocations.filter((loc: any) => !loc.isRemote);
       
-      // Fetch staff for each location
-      const locationsWithStaff = await Promise.all(
-        physicalLocations.map(async (loc: any) => {
-          try {
-            const staff = await blvdService.getLocationStaff(loc.id);
-            return {
-              id: loc.id,
-              name: loc.name,
-              address: loc.address,
-              staff: staff.map((s: any) => ({
-                id: s.id,
-                firstName: s.firstName,
-                lastName: s.lastName,
-                displayName: s.displayName,
-                avatar: s.avatar
-              }))
-            };
-          } catch (error) {
-            console.error(`Error fetching staff for location ${loc.name}:`, error);
-            return {
-              id: loc.id,
-              name: loc.name,
-              address: loc.address,
-              staff: []
-            };
-          }
-        })
-      );
+      // Don't pre-load staff - we'll fetch them when checking availability for a specific date
+      // This ensures we only show staff who are actually available
+      const locationsData = physicalLocations.map((loc: any) => ({
+        id: loc.id,
+        name: loc.name,
+        address: loc.address,
+        staff: [] // Staff will be loaded per date in availability endpoint
+      }));
       
       // Group by state and city
-      const grouped = locationsWithStaff.reduce((acc: any, loc: any) => {
+      const grouped = locationsData.reduce((acc: any, loc: any) => {
         const state = loc.address?.state || 'Other';
         const city = loc.address?.city || 'Unknown';
         
