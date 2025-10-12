@@ -624,24 +624,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appointments
       );
       
-      // Get staff information for this specific location from appointments
-      // Appointments already contain complete staff data from the location
-      const staffMap = new Map();
-      appointments.forEach((apt: any) => {
-        const staff = apt.appointmentServices?.[0]?.staff;
-        if (staff && staff.id) {
-          staffMap.set(staff.id, {
-            id: staff.id,
-            firstName: staff.firstName,
-            lastName: staff.lastName,
-            displayName: `${staff.firstName} ${staff.lastName}`,
-            role: staff.role
-          });
+      // Get ALL staff members for the organization
+      const allStaff = await blvdService.getLocationStaff(locationId);
+      
+      // Get staff working at this location on this date from shifts
+      const shiftsForStaff = await blvdService.getStaffShifts(
+        locationId,
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
+      
+      // Extract short staff IDs from shifts (staff actually scheduled to work)
+      const workingStaffShortIds = new Set();
+      shiftsForStaff.forEach((shift: any) => {
+        if (shift.available) {
+          // staffId in shifts is just the UUID part (8 chars minimum)
+          workingStaffShortIds.add(shift.staffId.substring(0, 8));
         }
       });
       
-      const staff = Array.from(staffMap.values());
-      console.log(`✅ Extracted ${staff.length} staff members from appointments`);
+      console.log(`🔍 Found ${workingStaffShortIds.size} staff with shifts:`, Array.from(workingStaffShortIds).join(', '));
+      
+      // Filter allStaff to only those who have shifts at this location
+      const staff = allStaff.filter((s: any) => {
+        const fullUuid = s.id.includes(':') ? s.id.split(':').pop() : s.id;
+        const short8 = fullUuid.substring(0, 8);
+        return workingStaffShortIds.has(short8);
+      });
+      
+      console.log(`✅ Filtered to ${staff.length} staff members working at this location on ${date}:`,
+        staff.map((s: any) => `${s.firstName} ${s.lastName}`).join(', '));
       
       // Get location timezone info for proper timestamp generation
       const locationTimezone = blvdService.inferLocationTimeZone(
