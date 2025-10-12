@@ -625,7 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       // Get staff information for this specific location from appointments
-      // Appointments already contain staff data from the location
+      // Appointments already contain complete staff data from the location
       const staffMap = new Map();
       appointments.forEach((apt: any) => {
         const staff = apt.appointmentServices?.[0]?.staff;
@@ -640,28 +640,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
-      // Also get shifts to find staff who haven't had appointments yet
-      const shiftsForStaff = await blvdService.getStaffShifts(
-        locationId,
-        startDate.toISOString(),
-        endDate.toISOString()
-      );
-      
-      // Query staff details for any staff in shifts who aren't in appointments
-      const allStaffIds = new Set([...staffMap.keys()]);
-      for (const shift of shiftsForStaff) {
-        const fullStaffId = shift.staffId; // This is the full URN
-        if (!allStaffIds.has(fullStaffId) && shift.available) {
-          // Need to fetch this staff member's details
-          const staffDetails = await blvdService.getStaffById(fullStaffId);
-          if (staffDetails) {
-            staffMap.set(fullStaffId, staffDetails);
-            allStaffIds.add(fullStaffId);
-          }
-        }
-      }
-      
       const staff = Array.from(staffMap.values());
+      console.log(`✅ Extracted ${staff.length} staff members from appointments`);
       
       // Get location timezone info for proper timestamp generation
       const locationTimezone = blvdService.inferLocationTimeZone(
