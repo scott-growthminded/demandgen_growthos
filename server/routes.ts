@@ -602,9 +602,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get staff for primary location
-      const staff = await blvdService.getLocationStaff(locationId);
-      
       // Calculate availability using Admin API (shifts and appointments)
       const startDate = new Date(date);
       startDate.setHours(0, 0, 0, 0);
@@ -627,6 +624,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appointments
       );
       
+      // Get staff information for this specific location from appointments
+      // Appointments already contain staff data from the location
+      const staffMap = new Map();
+      appointments.forEach((apt: any) => {
+        const staff = apt.appointmentServices?.[0]?.staff;
+        if (staff && staff.id) {
+          staffMap.set(staff.id, {
+            id: staff.id,
+            firstName: staff.firstName,
+            lastName: staff.lastName,
+            displayName: `${staff.firstName} ${staff.lastName}`,
+            role: staff.role
+          });
+        }
+      });
+      
+      // Also get shifts to find staff who haven't had appointments yet
+      const shiftsForStaff = await blvdService.getStaffShifts(
+        locationId,
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
+      
+      // Query staff details for any staff in shifts who aren't in appointments
+      const allStaffIds = new Set([...staffMap.keys()]);
+      for (const shift of shiftsForStaff) {
+        const fullStaffId = shift.staffId; // This is the full URN
+        if (!allStaffIds.has(fullStaffId) && shift.available) {
+          // Need to fetch this staff member's details
+          const staffDetails = await blvdService.getStaffById(fullStaffId);
+          if (staffDetails) {
+            staffMap.set(fullStaffId, staffDetails);
+            allStaffIds.add(fullStaffId);
+          }
+        }
+      }
+      
+      const staff = Array.from(staffMap.values());
+      
       // Get location timezone info for proper timestamp generation
       const locationTimezone = blvdService.inferLocationTimeZone(
         primaryLocation.name,
@@ -637,23 +673,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timeSlots: any[] = [];
       const availableEstheticianIds = new Set();
       
-      // Map staff short IDs to full staff objects
+      // Create two-way mapping: short ID (8 chars) <-> full staff record
       const staffByShortId = new Map();
+      const staffByFullId = new Map();
+      
       staff.forEach((s: any) => {
-        const shortId = s.id.includes(':') ? s.id.split(':').pop() : s.id;
-        const short8 = shortId.substring(0, 8);
+        // Extract the UUID part after "urn:blvd:Staff:"
+        const fullUuid = s.id.includes(':') ? s.id.split(':').pop() : s.id;
+        // Get first 8 characters of UUID for matching with shift data
+        const short8 = fullUuid.substring(0, 8);
+        
         staffByShortId.set(short8, s);
+        staffByFullId.set(s.id, s);
       });
       
-      console.log(`📋 Mapped ${staffByShortId.size} staff members by short ID`);
-      console.log(`📋 Staff map keys (first 10):`, Array.from(staffByShortId.keys()).slice(0, 10).join(', '));
+      console.log(`📋 Mapped ${staffByShortId.size} staff members`);
+      console.log(`📋 Sample staff IDs:`, Array.from(staffByShortId.entries()).slice(0, 3).map(([short, s]) => `${short} -> ${s.firstName} ${s.lastName}`).join(', '));
       
       // Collect all unique staff IDs from shifts
       const allShiftStaffIds = new Set();
       availabilityCalc.hourlyBreakdown.forEach((hourData: any) => {
         (hourData.staffWorking || []).forEach((id: string) => allShiftStaffIds.add(id));
       });
-      console.log(`🔍 Unique staff IDs from shifts:`, Array.from(allShiftStaffIds).join(', '));
+      console.log(`🔍 Unique staff short IDs from shifts:`, Array.from(allShiftStaffIds).join(', '));
       
       // Generate slots using actual staff working during each hour
       for (const hourData of availabilityCalc.hourlyBreakdown) {

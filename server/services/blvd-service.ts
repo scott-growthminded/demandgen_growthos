@@ -2438,6 +2438,51 @@ export class BlvdService {
    */
 
   /**
+   * Get a single staff member by ID
+   */
+  async getStaffById(staffId: string): Promise<any | null> {
+    console.log(`👤 Getting staff by ID: ${staffId}`);
+    
+    try {
+      const staffQuery = `
+        query GetStaffById($id: ID!) {
+          staff(id: $id) {
+            id
+            firstName
+            lastName
+            displayName
+            avatar
+            role {
+              name
+            }
+          }
+        }
+      `;
+      
+      const response = await this.makeGraphqlRequest(staffQuery, { id: staffId });
+      
+      if (response.errors) {
+        console.error('❌ Error getting staff by ID:', response.errors);
+        return null;
+      }
+      
+      const staffData = (response.data as any)?.staff;
+      
+      if (!staffData) {
+        console.log(`⚠️ Staff not found: ${staffId}`);
+        return null;
+      }
+      
+      console.log(`✅ Found staff: ${staffData.firstName} ${staffData.lastName}`);
+      
+      return staffData;
+    } catch (error) {
+      console.error('❌ Failed to get staff by ID:', error);
+      return null;
+    }
+  }
+
+  /**
    * Get staff/estheticians for a location
    */
   async getLocationStaff(locationId: string): Promise<any[]> {
