@@ -624,35 +624,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         appointments
       );
       
-      // Get ALL staff members for the organization
-      const allStaff = await blvdService.getLocationStaff(locationId);
+      // Combine staff from TWO sources:
+      // 1. Staff embedded in appointments (those with bookings)
+      // 2. Staff from shifts who may not have bookings yet
       
-      // Get staff working at this location on this date from shifts
+      const staffMap = new Map();
+      
+      // First: Extract staff from appointments (they have full details)
+      appointments.forEach((apt: any) => {
+        const staff = apt.appointmentServices?.[0]?.staff;
+        if (staff && staff.id) {
+          const fullId = staff.id.includes(':') ? staff.id.split(':').pop() : staff.id;
+          staffMap.set(fullId, {
+            id: staff.id,
+            firstName: staff.firstName,
+            lastName: staff.lastName,
+            displayName: `${staff.firstName} ${staff.lastName}`,
+            role: staff.role
+          });
+        }
+      });
+      
+      console.log(`📋 Found ${staffMap.size} staff from appointments:`, 
+        Array.from(staffMap.values()).map((s: any) => s.firstName).join(', '));
+      
+      // Second: Get shifts and find any staff not already in our map
       const shiftsForStaff = await blvdService.getStaffShifts(
         locationId,
         startDate.toISOString(),
         endDate.toISOString()
       );
       
-      // Extract short staff IDs from shifts (staff actually scheduled to work)
-      const workingStaffShortIds = new Set();
+      // Get all organization staff to look up details for shift-only staff
+      const allStaff = await blvdService.getLocationStaff(locationId);
+      const allStaffByUuid = new Map();
+      allStaff.forEach((s: any) => {
+        const fullId = s.id.includes(':') ? s.id.split(':').pop() : s.id;
+        allStaffByUuid.set(fullId, s);
+      });
+      
+      // Add staff from shifts who aren't already in the map
       shiftsForStaff.forEach((shift: any) => {
-        if (shift.available) {
-          // staffId in shifts is just the UUID part (8 chars minimum)
-          workingStaffShortIds.add(shift.staffId.substring(0, 8));
+        if (shift.available && shift.staffId) {
+          // staffId could be either full UUID or short ID
+          const shiftStaffId = shift.staffId;
+          
+          if (!staffMap.has(shiftStaffId) && allStaffByUuid.has(shiftStaffId)) {
+            const s = allStaffByUuid.get(shiftStaffId);
+            const fullId = s.id.includes(':') ? s.id.split(':').pop() : s.id;
+            staffMap.set(fullId, {
+              id: s.id,
+              firstName: s.firstName,
+              lastName: s.lastName,
+              displayName: `${s.firstName} ${s.lastName}`,
+              role: s.role
+            });
+          }
         }
       });
       
-      console.log(`🔍 Found ${workingStaffShortIds.size} staff with shifts:`, Array.from(workingStaffShortIds).join(', '));
-      
-      // Filter allStaff to only those who have shifts at this location
-      const staff = allStaff.filter((s: any) => {
-        const fullUuid = s.id.includes(':') ? s.id.split(':').pop() : s.id;
-        const short8 = fullUuid.substring(0, 8);
-        return workingStaffShortIds.has(short8);
-      });
-      
-      console.log(`✅ Filtered to ${staff.length} staff members working at this location on ${date}:`,
+      const staff = Array.from(staffMap.values());
+      console.log(`✅ Total ${staff.length} staff members working at this location on ${date}:`,
         staff.map((s: any) => `${s.firstName} ${s.lastName}`).join(', '));
       
       // Get location timezone info for proper timestamp generation
