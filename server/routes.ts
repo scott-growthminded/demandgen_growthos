@@ -641,10 +641,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const staffByShortId = new Map();
       staff.forEach((s: any) => {
         const shortId = s.id.includes(':') ? s.id.split(':').pop() : s.id;
-        staffByShortId.set(shortId.substring(0, 8), s);
+        const short8 = shortId.substring(0, 8);
+        staffByShortId.set(short8, s);
       });
       
       console.log(`📋 Mapped ${staffByShortId.size} staff members by short ID`);
+      console.log(`📋 Staff map keys (first 10):`, Array.from(staffByShortId.keys()).slice(0, 10).join(', '));
+      
+      // Collect all unique staff IDs from shifts
+      const allShiftStaffIds = new Set();
+      availabilityCalc.hourlyBreakdown.forEach((hourData: any) => {
+        (hourData.staffWorking || []).forEach((id: string) => allShiftStaffIds.add(id));
+      });
+      console.log(`🔍 Unique staff IDs from shifts:`, Array.from(allShiftStaffIds).join(', '));
       
       // Generate slots using actual staff working during each hour
       for (const hourData of availabilityCalc.hourlyBreakdown) {
