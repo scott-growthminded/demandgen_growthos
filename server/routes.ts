@@ -693,76 +693,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
         primaryLocation.address
       );
       
-      // Generate time slots per esthetician based on their working hours
+      // Generate time slots per esthetician based on their actual availability
       const timeSlots: any[] = [];
       const availableEstheticianIds = new Set();
       
-      // Create two-way mapping: short ID (8 chars) <-> full staff record
-      const staffByShortId = new Map();
-      const staffByFullId = new Map();
+      // Get shift data to know when each staff member is working
+      const staffShifts = await blvdService.getStaffShifts(
+        locationId,
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
       
-      staff.forEach((s: any) => {
-        // Extract the UUID part after "urn:blvd:Staff:"
-        const fullUuid = s.id.includes(':') ? s.id.split(':').pop() : s.id;
-        // Get first 8 characters of UUID for matching with shift data
-        const short8 = fullUuid.substring(0, 8);
-        
-        staffByShortId.set(short8, s);
-        staffByFullId.set(s.id, s);
+      // Build map of staff appointments
+      const appointmentsByStaff = new Map();
+      appointments.forEach((apt: any) => {
+        const staffId = apt.appointmentServices?.[0]?.staff?.id;
+        if (staffId) {
+          if (!appointmentsByStaff.has(staffId)) {
+            appointmentsByStaff.set(staffId, []);
+          }
+          appointmentsByStaff.get(staffId).push({
+            startTime: new Date(apt.startAt),
+            endTime: new Date(apt.endAt)
+          });
+        }
       });
       
-      console.log(`📋 Mapped ${staffByShortId.size} staff members`);
-      console.log(`📋 Sample staff IDs:`, Array.from(staffByShortId.entries()).slice(0, 3).map(([short, s]) => `${short} -> ${s.firstName} ${s.lastName}`).join(', '));
+      console.log(`📅 Processing ${staff.length} staff members for slot generation`);
       
-      // Collect all unique staff IDs from shifts
-      const allShiftStaffIds = new Set();
-      availabilityCalc.hourlyBreakdown.forEach((hourData: any) => {
-        (hourData.staffWorking || []).forEach((id: string) => allShiftStaffIds.add(id));
-      });
-      console.log(`🔍 Unique staff short IDs from shifts:`, Array.from(allShiftStaffIds).join(', '));
-      
-      // Generate slots using actual staff working during each hour
-      for (const hourData of availabilityCalc.hourlyBreakdown) {
-        const hour = hourData.hour;
-        const slotsInHour = hourData.availableSlots;
-        const staffWorkingIds = hourData.staffWorking || [];
+      // For each staff member, calculate their available time slots
+      for (const staffMember of staff) {
+        const staffId = staffMember.id;
+        const fullUuid = staffId.includes(':') ? staffId.split(':').pop() : staffId;
         
-        if (slotsInHour > 0 && staffWorkingIds.length > 0) {
-          console.log(`⏰ Hour ${hour}: ${slotsInHour} slots, staff working: ${staffWorkingIds.join(', ')}`);
+        // Find this staff member's shift for the day
+        const staffShift = staffShifts.find((shift: any) => 
+          shift.staffId === fullUuid && shift.available
+        );
+        
+        if (!staffShift) {
+          console.log(`⚠️ No shift found for ${staffMember.firstName} ${staffMember.lastName}`);
+          continue;
+        }
+        
+        // Parse shift times (format: "HH:MM:SS")
+        const [clockInHour, clockInMin] = staffShift.clockIn.split(':').map(Number);
+        const [clockOutHour, clockOutMin] = staffShift.clockOut.split(':').map(Number);
+        
+        // Get this staff member's appointments
+        const staffAppointments = appointmentsByStaff.get(staffId) || [];
+        
+        console.log(`👤 ${staffMember.firstName}: shift ${staffShift.clockIn}-${staffShift.clockOut}, ${staffAppointments.length} appointments`);
+        
+        // Generate all possible 20-minute intervals during their shift
+        let currentHour = clockInHour;
+        let currentMin = clockInMin;
+        
+        while (currentHour < clockOutHour || (currentHour === clockOutHour && currentMin < clockOutMin)) {
+          // Create slot start time
+          const slotStartLocal = new Date(`${date}T${String(currentHour).padStart(2, '0')}:${String(currentMin).padStart(2, '0')}:00`);
+          const slotEndLocal = new Date(slotStartLocal.getTime() + 40 * 60 * 1000); // 40 minutes later
           
-          // Generate slots for 40-minute appointments at 20-minute intervals
-          // This allows 3 slots per hour: :00-:40, :20-1:00, :40-1:20
-          const possibleMinutes = [0, 20, 40];
-          const slotsToGenerate = Math.min(slotsInHour, possibleMinutes.length);
+          // Check if this slot conflicts with any of this staff's appointments
+          const hasConflict = staffAppointments.some((apt: any) => {
+            // Slot conflicts if it overlaps with appointment
+            return slotStartLocal < apt.endTime && slotEndLocal > apt.startTime;
+          });
           
-          for (let i = 0; i < slotsToGenerate; i++) {
-            const minute = possibleMinutes[i];
-            // Assign each slot to a different staff member working this hour
-            const staffShortId = staffWorkingIds[i % staffWorkingIds.length];
-            const staffMember = staffByShortId.get(staffShortId);
-            
-            if (!staffMember) {
-              console.log(`⚠️ Could not find staff member for ID: ${staffShortId}`);
-            }
-            
-            // Create timestamp in location's timezone
-            const localTimeString = `${date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`;
-            
-            // Parse and adjust for timezone (EDT is UTC-4)
-            const slotDate = new Date(localTimeString);
-            const tzOffsetHours = 4; // EDT offset
-            slotDate.setHours(slotDate.getHours() + tzOffsetHours);
+          if (!hasConflict) {
+            // Convert to UTC for storage (EDT is UTC-4)
+            const slotStartUTC = new Date(slotStartLocal);
+            slotStartUTC.setHours(slotStartUTC.getHours() + 4);
             
             timeSlots.push({
-              id: `${locationId}-${staffMember?.id || 'any'}-${slotDate.toISOString()}`,
-              startTime: slotDate.toISOString(),
+              id: `${locationId}-${staffId}-${slotStartUTC.toISOString()}`,
+              startTime: slotStartUTC.toISOString(),
               available: true,
-              estheticianId: staffMember?.id
+              estheticianId: staffId
             });
             
-            if (staffMember?.id) {
-              availableEstheticianIds.add(staffMember.id);
-            }
+            availableEstheticianIds.add(staffId);
+          }
+          
+          // Move to next 20-minute interval
+          currentMin += 20;
+          if (currentMin >= 60) {
+            currentMin -= 60;
+            currentHour += 1;
           }
         }
       }
