@@ -705,6 +705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       // Build map of staff appointments
+      // NOTE: Appointments from API are in UTC, convert to local time for comparison
       const appointmentsByStaff = new Map();
       appointments.forEach((apt: any) => {
         const staffId = apt.appointmentServices?.[0]?.staff?.id;
@@ -712,9 +713,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!appointmentsByStaff.has(staffId)) {
             appointmentsByStaff.set(staffId, []);
           }
+          // Convert UTC times to local by subtracting offset (EDT is UTC-4)
+          const startTimeUTC = new Date(apt.startAt);
+          const endTimeUTC = new Date(apt.endAt);
+          const startTimeLocal = new Date(startTimeUTC.getTime() - 4 * 60 * 60 * 1000);
+          const endTimeLocal = new Date(endTimeUTC.getTime() - 4 * 60 * 60 * 1000);
+          
           appointmentsByStaff.get(staffId).push({
-            startTime: new Date(apt.startAt),
-            endTime: new Date(apt.endAt)
+            startTime: startTimeLocal,
+            endTime: endTimeLocal
           });
         }
       });
