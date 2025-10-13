@@ -1992,11 +1992,11 @@ export class BlvdService {
           const appointments = (appointmentsResponse.data as any)?.appointments?.edges?.map((edge: any) => edge.node) || [];
           console.log(`📅 Raw appointments found for ${location.name}: ${appointments.length}`);
           
-          // Filter out cancelled appointments AND filter by target date AND filter out training facials
+          // Filter out cancelled and HOLD appointments AND filter by target date AND filter out training facials
           const targetDate = startDate.split('T')[0];
           const bookedAppointments = appointments.filter((apt: any) => {
-            // Skip cancelled appointments (include both CONFIRMED and HOLD as booked time)
-            if (apt.cancelled || apt.state === 'CANCELLED') return false;
+            // Skip cancelled and HOLD appointments (only count CONFIRMED as booked time)
+            if (apt.cancelled || apt.state === 'CANCELLED' || apt.state === 'HOLD') return false;
             
             // Only include appointments that start on the target date
             const aptDate = apt.startAt.split('T')[0];
@@ -2025,7 +2025,7 @@ export class BlvdService {
           console.log(`🔍 ${location.name} appointments for ${targetDate}:`);
           console.log(`  Raw API response: ${appointments.length} appointments`);
           console.log(`  📊 Appointment states:`, stateCounts);
-          console.log(`  After filtering cancelled & date: ${bookedAppointments.length} target date appointments (includes CONFIRMED + HOLD)`);
+          console.log(`  After filtering cancelled, HOLD & date: ${bookedAppointments.length} target date appointments (CONFIRMED only)`);
           
           // Verify all appointments are for the correct date
           const dateMismatches = appointments.filter(apt => {

@@ -706,8 +706,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Build map of staff appointments
       // NOTE: Appointments from API are in UTC, convert to local time for comparison
+      // Skip HOLD and CANCELLED appointments - only CONFIRMED appointments block slots
       const appointmentsByStaff = new Map();
       appointments.forEach((apt: any) => {
+        // Skip HOLD and CANCELLED appointments
+        if (apt.cancelled || apt.state === 'CANCELLED' || apt.state === 'HOLD') {
+          return;
+        }
+        
         const staffId = apt.appointmentServices?.[0]?.staff?.id;
         if (staffId) {
           if (!appointmentsByStaff.has(staffId)) {
