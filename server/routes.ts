@@ -730,9 +730,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (slotsInHour > 0 && staffWorkingIds.length > 0) {
           console.log(`⏰ Hour ${hour}: ${slotsInHour} slots, staff working: ${staffWorkingIds.join(', ')}`);
           
-          // Generate slots for 40-minute appointments
-          // Slots can start at :00 and :40 (not :20, as that would overlap)
-          const possibleMinutes = [0, 40];
+          // Generate slots for 40-minute appointments at 20-minute intervals
+          // This allows 3 slots per hour: :00-:40, :20-1:00, :40-1:20
+          const possibleMinutes = [0, 20, 40];
           const slotsToGenerate = Math.min(slotsInHour, possibleMinutes.length);
           
           for (let i = 0; i < slotsToGenerate; i++) {
