@@ -704,6 +704,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         endDate.toISOString()
       );
       
+      // Get timeblocks (breaks, notes, etc.) for this location
+      const timeblocks = await blvdService.getTimeblocks(
+        locationId,
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
+      console.log(`📋 Found ${timeblocks.length} timeblocks (breaks/notes) for this date`);
+      
       // Build map of staff appointments
       // NOTE: Appointments from API are in UTC, convert to local time for comparison
       // Skip HOLD and CANCELLED appointments - only CONFIRMED appointments block slots
@@ -722,6 +730,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Convert UTC times to local by subtracting offset (EDT is UTC-4)
           const startTimeUTC = new Date(apt.startAt);
           const endTimeUTC = new Date(apt.endAt);
+          const startTimeLocal = new Date(startTimeUTC.getTime() - 4 * 60 * 60 * 1000);
+          const endTimeLocal = new Date(endTimeUTC.getTime() - 4 * 60 * 60 * 1000);
+          
+          appointmentsByStaff.get(staffId).push({
+            startTime: startTimeLocal,
+            endTime: endTimeLocal
+          });
+        }
+      });
+      
+      // Add timeblocks (breaks, notes) to blocked times
+      timeblocks.forEach((block: any) => {
+        const staffId = block.staff?.id;
+        if (staffId) {
+          if (!appointmentsByStaff.has(staffId)) {
+            appointmentsByStaff.set(staffId, []);
+          }
+          // Convert UTC times to local by subtracting offset (EDT is UTC-4)
+          const startTimeUTC = new Date(block.startAt);
+          const endTimeUTC = new Date(block.endAt);
           const startTimeLocal = new Date(startTimeUTC.getTime() - 4 * 60 * 60 * 1000);
           const endTimeLocal = new Date(endTimeUTC.getTime() - 4 * 60 * 60 * 1000);
           
@@ -753,10 +781,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const [clockInHour, clockInMin] = staffShift.clockIn.split(':').map(Number);
         const [clockOutHour, clockOutMin] = staffShift.clockOut.split(':').map(Number);
         
-        // Get this staff member's appointments
-        const staffAppointments = appointmentsByStaff.get(staffId) || [];
+        // Get this staff member's blocked times (appointments + timeblocks)
+        const staffBlockedTimes = appointmentsByStaff.get(staffId) || [];
         
-        console.log(`👤 ${staffMember.firstName}: shift ${staffShift.clockIn}-${staffShift.clockOut}, ${staffAppointments.length} appointments`);
+        console.log(`👤 ${staffMember.firstName}: shift ${staffShift.clockIn}-${staffShift.clockOut}, ${staffBlockedTimes.length} blocked times`);
         
         // Generate all possible 20-minute intervals during their shift
         let currentHour = clockInHour;
@@ -767,10 +795,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const slotStartLocal = new Date(`${date}T${String(currentHour).padStart(2, '0')}:${String(currentMin).padStart(2, '0')}:00`);
           const slotEndLocal = new Date(slotStartLocal.getTime() + 40 * 60 * 1000); // 40 minutes later
           
-          // Check if this slot conflicts with any of this staff's appointments
-          const hasConflict = staffAppointments.some((apt: any) => {
-            // Slot conflicts if it overlaps with appointment
-            return slotStartLocal < apt.endTime && slotEndLocal > apt.startTime;
+          // Check if this slot conflicts with any of this staff's blocked times (appointments + breaks)
+          const hasConflict = staffBlockedTimes.some((blockedTime: any) => {
+            // Slot conflicts if it overlaps with blocked time
+            return slotStartLocal < blockedTime.endTime && slotEndLocal > blockedTime.startTime;
           });
           
           if (!hasConflict) {
