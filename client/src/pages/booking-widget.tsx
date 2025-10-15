@@ -56,6 +56,47 @@ export default function BookingWidget() {
 
   // Track esthetician selection separately during time selection
   const [tempEstheticianId, setTempEstheticianId] = useState<string>('any');
+  
+  // Check for URL parameters on mount to support deep linking
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const locationId = params.get('location');
+    const dateParam = params.get('date');
+    const estheticianId = params.get('esthetician');
+    
+    if (locationId || dateParam || estheticianId) {
+      const newState: BookingState = {
+        step: 'location'
+      };
+      
+      // If location is provided
+      if (locationId) {
+        newState.locationId = locationId;
+        newState.locationName = params.get('locationName') || 'Selected Location';
+        newState.step = 'date';
+      }
+      
+      // If date is provided (requires location)
+      if (dateParam && locationId) {
+        try {
+          const parsedDate = new Date(dateParam);
+          if (!isNaN(parsedDate.getTime())) {
+            newState.date = parsedDate;
+            newState.step = 'time';
+          }
+        } catch (e) {
+          console.error('Invalid date parameter:', e);
+        }
+      }
+      
+      // If esthetician is provided, set it
+      if (estheticianId) {
+        setTempEstheticianId(estheticianId);
+      }
+      
+      setBookingState(newState);
+    }
+  }, []);
 
   // Fetch all locations grouped by state and city
   const { data: locationsData, isLoading: locationsLoading } = useQuery({
