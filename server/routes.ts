@@ -741,17 +741,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Add timeblocks (breaks, notes) to blocked times
+      // NOTE: Timeblocks already come with timezone offset (e.g. -04:00), so they're in local time
       timeblocks.forEach((block: any) => {
-        const staffId = block.staff?.id;
+        // Skip cancelled timeblocks
+        if (block.cancelled) {
+          return;
+        }
+        
+        const staffId = block.staffId;
         if (staffId) {
           if (!appointmentsByStaff.has(staffId)) {
             appointmentsByStaff.set(staffId, []);
           }
-          // Convert UTC times to local by subtracting offset (EDT is UTC-4)
-          const startTimeUTC = new Date(block.startAt);
-          const endTimeUTC = new Date(block.endAt);
-          const startTimeLocal = new Date(startTimeUTC.getTime() - 4 * 60 * 60 * 1000);
-          const endTimeLocal = new Date(endTimeUTC.getTime() - 4 * 60 * 60 * 1000);
+          // Timeblocks are already in local time (have timezone offset), use them directly
+          const startTimeLocal = new Date(block.startAt);
+          const endTimeLocal = new Date(block.endAt);
           
           appointmentsByStaff.get(staffId).push({
             startTime: startTimeLocal,
