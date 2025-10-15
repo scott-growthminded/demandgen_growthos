@@ -157,9 +157,24 @@ export default function BookingWidget() {
   const alternativeLocations = availabilityData?.alternativeLocations || [];
   
   // Filter time slots by selected esthetician
-  const filteredTimeSlots = tempEstheticianId === 'any' 
+  let filteredTimeSlots = tempEstheticianId === 'any' 
     ? allTimeSlots 
     : allTimeSlots.filter(slot => slot.estheticianId === tempEstheticianId);
+  
+  // Filter out past time slots if the selected date is today
+  const today = new Date();
+  const isToday = bookingState.date && 
+    bookingState.date.getFullYear() === today.getFullYear() &&
+    bookingState.date.getMonth() === today.getMonth() &&
+    bookingState.date.getDate() === today.getDate();
+  
+  if (isToday) {
+    const now = new Date();
+    filteredTimeSlots = filteredTimeSlots.filter(slot => {
+      const slotTime = new Date(slot.startTime);
+      return slotTime > now;
+    });
+  }
   
   const { morning, afternoon, evening } = groupTimeSlotsByPeriod(filteredTimeSlots);
 
