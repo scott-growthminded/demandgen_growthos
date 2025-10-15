@@ -219,7 +219,7 @@ export default function BookingWidget() {
   if (bookingState.step === 'location') {
     return (
       <>
-        <div className="h-[10px] bg-yellow-400" />
+        <div className="h-[10px] bg-primary" />
         <div className="min-h-screen bg-background p-4">
           <div className="max-w-6xl mx-auto">
             <div className="mb-8">
@@ -383,7 +383,7 @@ export default function BookingWidget() {
   if (bookingState.step === 'date') {
     return (
       <>
-        <div className="h-[10px] bg-yellow-400" />
+        <div className="h-[10px] bg-primary" />
         <div className="min-h-screen bg-background p-4">
           <div className="max-w-4xl mx-auto">
           <Button
@@ -431,7 +431,7 @@ export default function BookingWidget() {
 
     return (
       <>
-        <div className="h-[10px] bg-yellow-400" />
+        <div className="h-[10px] bg-primary" />
         <div className="min-h-screen bg-background p-4">
           <div className="max-w-6xl mx-auto">
           <Button
@@ -592,7 +592,7 @@ export default function BookingWidget() {
   if (bookingState.step === 'review') {
     return (
       <>
-        <div className="h-[10px] bg-yellow-400" />
+        <div className="h-[10px] bg-primary" />
         <div className="min-h-screen bg-background p-4">
           <div className="max-w-2xl mx-auto">
           <Button
@@ -653,7 +653,7 @@ export default function BookingWidget() {
   if (bookingState.step === 'account') {
     return (
       <>
-        <div className="h-[10px] bg-yellow-400" />
+        <div className="h-[10px] bg-primary" />
         <div className="min-h-screen bg-background p-4">
           <div className="max-w-md mx-auto">
           <Button
