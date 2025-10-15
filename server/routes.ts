@@ -498,6 +498,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: loc.id,
         name: loc.name,
         address: loc.address,
+        coordinates: loc.coordinates ? {
+          lat: loc.coordinates.latitude,
+          lng: loc.coordinates.longitude
+        } : undefined,
         staff: [] // Staff will be loaded per date in availability endpoint
       }));
       

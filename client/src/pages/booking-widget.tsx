@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, MapPin, List } from "lucide-react";
 import { format } from "date-fns";
+import 'leaflet/dist/leaflet.css';
 
 interface TimeSlot {
   id: string;
@@ -34,6 +36,10 @@ interface Location {
     state: string;
     line1?: string;
     line2?: string;
+  };
+  coordinates?: {
+    lat: number;
+    lng: number;
   };
   staff?: Esthetician[];
 }
@@ -296,12 +302,74 @@ export default function BookingWidget() {
               </TabsContent>
 
               <TabsContent value="map">
-                <Card>
-                  <CardContent className="p-12 text-center">
-                    <MapPin className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground">Map view coming soon</p>
-                  </CardContent>
-                </Card>
+                <div className="h-[600px] w-full rounded-lg overflow-hidden border">
+                  {(() => {
+                    const allLocations: Location[] = [];
+                    if (locationsData) {
+                      Object.values(locationsData).forEach((cities: any) => {
+                        Object.values(cities).forEach((locations: any) => {
+                          allLocations.push(...locations);
+                        });
+                      });
+                    }
+                    
+                    const locationsWithCoords = allLocations.filter(loc => loc.coordinates);
+                    
+                    if (locationsWithCoords.length === 0) {
+                      return (
+                        <div className="h-full flex items-center justify-center bg-secondary/20">
+                          <div className="text-center">
+                            <MapPin className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                            <p className="text-muted-foreground">No location coordinates available</p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    const centerLat = locationsWithCoords.reduce((sum, loc) => sum + loc.coordinates!.lat, 0) / locationsWithCoords.length;
+                    const centerLng = locationsWithCoords.reduce((sum, loc) => sum + loc.coordinates!.lng, 0) / locationsWithCoords.length;
+                    
+                    return (
+                      <MapContainer
+                        center={[centerLat, centerLng]}
+                        zoom={6}
+                        style={{ height: '100%', width: '100%' }}
+                        data-testid="map-container"
+                      >
+                        <TileLayer
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        {locationsWithCoords.map((location) => (
+                          <Marker
+                            key={location.id}
+                            position={[location.coordinates!.lat, location.coordinates!.lng]}
+                            eventHandlers={{
+                              click: () => handleLocationSelect(location.id, location.name)
+                            }}
+                          >
+                            <Popup>
+                              <div className="p-2">
+                                <h3 className="font-semibold mb-1">{location.name}</h3>
+                                {location.address && (
+                                  <p className="text-sm text-muted-foreground">
+                                    {location.address.line1 && <>{location.address.line1}<br /></>}
+                                    {location.address.city}, {location.address.state}
+                                  </p>
+                                )}
+                                {location.staff && location.staff.length > 0 && (
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    {location.staff.length} esthetician{location.staff.length !== 1 ? 's' : ''} available
+                                  </p>
+                                )}
+                              </div>
+                            </Popup>
+                          </Marker>
+                        ))}
+                      </MapContainer>
+                    );
+                  })()}
+                </div>
               </TabsContent>
             </Tabs>
           )}

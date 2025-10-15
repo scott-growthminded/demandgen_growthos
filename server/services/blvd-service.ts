@@ -408,7 +408,10 @@ export class BlvdService {
               address {
                 city
                 state
+                line1
+                line2
               }
+              coordinates
             } 
           }
           pageInfo { 
