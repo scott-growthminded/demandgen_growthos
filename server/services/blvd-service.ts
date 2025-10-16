@@ -1366,7 +1366,7 @@ export class BlvdService {
     }
   }
 
-  async createCartForLocation(locationId: string): Promise<string | null> {
+  async createCartForLocation(locationId: string): Promise<{ cartId: string; categories: any[] } | null> {
     console.log(`🛒 Creating cart for location: ${locationId}`);
     
     const mutation = `
@@ -1402,12 +1402,12 @@ export class BlvdService {
       }
 
       const cartId = (response.data as any)?.createCart?.cart?.id;
-      const categories = (response.data as any)?.createCart?.cart?.availableCategories;
+      const categories = (response.data as any)?.createCart?.cart?.availableCategories || [];
       
       console.log(`✅ Cart created: ${cartId}`);
-      console.log(`📋 Available categories: ${categories?.length || 0}`);
+      console.log(`📋 Available categories: ${categories.length}`);
       
-      return cartId;
+      return { cartId, categories };
     } catch (error) {
       console.error('❌ Failed to create cart:', error);
       return null;
@@ -1704,33 +1704,15 @@ export class BlvdService {
 
     try {
       // Step 1: Create a cart for this location
-      const cartId = await this.createCartForLocation(locationId);
-      if (!cartId) {
+      const cartResult = await this.createCartForLocation(locationId);
+      if (!cartResult) {
         console.error('❌ Failed to create cart');
         return null;
       }
 
-      // Step 2: Get available services - we need to add a 40-min service to the cart
-      // For now, we'll use a standard facial service (this should be configurable)
-      const serviceQuery = `
-        query GetServices($cartId: ID!) {
-          cart(id: $cartId) {
-            availableCategories {
-              name
-              availableItems {
-                id
-                name
-                ... on CartAvailableBookableItem {
-                  listDuration
-                }
-              }
-            }
-          }
-        }
-      `;
+      const { cartId, categories } = cartResult;
       
-      const servicesResponse = await this.makeClientApiRequest(serviceQuery, { cartId });
-      const categories = (servicesResponse.data as any)?.cart?.availableCategories || [];
+      // Use the categories from cart creation instead of querying again
       
       // Find a facial service around 40 minutes duration
       let serviceId: string | null = null;
@@ -2869,34 +2851,18 @@ export class BlvdService {
 
     try {
       // Create cart for location
-      const cartId = await this.createCartForLocation(locationId);
-      if (!cartId) {
+      const cartResult = await this.createCartForLocation(locationId);
+      if (!cartResult) {
         console.error('❌ Failed to create cart');
         return [];
       }
 
+      const { cartId, categories } = cartResult;
+
       // Get or use provided service
       let selectedServiceId = serviceId;
       if (!selectedServiceId) {
-        const servicesResponse = await this.makeClientApiRequest(
-          `query GetServices($cartId: ID!) {
-            cart(id: $cartId) {
-              availableCategories {
-                name
-                availableItems {
-                  id
-                  name
-                  ... on CartAvailableBookableItem {
-                    listDuration
-                  }
-                }
-              }
-            }
-          }`,
-          { cartId }
-        );
-
-        const categories = (servicesResponse.data as any)?.cart?.availableCategories || [];
+        // Use categories from cart creation
         for (const category of categories) {
           const facial = category.availableItems?.find((item: any) =>
             item.name?.toLowerCase().includes('facial') &&

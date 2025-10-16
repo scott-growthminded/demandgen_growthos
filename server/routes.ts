@@ -917,11 +917,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create cart via Boulevard Client API
-      const cartId = await blvdService.createCartForLocation(locationId);
+      const cartResult = await blvdService.createCartForLocation(locationId);
       
-      if (!cartId) {
+      if (!cartResult) {
         return res.status(500).json({ error: "Failed to create cart" });
       }
+      
+      const { cartId, categories } = cartResult;
       
       // Store cart session in memory
       const cartSession = await storage.createBookingCart({
@@ -932,7 +934,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'creating'
       });
       
-      res.json({ success: true, cart: cartSession });
+      res.json({ success: true, cart: cartSession, categories });
     } catch (error) {
       console.error('Create cart error:', error);
       res.status(500).json({
