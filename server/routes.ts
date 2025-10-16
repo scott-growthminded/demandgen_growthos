@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { BlvdService } from "./services/blvd-service";
-import { blvdConfigSchema } from "@shared/schema";
+import { blvdConfigSchema, insertBookingCartSchema, insertWaitlistRequestSchema } from "@shared/schema";
+import { storage } from "./storage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get server-side BLVD configuration
@@ -896,6 +897,335 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Get availability error:', error);
       res.status(500).json({
         error: error instanceof Error ? error.message : "Failed to get availability"
+      });
+    }
+  });
+
+  // Cart API Routes (Client API flow)
+  
+  // Create a new cart for a location
+  app.post("/api/cart/create", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { locationId, productType, plan } = req.body;
+      
+      if (!locationId) {
+        return res.status(400).json({ error: "Missing required field: locationId" });
+      }
+      
+      // Create cart via Boulevard Client API
+      const cartId = await blvdService.createCartForLocation(locationId);
+      
+      if (!cartId) {
+        return res.status(500).json({ error: "Failed to create cart" });
+      }
+      
+      // Store cart session in memory
+      const cartSession = await storage.createBookingCart({
+        cartId,
+        productType: productType || 'Treatment',
+        plan,
+        locationId,
+        status: 'creating'
+      });
+      
+      res.json({ success: true, cart: cartSession });
+    } catch (error) {
+      console.error('Create cart error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to create cart"
+      });
+    }
+  });
+
+  // Get cart details
+  app.get("/api/cart/:cartId", async (req, res) => {
+    try {
+      const { cartId } = req.params;
+      const cart = await storage.getBookingCart(cartId);
+      
+      if (!cart) {
+        return res.status(404).json({ error: "Cart not found" });
+      }
+      
+      res.json({ success: true, cart });
+    } catch (error) {
+      console.error('Get cart error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to get cart"
+      });
+    }
+  });
+
+  // Add bookable item to cart
+  app.post("/api/cart/:cartId/add-item", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { cartId } = req.params;
+      const { itemId, itemName } = req.body;
+      
+      if (!itemId) {
+        return res.status(400).json({ error: "Missing required field: itemId" });
+      }
+      
+      const success = await blvdService.addBookableItemToCart(cartId, itemId);
+      
+      if (!success) {
+        return res.status(500).json({ error: "Failed to add item to cart" });
+      }
+      
+      // Update cart session
+      await storage.updateBookingCart(cartId, {
+        serviceId: itemId,
+        serviceName: itemName,
+        status: 'items_added'
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Add item to cart error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to add item to cart"
+      });
+    }
+  });
+
+  // Get bookable dates for cart
+  app.get("/api/cart/:cartId/dates", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { cartId } = req.params;
+      const { startDate, endDate, timeZone } = req.query;
+      
+      if (!startDate || !endDate) {
+        return res.status(400).json({ 
+          error: "Missing required query params: startDate, endDate" 
+        });
+      }
+      
+      const dates = await blvdService.getCartBookableDates(
+        cartId,
+        startDate as string,
+        endDate as string,
+        (timeZone as string) || 'America/New_York'
+      );
+      
+      res.json({ success: true, dates });
+    } catch (error) {
+      console.error('Get bookable dates error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to get bookable dates"
+      });
+    }
+  });
+
+  // Get bookable times for cart on a specific date
+  app.get("/api/cart/:cartId/times/:date", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { cartId, date } = req.params;
+      const { timeZone } = req.query;
+      
+      const times = await blvdService.getCartBookableTimes(
+        cartId,
+        date,
+        (timeZone as string) || 'America/New_York'
+      );
+      
+      res.json({ success: true, times });
+    } catch (error) {
+      console.error('Get bookable times error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to get bookable times"
+      });
+    }
+  });
+
+  // Reserve a time slot
+  app.post("/api/cart/:cartId/reserve", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { cartId } = req.params;
+      const { bookableTimeId, selectedDate, selectedTime } = req.body;
+      
+      if (!bookableTimeId) {
+        return res.status(400).json({ error: "Missing required field: bookableTimeId" });
+      }
+      
+      const success = await blvdService.reserveCartBookableItems(cartId, bookableTimeId);
+      
+      if (!success) {
+        return res.status(500).json({ error: "Failed to reserve time slot" });
+      }
+      
+      // Update cart session
+      await storage.updateBookingCart(cartId, {
+        bookableTimeId,
+        selectedDate,
+        selectedTime,
+        status: 'time_reserved'
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Reserve time slot error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to reserve time slot"
+      });
+    }
+  });
+
+  // Update client information
+  app.post("/api/cart/:cartId/client-info", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { cartId } = req.params;
+      const { email, firstName, lastName, phoneNumber } = req.body;
+      
+      if (!email || !firstName || !lastName || !phoneNumber) {
+        return res.status(400).json({ 
+          error: "Missing required fields: email, firstName, lastName, phoneNumber" 
+        });
+      }
+      
+      const success = await blvdService.updateCartClientInfo(cartId, {
+        email,
+        firstName,
+        lastName,
+        phoneNumber
+      });
+      
+      if (!success) {
+        return res.status(500).json({ error: "Failed to update client info" });
+      }
+      
+      // Update cart session
+      await storage.updateBookingCart(cartId, {
+        clientInfo: { email, firstName, lastName, phoneNumber },
+        status: 'info_collected'
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Update client info error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to update client info"
+      });
+    }
+  });
+
+  // Add payment method
+  app.post("/api/cart/:cartId/payment", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { cartId } = req.params;
+      const { token } = req.body;
+      
+      if (!token) {
+        return res.status(400).json({ error: "Missing required field: token" });
+      }
+      
+      const success = await blvdService.addCartCardPaymentMethod(cartId, token);
+      
+      if (!success) {
+        return res.status(500).json({ error: "Failed to add payment method" });
+      }
+      
+      // Update cart session
+      await storage.updateBookingCart(cartId, {
+        paymentMethodId: token,
+        status: 'payment_added'
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Add payment method error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to add payment method"
+      });
+    }
+  });
+
+  // Checkout cart
+  app.post("/api/cart/:cartId/checkout", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { cartId } = req.params;
+      
+      const result = await blvdService.checkoutCart(cartId);
+      
+      if (!result.success) {
+        return res.status(500).json({ error: "Failed to checkout cart" });
+      }
+      
+      // Update cart session
+      await storage.updateBookingCart(cartId, {
+        status: 'completed'
+      });
+      
+      res.json({ 
+        success: true, 
+        appointmentId: result.appointmentId 
+      });
+    } catch (error) {
+      console.error('Checkout cart error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to checkout cart"
+      });
+    }
+  });
+
+  // Submit waitlist request
+  app.post("/api/waitlist", async (req, res) => {
+    try {
+      const waitlistData = insertWaitlistRequestSchema.parse(req.body);
+      const waitlistRequest = await storage.createWaitlistRequest(waitlistData);
+      
+      res.json({ 
+        success: true, 
+        waitlistRequest 
+      });
+    } catch (error) {
+      console.error('Submit waitlist error:', error);
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to submit waitlist request"
+      });
+    }
+  });
+
+  // Get all waitlist requests (for admin)
+  app.get("/api/waitlist", async (req, res) => {
+    try {
+      const requests = await storage.getAllWaitlistRequests();
+      res.json({ success: true, requests });
+    } catch (error) {
+      console.error('Get waitlist requests error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to get waitlist requests"
       });
     }
   });

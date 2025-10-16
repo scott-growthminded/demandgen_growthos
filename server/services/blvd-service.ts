@@ -1488,6 +1488,206 @@ export class BlvdService {
     }
   }
 
+  async getCartBookableDates(
+    cartId: string, 
+    searchRangeLower: string, 
+    searchRangeUpper: string,
+    timeZone: string = 'America/New_York'
+  ): Promise<string[]> {
+    console.log(`📅 Getting bookable dates for cart ${cartId} from ${searchRangeLower} to ${searchRangeUpper}`);
+    
+    const query = `
+      query GetBookableDates($cartId: ID!, $searchRangeLower: Date!, $searchRangeUpper: Date!, $tz: Tz!) {
+        cartBookableDates(
+          id: $cartId,
+          searchRangeLower: $searchRangeLower,
+          searchRangeUpper: $searchRangeUpper,
+          tz: $tz
+        ) {
+          date
+        }
+      }
+    `;
+
+    try {
+      const response = await this.makeClientApiRequest(query, {
+        cartId,
+        searchRangeLower,
+        searchRangeUpper,
+        tz: timeZone
+      });
+      
+      if (response.errors) {
+        console.error('❌ Error getting bookable dates:', response.errors);
+        return [];
+      }
+
+      const dates = (response.data as any)?.cartBookableDates || [];
+      const dateStrings = dates.map((d: any) => d.date);
+      console.log(`✅ Found ${dateStrings.length} available booking dates`);
+      
+      return dateStrings;
+    } catch (error) {
+      console.error('❌ Failed to get bookable dates:', error);
+      return [];
+    }
+  }
+
+  async reserveCartBookableItems(cartId: string, bookableTimeId: string): Promise<boolean> {
+    console.log(`🔒 Reserving bookable time ${bookableTimeId} for cart ${cartId}`);
+    
+    const mutation = `
+      mutation ReserveCartBookableItems($cartId: ID!, $bookableTimeId: ID!) {
+        reserveCartBookableItems(input: { 
+          id: $cartId, 
+          bookableTimeId: $bookableTimeId 
+        }) {
+          cart {
+            id
+          }
+        }
+      }
+    `;
+
+    try {
+      const response = await this.makeClientApiRequest(mutation, { 
+        cartId, 
+        bookableTimeId 
+      });
+      
+      if (response.errors) {
+        console.error('❌ Error reserving bookable time:', response.errors);
+        return false;
+      }
+
+      console.log(`✅ Time slot reserved successfully`);
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to reserve bookable time:', error);
+      return false;
+    }
+  }
+
+  async updateCartClientInfo(
+    cartId: string, 
+    clientInfo: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      phoneNumber: string;
+    }
+  ): Promise<boolean> {
+    console.log(`👤 Updating client info for cart ${cartId}`);
+    
+    const mutation = `
+      mutation UpdateCart($cartId: ID!, $clientInfo: CartClientInformationInput!) {
+        updateCart(input: { 
+          id: $cartId, 
+          clientInformation: $clientInfo 
+        }) {
+          cart {
+            id
+          }
+        }
+      }
+    `;
+
+    try {
+      const response = await this.makeClientApiRequest(mutation, { 
+        cartId, 
+        clientInfo 
+      });
+      
+      if (response.errors) {
+        console.error('❌ Error updating client info:', response.errors);
+        return false;
+      }
+
+      console.log(`✅ Client info updated successfully`);
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to update client info:', error);
+      return false;
+    }
+  }
+
+  async addCartCardPaymentMethod(cartId: string, token: string): Promise<boolean> {
+    console.log(`💳 Adding card payment method to cart ${cartId}`);
+    
+    const mutation = `
+      mutation AddCardPaymentMethod($cartId: ID!, $token: String!) {
+        addCartCardPaymentMethod(input: { 
+          id: $cartId, 
+          token: $token,
+          select: true
+        }) {
+          cart {
+            id
+          }
+        }
+      }
+    `;
+
+    try {
+      const response = await this.makeClientApiRequest(mutation, { 
+        cartId, 
+        token 
+      });
+      
+      if (response.errors) {
+        console.error('❌ Error adding payment method:', response.errors);
+        return false;
+      }
+
+      console.log(`✅ Payment method added successfully`);
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to add payment method:', error);
+      return false;
+    }
+  }
+
+  async checkoutCart(cartId: string): Promise<{ success: boolean; appointmentId?: string }> {
+    console.log(`✅ Checking out cart ${cartId}`);
+    
+    const mutation = `
+      mutation CheckoutCart($cartId: ID!) {
+        checkoutCart(input: { id: $cartId }) {
+          cart {
+            id
+            completedAt
+          }
+          appointments {
+            id
+          }
+        }
+      }
+    `;
+
+    try {
+      const response = await this.makeClientApiRequest(mutation, { cartId });
+      
+      if (response.errors) {
+        console.error('❌ Error checking out cart:', response.errors);
+        return { success: false };
+      }
+
+      const completedAt = (response.data as any)?.checkoutCart?.cart?.completedAt;
+      const appointments = (response.data as any)?.checkoutCart?.appointments || [];
+      const appointmentId = appointments[0]?.id;
+
+      if (completedAt) {
+        console.log(`✅ Cart checked out successfully at ${completedAt}`);
+        return { success: true, appointmentId };
+      }
+
+      return { success: false };
+    } catch (error) {
+      console.error('❌ Failed to checkout cart:', error);
+      return { success: false };
+    }
+  }
+
   async getLocationAvailabilityFromClientAPI(
     locationId: string, 
     date: string
