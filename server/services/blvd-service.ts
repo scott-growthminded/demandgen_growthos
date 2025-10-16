@@ -341,10 +341,12 @@ export class BlvdService {
   }
 
   private createClientApiHeaders(): Record<string, string> {
-    // Client API uses simple API key authentication
+    // Client API uses HTTP Basic authentication with API key
+    // For Public Client Access: base64_encode(API_KEY + ":")
+    const credentials = Buffer.from(`${this.config.apiKey}:`).toString('base64');
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.config.apiKey}`,
+      'Authorization': `Basic ${credentials}`,
     };
   }
 
