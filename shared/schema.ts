@@ -116,3 +116,55 @@ export type Esthetician = z.infer<typeof estheticianSchema>;
 export type TimeSlot = z.infer<typeof timeSlotSchema>;
 export type BookingState = z.infer<typeof bookingStateSchema>;
 export type AvailabilityResponse = z.infer<typeof availabilityResponseSchema>;
+
+// Booking Cart Schema (for Client API flow)
+export const bookingCartSchema = z.object({
+  id: z.string(),
+  cartId: z.string(),
+  productType: z.enum(['Treatment', 'Product', 'GiftCard']).default('Treatment'),
+  plan: z.enum(['Member', 'NonMember']).optional(),
+  locationId: z.string().optional(),
+  locationName: z.string().optional(),
+  serviceId: z.string().optional(),
+  serviceName: z.string().optional(),
+  bookableTimeId: z.string().optional(),
+  selectedDate: z.string().optional(),
+  selectedTime: z.string().optional(),
+  clientInfo: z.object({
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string().email(),
+    phoneNumber: z.string(),
+  }).optional(),
+  paymentMethodId: z.string().optional(),
+  status: z.enum(['creating', 'items_added', 'time_reserved', 'info_collected', 'payment_added', 'completed']).default('creating'),
+  createdAt: z.string(),
+});
+
+export const insertBookingCartSchema = bookingCartSchema.omit({ id: true, createdAt: true });
+
+export type BookingCart = z.infer<typeof bookingCartSchema>;
+export type InsertBookingCart = z.infer<typeof insertBookingCartSchema>;
+
+// Waitlist Request Schema
+export const waitlistRequestSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.string().email(),
+  phoneNumber: z.string(),
+  locationId: z.string(),
+  locationName: z.string().optional(),
+  serviceId: z.string().optional(),
+  serviceName: z.string().optional(),
+  preferredDate: z.string().optional(),
+  preferredTime: z.string().optional(),
+  notes: z.string().optional(),
+  status: z.enum(['pending', 'contacted', 'booked', 'cancelled']).default('pending'),
+  createdAt: z.string(),
+});
+
+export const insertWaitlistRequestSchema = waitlistRequestSchema.omit({ id: true, createdAt: true });
+
+export type WaitlistRequest = z.infer<typeof waitlistRequestSchema>;
+export type InsertWaitlistRequest = z.infer<typeof insertWaitlistRequestSchema>;
