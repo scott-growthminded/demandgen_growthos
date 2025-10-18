@@ -57,6 +57,19 @@ interface AvailabilityResponse {
   totalSlots: number;
 }
 
+interface StaffMember {
+  id: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
+  avatar?: string;
+}
+
+interface StaffResponse {
+  success: boolean;
+  staff: StaffMember[];
+}
+
 export default function BookingWidget() {
   const { toast } = useToast();
   const [bookingState, setBookingState] = useState<BookingState>({
@@ -87,6 +100,12 @@ export default function BookingWidget() {
   const { data: availabilityData, isLoading: availabilityLoading } = useQuery<AvailabilityResponse>({
     queryKey: ['/api/booking/availability', bookingState.selectedLocation?.id, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''],
     enabled: !!bookingState.selectedLocation?.id && !!selectedDate,
+  });
+
+  // Fetch staff for the selected location
+  const { data: staffData, isLoading: staffLoading } = useQuery<StaffResponse>({
+    queryKey: ['/api/booking/staff', bookingState.selectedLocation?.id],
+    enabled: !!bookingState.selectedLocation?.id,
   });
 
 
@@ -352,16 +371,21 @@ export default function BookingWidget() {
 
               {/* Esthetician Filter */}
               <div className="mb-6">
-                <Label>Esthetician Preference</Label>
+                <Label>
+                  Esthetician Preference
+                  {staffLoading && <span className="text-sm text-gray-500 ml-2">(Loading...)</span>}
+                </Label>
                 <Select value={esthetician} onValueChange={setEsthetician}>
                   <SelectTrigger className="w-full" data-testid="select-esthetician">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="any">Any Esthetician</SelectItem>
-                    <SelectItem value="sarah">Sarah Johnson</SelectItem>
-                    <SelectItem value="emily">Emily Chen</SelectItem>
-                    <SelectItem value="maria">Maria Rodriguez</SelectItem>
+                    {staffData?.staff?.map((staff) => (
+                      <SelectItem key={staff.id} value={staff.id}>
+                        {staff.displayName || `${staff.firstName} ${staff.lastName}`}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -633,7 +657,13 @@ export default function BookingWidget() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Esthetician</p>
-                    <p className="font-semibold">{bookingState.selectedEsthetician === 'any' ? 'No preference' : bookingState.selectedEsthetician}</p>
+                    <p className="font-semibold">
+                      {bookingState.selectedEsthetician === 'any' 
+                        ? 'No preference' 
+                        : staffData?.staff?.find(s => s.id === bookingState.selectedEsthetician)?.displayName 
+                          || staffData?.staff?.find(s => s.id === bookingState.selectedEsthetician)?.firstName 
+                          || 'No preference'}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
