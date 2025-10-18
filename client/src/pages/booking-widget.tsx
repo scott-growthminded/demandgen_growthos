@@ -47,6 +47,16 @@ interface BookingState {
   selectedEsthetician?: string;
 }
 
+interface AvailabilityResponse {
+  success: boolean;
+  availableSlots: Array<{
+    startTime: string;
+    id: string;
+    score: number;
+  }>;
+  totalSlots: number;
+}
+
 export default function BookingWidget() {
   const { toast } = useToast();
   const [bookingState, setBookingState] = useState<BookingState>({
@@ -71,6 +81,12 @@ export default function BookingWidget() {
   // Fetch locations
   const { data: locationsData, isLoading: locationsLoading } = useQuery({
     queryKey: ['/api/booking/locations'],
+  });
+
+  // Fetch availability when a location and date are selected
+  const { data: availabilityData, isLoading: availabilityLoading } = useQuery<AvailabilityResponse>({
+    queryKey: ['/api/booking/availability', bookingState.selectedLocation?.id, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''],
+    enabled: !!bookingState.selectedLocation?.id && !!selectedDate,
   });
 
 
@@ -239,7 +255,7 @@ export default function BookingWidget() {
 
   // Step 3: Date/Time Selection
   if (bookingState.step === 'datetime') {
-    // Mock time slots (40-minute intervals)
+    // Generate time slots (40-minute intervals) with real availability from Boulevard
     const generateTimeSlots = () => {
       const slots: string[] = [];
       for (let hour = 8; hour < 20; hour++) {
@@ -247,15 +263,49 @@ export default function BookingWidget() {
         slots.push(`${hour}:20`);
         slots.push(`${hour}:40`);
       }
+      
+      // Get current time for filtering past slots
+      const now = new Date();
+      const isToday = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
+      
+      // Parse available slots from Boulevard API
+      const availableTimesSet = new Set<string>();
+      if (availabilityData?.success && availabilityData.availableSlots) {
+        availabilityData.availableSlots.forEach((slot: any) => {
+          // Parse ISO time like "2025-10-18T20:00:00-04:00" to get hour and minute
+          // Extract time from ISO string to show location's local time
+          const match = slot.startTime.match(/T(\d{2}):(\d{2}):/);
+          if (match) {
+            const hour = parseInt(match[1]);
+            const minute = parseInt(match[2]);
+            const timeKey = `${hour}:${minute.toString().padStart(2, '0')}`;
+            availableTimesSet.add(timeKey);
+          }
+        });
+      }
+      
       return slots.map(time => {
         const [h, m] = time.split(':');
         const hour = parseInt(h);
+        const minute = parseInt(m);
         const ampm = hour >= 12 ? 'PM' : 'AM';
         const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+        
+        // Check if this slot is in the past (for today only)
+        let isPast = false;
+        if (isToday) {
+          const slotTime = new Date();
+          slotTime.setHours(hour, minute, 0, 0);
+          isPast = slotTime < now;
+        }
+        
+        // Slot is available if: 1) Boulevard says it's available, 2) not in the past
+        const isAvailable = !isPast && availableTimesSet.has(time);
+        
         return {
           value: time,
           display: `${displayHour}:${m} ${ampm}`,
-          available: Math.random() > 0.3
+          available: isAvailable
         };
       });
     };
@@ -331,29 +381,35 @@ export default function BookingWidget() {
               {selectedDate && (
                 <div>
                   <Label className="mb-4 block">Available Times</Label>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                    {timeSlots.map((slot) => (
-                      <button
-                        key={slot.value}
-                        onClick={() => {
-                          if (slot.available) {
-                            setSelectedTimeSlot(slot.value);
-                          }
-                        }}
-                        disabled={!slot.available}
-                        className={`p-3 border rounded-lg text-center transition-colors ${
-                          selectedTimeSlot === slot.value
-                            ? 'bg-orange-500 text-white border-orange-500'
-                            : slot.available
-                            ? 'hover:border-orange-500'
-                            : 'opacity-40 cursor-not-allowed'
-                        }`}
-                        data-testid={`button-time-${slot.value}`}
-                      >
-                        {slot.display}
-                      </button>
-                    ))}
-                  </div>
+                  {availabilityLoading ? (
+                    <div className="text-center py-8 text-gray-500" data-testid="text-loading-availability">
+                      Loading available times...
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                      {timeSlots.map((slot) => (
+                        <button
+                          key={slot.value}
+                          onClick={() => {
+                            if (slot.available) {
+                              setSelectedTimeSlot(slot.value);
+                            }
+                          }}
+                          disabled={!slot.available}
+                          className={`p-3 border rounded-lg text-center transition-colors ${
+                            selectedTimeSlot === slot.value
+                              ? 'bg-orange-500 text-white border-orange-500'
+                              : slot.available
+                              ? 'hover:border-orange-500'
+                              : 'opacity-40 cursor-not-allowed'
+                          }`}
+                          data-testid={`button-time-${slot.value}`}
+                        >
+                          {slot.display}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
