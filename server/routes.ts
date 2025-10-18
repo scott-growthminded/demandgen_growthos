@@ -572,11 +572,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const blvdService = new BlvdService(config);
       
       const { locationId } = req.params;
-      const staff = await blvdService.getLocationStaff(locationId);
+      
+      // Get all staff
+      const allStaff = await blvdService.getLocationStaff(locationId);
+      
+      // Get shifts for the next 30 days to determine which staff work at this location
+      const startDate = new Date().toISOString();
+      const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const shifts = await blvdService.getStaffShifts(locationId, startDate, endDate);
+      
+      // Extract unique staff IDs from shifts
+      const staffIdsWithShifts = new Set(
+        shifts.map(shift => shift.staffId)
+      );
+      
+      // Filter staff to only those who have shifts at this location
+      const locationStaff = allStaff.filter(staff => 
+        staffIdsWithShifts.has(staff.id)
+      );
+      
+      console.log(`✅ Found ${locationStaff.length} staff working at location (out of ${allStaff.length} total staff)`);
       
       res.json({ 
         success: true, 
-        staff: staff.map(s => ({
+        staff: locationStaff.map(s => ({
           id: s.id,
           firstName: s.firstName,
           lastName: s.lastName,
