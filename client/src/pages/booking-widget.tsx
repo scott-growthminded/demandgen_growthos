@@ -56,6 +56,7 @@ interface BookingState {
   };
   selectedEsthetician?: string;
   cartId?: string;
+  availableTreatments?: any[];
 }
 
 export default function BookingWidget() {
@@ -64,10 +65,60 @@ export default function BookingWidget() {
     step: 'location',
   });
   const [expandedState, setExpandedState] = useState<string | null>(null);
+  
+  // Questionnaire state
+  const [accutane, setAccutane] = useState(false);
+  const [injections, setInjections] = useState(false);
+  const [waxing, setWaxing] = useState(false);
+  
+  // Date/Time state
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | undefined>(undefined);
+  const [esthetician, setEsthetician] = useState('any');
+  
+  // Checkout state
+  const [promoCode, setPromoCode] = useState('');
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   // Fetch locations
   const { data: locationsData, isLoading: locationsLoading } = useQuery({
     queryKey: ['/api/booking/locations'],
+  });
+
+  // Create cart mutation
+  const createCartMutation = useMutation({
+    mutationFn: async (data: { locationId: string }) => {
+      const res = await apiRequest('POST', '/api/cart/create', {
+        locationId: data.locationId,
+        productType: 'Treatment'
+      });
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      const treatments = data.categories?.flatMap((category: any) => 
+        category.availableItems?.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description || '',
+          duration: item.listDuration || 50,
+          price: item.listPriceCents ? item.listPriceCents / 100 : 0,
+        })) || []
+      ) || [];
+      
+      setBookingState(prev => ({
+        ...prev,
+        cartId: data.cart.cartId,
+        availableTreatments: treatments,
+        step: 'treatment'
+      }));
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load treatments",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleBack = () => {
@@ -258,7 +309,12 @@ export default function BookingWidget() {
           <div className="space-y-4">
             <Card
               className="cursor-pointer hover:border-orange-500 transition-colors"
-              onClick={() => setBookingState(prev => ({ ...prev, serviceType: 'treatment', step: 'treatment' }))}
+              onClick={() => {
+                setBookingState(prev => ({ ...prev, serviceType: 'treatment' }));
+                if (bookingState.selectedLocation?.id) {
+                  createCartMutation.mutate({ locationId: bookingState.selectedLocation.id });
+                }
+              }}
               data-testid="card-service-treatment"
             >
               <CardHeader className="p-6">
@@ -322,35 +378,7 @@ export default function BookingWidget() {
 
   // Step 4: Treatment Selection
   if (bookingState.step === 'treatment') {
-    const mockTreatments = [
-      {
-        id: '1',
-        name: 'The Glow Facial',
-        description: 'Our signature treatment combining deep cleansing, extractions, and hydration',
-        price: 80,
-        memberPrice: 65,
-        duration: 50,
-        image: null
-      },
-      {
-        id: '2',
-        name: 'Acne Clarifying',
-        description: 'Targeted treatment for acne-prone skin with specialized extractions',
-        price: 80,
-        memberPrice: 65,
-        duration: 50,
-        image: null
-      },
-      {
-        id: '3',
-        name: 'Vitamin C Brightening',
-        description: 'Brighten and even skin tone with vitamin C infusion',
-        price: 80,
-        memberPrice: 65,
-        duration: 50,
-        image: null
-      },
-    ];
+    const treatments = bookingState.availableTreatments || [];
 
     return (
       <div className="min-h-screen bg-white">
@@ -372,39 +400,46 @@ export default function BookingWidget() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {mockTreatments.map((treatment) => (
-              <Card key={treatment.id} className="overflow-hidden" data-testid={`card-treatment-${treatment.id}`}>
-                <div className="aspect-video bg-gradient-to-br from-orange-100 to-pink-100" />
-                <CardHeader>
-                  <CardTitle>{treatment.name}</CardTitle>
-                  <CardDescription>{treatment.description}</CardDescription>
-                  <div className="mt-4 space-y-2">
-                    <p className="text-2xl font-bold">${treatment.price}</p>
-                    <p className="text-sm text-orange-600 font-semibold">
-                      Members save! Only ${treatment.memberPrice}
-                    </p>
-                    <p className="text-sm text-gray-600">{treatment.duration} minutes</p>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={() => {
-                      setBookingState(prev => ({
-                        ...prev,
-                        selectedTreatment: treatment,
-                        step: 'questionnaire'
-                      }));
-                    }}
-                    className="w-full bg-black text-white hover:bg-gray-800"
-                    data-testid={`button-select-treatment-${treatment.id}`}
-                  >
-                    SELECT
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {createCartMutation.isPending ? (
+            <div className="text-center py-12" data-testid="text-loading">Loading treatments...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {treatments.map((treatment: any) => (
+                <Card key={treatment.id} className="overflow-hidden" data-testid={`card-treatment-${treatment.id}`}>
+                  <div className="aspect-video bg-gradient-to-br from-orange-100 to-pink-100" />
+                  <CardHeader>
+                    <CardTitle>{treatment.name}</CardTitle>
+                    <CardDescription>{treatment.description}</CardDescription>
+                    <div className="mt-4 space-y-2">
+                      <p className="text-2xl font-bold">${treatment.price}</p>
+                      <p className="text-sm text-gray-600">{treatment.duration} minutes</p>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      onClick={() => {
+                        setBookingState(prev => ({
+                          ...prev,
+                          selectedTreatment: {
+                            id: treatment.id,
+                            name: treatment.name,
+                            price: treatment.price,
+                            memberPrice: treatment.price * 0.8, // Mock member pricing
+                            duration: treatment.duration
+                          },
+                          step: 'questionnaire'
+                        }));
+                      }}
+                      className="w-full bg-black text-white hover:bg-gray-800"
+                      data-testid={`button-select-treatment-${treatment.id}`}
+                    >
+                      SELECT
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -412,10 +447,6 @@ export default function BookingWidget() {
 
   // Step 5: Pre-Treatment Questionnaire
   if (bookingState.step === 'questionnaire') {
-    const [accutane, setAccutane] = useState(false);
-    const [injections, setInjections] = useState(false);
-    const [waxing, setWaxing] = useState(false);
-
     const allChecked = accutane && injections && waxing;
 
     return (
@@ -546,10 +577,6 @@ export default function BookingWidget() {
 
   // Step 6: Date/Time Selection
   if (bookingState.step === 'datetime') {
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-    const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | undefined>(undefined);
-    const [esthetician, setEsthetician] = useState('any');
-
     // Mock time slots (40-minute intervals)
     const generateTimeSlots = () => {
       const slots: string[] = [];
@@ -724,9 +751,6 @@ export default function BookingWidget() {
 
   // Step 7: Checkout Summary
   if (bookingState.step === 'checkout') {
-    const [promoCode, setPromoCode] = useState('');
-    const [acceptTerms, setAcceptTerms] = useState(false);
-
     return (
       <div className="min-h-screen bg-white">
         <div className="max-w-4xl mx-auto px-6 py-8">
