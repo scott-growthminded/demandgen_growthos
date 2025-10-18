@@ -586,12 +586,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shifts.map(shift => shift.staffId)
       );
       
+      console.log(`🔍 DEBUG: Sample shift staffId: ${shifts[0]?.staffId}`);
+      console.log(`🔍 DEBUG: Sample staff ID: ${allStaff[0]?.id}`);
+      console.log(`🔍 DEBUG: Shift staff IDs (first 3):`, Array.from(staffIdsWithShifts).slice(0, 3));
+      
       // Filter staff to only those who have shifts at this location
       // Staff IDs from API are in URN format: urn:blvd:Staff:SHORT_ID
       // Shift staffIds are just the SHORT_ID part
       const locationStaff = allStaff.filter(staff => {
         const shortStaffId = staff.id.includes(':') ? staff.id.split(':').pop() : staff.id;
-        return staffIdsWithShifts.has(shortStaffId);
+        const match = staffIdsWithShifts.has(shortStaffId);
+        if (allStaff.indexOf(staff) < 3) {
+          console.log(`🔍 DEBUG: Staff ${staff.displayName}: fullId=${staff.id}, shortId=${shortStaffId}, match=${match}`);
+        }
+        return match;
       });
       
       console.log(`✅ Found ${locationStaff.length} staff working at location (out of ${allStaff.length} total staff)`);
