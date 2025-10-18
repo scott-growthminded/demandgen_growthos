@@ -480,43 +480,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Booking Widget API Routes
   
-  // Create cart for booking
-  app.post("/api/cart/create", async (req, res) => {
-    try {
-      const serverConfig = getServerConfig();
-      const config = blvdConfigSchema.parse(serverConfig);
-      const blvdService = new BlvdService(config);
-      
-      const { locationId } = req.body;
-      
-      if (!locationId) {
-        return res.status(400).json({
-          error: "Missing required field: locationId"
-        });
-      }
-      
-      const result = await blvdService.createCartForLocation(locationId);
-      
-      if (!result) {
-        return res.status(500).json({
-          error: "Failed to create cart"
-        });
-      }
-      
-      res.json({
-        cart: {
-          cartId: result.cartId
-        },
-        categories: result.categories
-      });
-    } catch (error) {
-      console.error('Create cart error:', error);
-      res.status(500).json({
-        error: error instanceof Error ? error.message : "Failed to create cart"
-      });
-    }
-  });
-  
   // Get all locations grouped by state and city
   app.get("/api/booking/locations", async (req, res) => {
     try {

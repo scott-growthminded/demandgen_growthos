@@ -14,10 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 type BookingStep = 
   | 'location'
   | 'auth'
-  | 'service-type'
-  | 'treatment'
-  | 'questionnaire'
   | 'datetime'
+  | 'questionnaire'
   | 'checkout';
 
 interface Location {
@@ -40,14 +38,6 @@ interface BookingState {
   };
   userPhone?: string;
   userName?: string;
-  serviceType?: 'treatment' | 'membership' | 'package' | 'giftcard';
-  selectedTreatment?: {
-    id: string;
-    name: string;
-    price: number;
-    memberPrice: number;
-    duration: number;
-  };
   questionnaireComplete?: boolean;
   selectedDate?: Date;
   selectedTime?: {
@@ -55,8 +45,6 @@ interface BookingState {
     time: string;
   };
   selectedEsthetician?: string;
-  cartId?: string;
-  availableTreatments?: any[];
 }
 
 export default function BookingWidget() {
@@ -85,44 +73,9 @@ export default function BookingWidget() {
     queryKey: ['/api/booking/locations'],
   });
 
-  // Create cart mutation
-  const createCartMutation = useMutation({
-    mutationFn: async (data: { locationId: string }) => {
-      const res = await apiRequest('POST', '/api/cart/create', {
-        locationId: data.locationId,
-        productType: 'Treatment'
-      });
-      return await res.json();
-    },
-    onSuccess: (data) => {
-      const treatments = data.categories?.flatMap((category: any) => 
-        category.availableItems?.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description || '',
-          duration: item.listDuration || 50,
-          price: item.listPriceCents ? item.listPriceCents / 100 : 0,
-        })) || []
-      ) || [];
-      
-      setBookingState(prev => ({
-        ...prev,
-        cartId: data.cart.cartId,
-        availableTreatments: treatments,
-        step: 'treatment'
-      }));
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to load treatments",
-        variant: "destructive",
-      });
-    },
-  });
 
   const handleBack = () => {
-    const stepOrder: BookingStep[] = ['location', 'auth', 'service-type', 'treatment', 'questionnaire', 'datetime', 'checkout'];
+    const stepOrder: BookingStep[] = ['location', 'auth', 'datetime', 'questionnaire', 'checkout'];
     const currentIndex = stepOrder.indexOf(bookingState.step);
     if (currentIndex > 0) {
       setBookingState(prev => ({ ...prev, step: stepOrder[currentIndex - 1] }));
@@ -268,7 +221,7 @@ export default function BookingWidget() {
                     setBookingState(prev => ({ 
                       ...prev, 
                       userName: 'Guest',
-                      step: 'service-type' 
+                      step: 'datetime' 
                     }));
                   }}
                   className="w-full bg-black text-white hover:bg-gray-800"
@@ -284,298 +237,7 @@ export default function BookingWidget() {
     );
   }
 
-  // Step 3: Service Type Menu
-  if (bookingState.step === 'service-type') {
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-2xl mx-auto px-6 py-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">
-              Welcome back, {bookingState.userName}!
-            </h1>
-            <p className="text-gray-600" data-testid="text-subtitle">What would you like to do today?</p>
-          </div>
-
-          <div className="space-y-4">
-            <Card
-              className="cursor-pointer hover:border-orange-500 transition-colors"
-              onClick={() => {
-                setBookingState(prev => ({ ...prev, serviceType: 'treatment' }));
-                if (bookingState.selectedLocation?.id) {
-                  createCartMutation.mutate({ locationId: bookingState.selectedLocation.id });
-                }
-              }}
-              data-testid="card-service-treatment"
-            >
-              <CardHeader className="p-6">
-                <CardTitle className="text-xl">Book a Treatment</CardTitle>
-                <CardDescription>Schedule your next facial or skincare service</CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card
-              className="cursor-pointer hover:border-orange-500 transition-colors"
-              onClick={() => {
-                toast({
-                  title: "Coming Soon",
-                  description: "Membership options will be available soon"
-                });
-              }}
-              data-testid="card-service-membership"
-            >
-              <CardHeader className="p-6">
-                <CardTitle className="text-xl">Get a Membership Deal</CardTitle>
-                <CardDescription>Save with monthly membership pricing</CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card
-              className="cursor-pointer hover:border-orange-500 transition-colors"
-              onClick={() => {
-                toast({
-                  title: "Coming Soon",
-                  description: "Package options will be available soon"
-                });
-              }}
-              data-testid="card-service-package"
-            >
-              <CardHeader className="p-6">
-                <CardTitle className="text-xl">Purchase a Package</CardTitle>
-                <CardDescription>Buy multiple treatments at a discounted rate</CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card
-              className="cursor-pointer hover:border-orange-500 transition-colors"
-              onClick={() => {
-                toast({
-                  title: "Coming Soon",
-                  description: "Gift cards will be available soon"
-                });
-              }}
-              data-testid="card-service-giftcard"
-            >
-              <CardHeader className="p-6">
-                <CardTitle className="text-xl">Purchase a Gift Card</CardTitle>
-                <CardDescription>Give the gift of glowing skin</CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Step 4: Treatment Selection
-  if (bookingState.step === 'treatment') {
-    const treatments = bookingState.availableTreatments || [];
-
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Select Your Treatment</h1>
-            <p className="text-gray-600" data-testid="text-subtitle">
-              {bookingState.selectedLocation?.name}
-            </p>
-          </div>
-
-          {createCartMutation.isPending ? (
-            <div className="text-center py-12" data-testid="text-loading">Loading treatments...</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {treatments.map((treatment: any) => (
-                <Card key={treatment.id} className="overflow-hidden" data-testid={`card-treatment-${treatment.id}`}>
-                  <div className="aspect-video bg-gradient-to-br from-orange-100 to-pink-100" />
-                  <CardHeader>
-                    <CardTitle>{treatment.name}</CardTitle>
-                    <CardDescription>{treatment.description}</CardDescription>
-                    <div className="mt-4 space-y-2">
-                      <p className="text-2xl font-bold">${treatment.price}</p>
-                      <p className="text-sm text-gray-600">{treatment.duration} minutes</p>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Button
-                      onClick={() => {
-                        setBookingState(prev => ({
-                          ...prev,
-                          selectedTreatment: {
-                            id: treatment.id,
-                            name: treatment.name,
-                            price: treatment.price,
-                            memberPrice: treatment.price * 0.8, // Mock member pricing
-                            duration: treatment.duration
-                          },
-                          step: 'questionnaire'
-                        }));
-                      }}
-                      className="w-full bg-black text-white hover:bg-gray-800"
-                      data-testid={`button-select-treatment-${treatment.id}`}
-                    >
-                      SELECT
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Step 5: Pre-Treatment Questionnaire
-  if (bookingState.step === 'questionnaire') {
-    const allChecked = accutane && injections && waxing;
-
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="flex">
-          {/* Main Content */}
-          <div className="flex-1 px-6 py-8">
-            <div className="max-w-2xl mx-auto">
-              <Button
-                variant="ghost"
-                onClick={handleBack}
-                className="mb-6"
-                data-testid="button-back"
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-
-              <div className="mb-8">
-                <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Before You Glow</h1>
-                <p className="text-gray-600" data-testid="text-subtitle">
-                  Please confirm the following for your safety
-                </p>
-              </div>
-
-              <Card>
-                <CardContent className="p-6 space-y-6">
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="accutane"
-                      checked={accutane}
-                      onCheckedChange={(checked) => setAccutane(checked as boolean)}
-                      data-testid="checkbox-accutane"
-                    />
-                    <div className="flex-1">
-                      <label
-                        htmlFor="accutane"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        I confirm I am not currently taking Accutane or have not taken it in the last 6 months
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="injections"
-                      checked={injections}
-                      onCheckedChange={(checked) => setInjections(checked as boolean)}
-                      data-testid="checkbox-injections"
-                    />
-                    <div className="flex-1">
-                      <label
-                        htmlFor="injections"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        I confirm I have not had any injections or laser treatments in the last 2 weeks
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="waxing"
-                      checked={waxing}
-                      onCheckedChange={(checked) => setWaxing(checked as boolean)}
-                      data-testid="checkbox-waxing"
-                    />
-                    <div className="flex-1">
-                      <label
-                        htmlFor="waxing"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        I confirm I have not had any waxing or threading on my face in the last 48 hours
-                      </label>
-                    </div>
-                  </div>
-
-                  {allChecked && (
-                    <Button
-                      onClick={() => {
-                        setBookingState(prev => ({
-                          ...prev,
-                          questionnaireComplete: true,
-                          step: 'datetime'
-                        }));
-                      }}
-                      className="w-full bg-black text-white hover:bg-gray-800 mt-4"
-                      data-testid="button-continue"
-                    >
-                      CONTINUE
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Cart Sidebar */}
-          <div className="w-80 bg-gray-50 p-6 border-l">
-            <h2 className="text-xl font-bold mb-4">Your Cart</h2>
-            {bookingState.selectedTreatment && (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-semibold">{bookingState.selectedTreatment.name}</p>
-                      <p className="text-sm text-gray-600">{bookingState.selectedLocation?.name}</p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setBookingState(prev => ({ ...prev, step: 'treatment' }))}
-                      data-testid="button-remove"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                  <p className="text-lg font-bold">${bookingState.selectedTreatment.price}</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Step 6: Date/Time Selection
+  // Step 3: Date/Time Selection
   if (bookingState.step === 'datetime') {
     // Mock time slots (40-minute intervals)
     const generateTimeSlots = () => {
@@ -619,7 +281,7 @@ export default function BookingWidget() {
               <div className="mb-8">
                 <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Select Date & Time</h1>
                 <p className="text-gray-600" data-testid="text-subtitle">
-                  {bookingState.selectedTreatment?.name} at {bookingState.selectedLocation?.name}
+                  Book your appointment at {bookingState.selectedLocation?.name}
                 </p>
               </div>
 
@@ -703,7 +365,7 @@ export default function BookingWidget() {
                       selectedDate,
                       selectedTime: { id: selectedTimeSlot, time: selectedTimeSlot },
                       selectedEsthetician: esthetician,
-                      step: 'checkout'
+                      step: 'questionnaire'
                     }));
                   }}
                   className="w-full bg-black text-white hover:bg-gray-800 mt-6"
@@ -726,30 +388,137 @@ export default function BookingWidget() {
             </div>
           </div>
 
-          {/* Cart Sidebar */}
+          {/* Booking Summary Sidebar */}
           <div className="w-80 bg-gray-50 p-6 border-l">
-            <h2 className="text-xl font-bold mb-4">Your Cart</h2>
-            {bookingState.selectedTreatment && (
-              <Card>
-                <CardContent className="p-4">
-                  <p className="font-semibold">{bookingState.selectedTreatment.name}</p>
-                  <p className="text-sm text-gray-600">{bookingState.selectedLocation?.name}</p>
-                  {selectedDate && selectedTimeSlot && (
-                    <p className="text-sm text-gray-600 mt-2">
+            <h2 className="text-xl font-bold mb-4">Your Booking</h2>
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Location</p>
+                  <p className="font-semibold">{bookingState.selectedLocation?.name}</p>
+                </div>
+                {selectedDate && selectedTimeSlot && (
+                  <div>
+                    <p className="text-sm text-gray-600">Date & Time</p>
+                    <p className="font-semibold">
                       {format(selectedDate, 'MMM d, yyyy')} at {selectedTimeSlot}
                     </p>
-                  )}
-                  <p className="text-lg font-bold mt-2">${bookingState.selectedTreatment.price}</p>
-                </CardContent>
-              </Card>
-            )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
     );
   }
 
-  // Step 7: Checkout Summary
+  // Step 4: Pre-Treatment Questionnaire
+  if (bookingState.step === 'questionnaire') {
+    const allChecked = accutane && injections && waxing;
+
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="max-w-2xl mx-auto px-6 py-8">
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            className="mb-6"
+            data-testid="button-back"
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Before You Glow</h1>
+            <p className="text-gray-600" data-testid="text-subtitle">
+              Please confirm the following for your safety
+            </p>
+          </div>
+
+          <Card>
+            <CardContent className="p-6 space-y-6">
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="accutane"
+                  checked={accutane}
+                  onCheckedChange={(checked) => setAccutane(checked as boolean)}
+                  data-testid="checkbox-accutane"
+                />
+                <div className="flex-1">
+                  <label
+                    htmlFor="accutane"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    I confirm I am not currently taking Accutane or have not taken it in the last 6 months
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="injections"
+                  checked={injections}
+                  onCheckedChange={(checked) => setInjections(checked as boolean)}
+                  data-testid="checkbox-injections"
+                />
+                <div className="flex-1">
+                  <label
+                    htmlFor="injections"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    I confirm I have not had any injections or laser treatments in the last 2 weeks
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="waxing"
+                  checked={waxing}
+                  onCheckedChange={(checked) => setWaxing(checked as boolean)}
+                  data-testid="checkbox-waxing"
+                />
+                <div className="flex-1">
+                  <label
+                    htmlFor="waxing"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    I confirm I have not had any waxing or threading on my face in the last 48 hours
+                  </label>
+                </div>
+              </div>
+
+              {allChecked && (
+                <Button
+                  onClick={() => {
+                    setBookingState(prev => ({
+                      ...prev,
+                      questionnaireComplete: true,
+                      step: 'checkout'
+                    }));
+                  }}
+                  className="w-full bg-black text-white hover:bg-gray-800 mt-4"
+                  data-testid="button-continue"
+                >
+                  CONTINUE TO CHECKOUT
+                </Button>
+              )}
+
+              {!allChecked && (
+                <p className="text-sm text-gray-500 text-center mt-4">
+                  Please check all boxes to continue
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 5: Checkout Summary
   if (bookingState.step === 'checkout') {
     return (
       <div className="min-h-screen bg-white">
@@ -778,12 +547,13 @@ export default function BookingWidget() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-600">Treatment</p>
-                    <p className="font-semibold">{bookingState.selectedTreatment?.name}</p>
+                    <p className="text-sm text-gray-600">Service</p>
+                    <p className="font-semibold">Facial Treatment (50 minutes)</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Location</p>
                     <p className="font-semibold">{bookingState.selectedLocation?.name}</p>
+                    <p className="text-sm text-gray-500">{bookingState.selectedLocation?.city}, {bookingState.selectedLocation?.state}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Date & Time</p>
@@ -794,8 +564,8 @@ export default function BookingWidget() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Duration</p>
-                    <p className="font-semibold">{bookingState.selectedTreatment?.duration} minutes</p>
+                    <p className="text-sm text-gray-600">Esthetician</p>
+                    <p className="font-semibold">{bookingState.selectedEsthetician === 'any' ? 'No preference' : bookingState.selectedEsthetician}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -840,16 +610,16 @@ export default function BookingWidget() {
                   {/* Price Breakdown */}
                   <div className="border-t pt-4">
                     <div className="flex justify-between mb-2">
-                      <span>Subtotal</span>
-                      <span>${bookingState.selectedTreatment?.price}</span>
+                      <span>Treatment</span>
+                      <span>$80.00</span>
                     </div>
                     <div className="flex justify-between mb-2">
                       <span>Tax</span>
-                      <span>$0.00</span>
+                      <span>$7.20</span>
                     </div>
                     <div className="flex justify-between font-bold text-lg border-t pt-2">
                       <span>Total</span>
-                      <span data-testid="text-total">${bookingState.selectedTreatment?.price}</span>
+                      <span data-testid="text-total">$87.20</span>
                     </div>
                   </div>
 
