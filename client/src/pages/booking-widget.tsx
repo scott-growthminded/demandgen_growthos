@@ -178,6 +178,7 @@ export default function BookingWidget() {
                           </div>
                           <Button
                             onClick={() => {
+                              setEsthetician('any');
                               setBookingState(prev => ({
                                 ...prev,
                                 selectedLocation: {
