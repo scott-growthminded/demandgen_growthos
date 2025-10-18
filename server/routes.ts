@@ -581,15 +581,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       const shifts = await blvdService.getStaffShifts(locationId, startDate, endDate);
       
-      // Extract unique staff IDs from shifts
+      // Extract unique staff IDs from shifts (these are short IDs without URN prefix)
       const staffIdsWithShifts = new Set(
         shifts.map(shift => shift.staffId)
       );
       
       // Filter staff to only those who have shifts at this location
-      const locationStaff = allStaff.filter(staff => 
-        staffIdsWithShifts.has(staff.id)
-      );
+      // Staff IDs from API are in URN format: urn:blvd:Staff:SHORT_ID
+      // Shift staffIds are just the SHORT_ID part
+      const locationStaff = allStaff.filter(staff => {
+        const shortStaffId = staff.id.includes(':') ? staff.id.split(':').pop() : staff.id;
+        return staffIdsWithShifts.has(shortStaffId);
+      });
       
       console.log(`✅ Found ${locationStaff.length} staff working at location (out of ${allStaff.length} total staff)`);
       
