@@ -531,6 +531,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get availability for a location on a specific date
+  app.get("/api/booking/availability/:locationId/:date", async (req, res) => {
+    try {
+      const serverConfig = getServerConfig();
+      const config = blvdConfigSchema.parse(serverConfig);
+      const blvdService = new BlvdService(config);
+      
+      const { locationId, date } = req.params;
+      
+      // Get real availability from Boulevard Client API
+      const availability = await blvdService.getLocationAvailabilityFromClientAPI(locationId, date);
+      
+      if (!availability) {
+        return res.json({ 
+          success: false, 
+          availableSlots: [],
+          totalSlots: 0
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        availableSlots: availability.availableSlots,
+        totalSlots: availability.totalSlots
+      });
+    } catch (error) {
+      console.error('Get availability error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to get availability"
+      });
+    }
+  });
+  
   // Get staff/estheticians for a location
   app.get("/api/booking/staff/:locationId", async (req, res) => {
     try {
