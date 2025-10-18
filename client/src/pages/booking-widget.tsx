@@ -255,33 +255,59 @@ export default function BookingWidget() {
 
   // Step 3: Date/Time Selection
   if (bookingState.step === 'datetime') {
-    // Generate time slots (40-minute intervals) with real availability from Boulevard
+    // Generate time slots directly from Boulevard availability data
     const generateTimeSlots = () => {
-      const slots: string[] = [];
-      for (let hour = 8; hour < 20; hour++) {
-        slots.push(`${hour}:00`);
-        slots.push(`${hour}:20`);
-        slots.push(`${hour}:40`);
-      }
-      
       // Get current time for filtering past slots
       const now = new Date();
       const isToday = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
       
-      // Parse available slots from Boulevard API
-      const availableTimesSet = new Set<string>();
-      if (availabilityData?.success && availabilityData.availableSlots) {
-        availabilityData.availableSlots.forEach((slot: any) => {
-          // Parse ISO time like "2025-10-18T20:00:00-04:00" to get hour and minute
-          // Extract time from ISO string to show location's local time
-          const match = slot.startTime.match(/T(\d{2}):(\d{2}):/);
-          if (match) {
+      // If we have Boulevard availability data, use it to generate slots
+      if (availabilityData?.success && availabilityData.availableSlots && availabilityData.availableSlots.length > 0) {
+        const slots = availabilityData.availableSlots
+          .map((slot) => {
+            // Parse ISO time like "2025-10-18T20:00:00-04:00" to get hour and minute
+            const match = slot.startTime.match(/T(\d{2}):(\d{2}):/);
+            if (!match) return null;
+            
             const hour = parseInt(match[1]);
             const minute = parseInt(match[2]);
-            const timeKey = `${hour}:${minute.toString().padStart(2, '0')}`;
-            availableTimesSet.add(timeKey);
-          }
-        });
+            const timeValue = `${hour}:${minute.toString().padStart(2, '0')}`;
+            
+            // Check if this slot is in the past (for today only)
+            let isPast = false;
+            if (isToday) {
+              const slotTime = new Date();
+              slotTime.setHours(hour, minute, 0, 0);
+              isPast = slotTime < now;
+            }
+            
+            // Format for display
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+            
+            return {
+              value: timeValue,
+              display: `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`,
+              available: !isPast
+            };
+          })
+          .filter((slot): slot is { value: string; display: string; available: boolean } => slot !== null);
+        
+        return slots;
+      }
+      
+      // Fallback: generate placeholder slots from 8 AM to 8 PM (40-minute intervals)
+      // This shows while loading or when no availability data is returned
+      const slots: string[] = [];
+      for (let hour = 8; hour <= 20; hour++) {
+        if (hour < 20) {
+          slots.push(`${hour}:00`);
+          slots.push(`${hour}:20`);
+          slots.push(`${hour}:40`);
+        } else {
+          // Include 8:00 PM
+          slots.push(`${hour}:00`);
+        }
       }
       
       return slots.map(time => {
@@ -291,21 +317,10 @@ export default function BookingWidget() {
         const ampm = hour >= 12 ? 'PM' : 'AM';
         const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
         
-        // Check if this slot is in the past (for today only)
-        let isPast = false;
-        if (isToday) {
-          const slotTime = new Date();
-          slotTime.setHours(hour, minute, 0, 0);
-          isPast = slotTime < now;
-        }
-        
-        // Slot is available if: 1) Boulevard says it's available, 2) not in the past
-        const isAvailable = !isPast && availableTimesSet.has(time);
-        
         return {
           value: time,
           display: `${displayHour}:${m} ${ampm}`,
-          available: isAvailable
+          available: false // All unavailable until we get real data
         };
       });
     };
@@ -380,36 +395,33 @@ export default function BookingWidget() {
               {/* Time Slots */}
               {selectedDate && (
                 <div>
-                  <Label className="mb-4 block">Available Times</Label>
-                  {availabilityLoading ? (
-                    <div className="text-center py-8 text-gray-500" data-testid="text-loading-availability">
-                      Loading available times...
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                      {timeSlots.map((slot) => (
-                        <button
-                          key={slot.value}
-                          onClick={() => {
-                            if (slot.available) {
-                              setSelectedTimeSlot(slot.value);
-                            }
-                          }}
-                          disabled={!slot.available}
-                          className={`p-3 border rounded-lg text-center transition-colors ${
-                            selectedTimeSlot === slot.value
-                              ? 'bg-orange-500 text-white border-orange-500'
-                              : slot.available
-                              ? 'hover:border-orange-500'
-                              : 'opacity-40 cursor-not-allowed'
-                          }`}
-                          data-testid={`button-time-${slot.value}`}
-                        >
-                          {slot.display}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <Label className="mb-4 block">
+                    Available Times
+                    {availabilityLoading && <span className="text-sm text-gray-500 ml-2">(Loading...)</span>}
+                  </Label>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    {timeSlots.map((slot) => (
+                      <button
+                        key={slot.value}
+                        onClick={() => {
+                          if (slot.available) {
+                            setSelectedTimeSlot(slot.value);
+                          }
+                        }}
+                        disabled={!slot.available}
+                        className={`p-3 border rounded-lg text-center transition-colors ${
+                          selectedTimeSlot === slot.value
+                            ? 'bg-orange-500 text-white border-orange-500'
+                            : slot.available
+                            ? 'hover:border-orange-500'
+                            : 'opacity-40 cursor-not-allowed'
+                        }`}
+                        data-testid={`button-time-${slot.value}`}
+                      >
+                        {slot.display}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
