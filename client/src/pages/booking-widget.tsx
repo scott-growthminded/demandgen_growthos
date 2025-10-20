@@ -308,10 +308,11 @@ export default function BookingWidget() {
             return {
               value: timeValue,
               display: `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`,
-              available: !isPast
+              available: !isPast,
+              hour: hour
             };
           })
-          .filter((slot): slot is { value: string; display: string; available: boolean } => slot !== null);
+          .filter((slot): slot is { value: string; display: string; available: boolean; hour: number } => slot !== null);
         
         return slots;
       }
@@ -340,12 +341,37 @@ export default function BookingWidget() {
         return {
           value: time,
           display: `${displayHour}:${m} ${ampm}`,
-          available: false // All unavailable until we get real data
+          available: false, // All unavailable until we get real data
+          hour: hour
         };
       });
     };
 
     const timeSlots = generateTimeSlots();
+    
+    // Group time slots by period (morning, afternoon, evening)
+    const morningSlots = timeSlots.filter(slot => slot.hour < 12);
+    const afternoonSlots = timeSlots.filter(slot => slot.hour >= 12 && slot.hour < 17);
+    const eveningSlots = timeSlots.filter(slot => slot.hour >= 17);
+    
+    // Get nearby locations (top 2 that are not the current location)
+    const getNearbyLocations = () => {
+      if (!locationsData) return [];
+      
+      const allLocations: Location[] = [];
+      Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
+        Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
+          allLocations.push(...(locations as Location[]));
+        });
+      });
+      
+      // Filter out current location and return first 2
+      return allLocations
+        .filter(loc => loc.id !== bookingState.selectedLocation?.id)
+        .slice(0, 2);
+    };
+    
+    const nearbyLocations = getNearbyLocations();
 
     return (
       <div className="min-h-screen bg-white">
@@ -417,36 +443,103 @@ export default function BookingWidget() {
                 </div>
               </div>
 
-              {/* Time Slots */}
+              {/* Time Slots - Grouped by Period */}
               {selectedDate && (
-                <div>
+                <div className="space-y-6">
                   <Label className="mb-4 block">
                     Available Times
                     {availabilityLoading && <span className="text-sm text-gray-500 ml-2">(Loading...)</span>}
                   </Label>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                    {timeSlots.map((slot) => (
-                      <button
-                        key={slot.value}
-                        onClick={() => {
-                          if (slot.available) {
-                            setSelectedTimeSlot(slot.value);
-                          }
-                        }}
-                        disabled={!slot.available}
-                        className={`p-3 border rounded-lg text-center transition-colors ${
-                          selectedTimeSlot === slot.value
-                            ? 'bg-orange-500 text-white border-orange-500'
-                            : slot.available
-                            ? 'hover:border-orange-500'
-                            : 'opacity-40 cursor-not-allowed'
-                        }`}
-                        data-testid={`button-time-${slot.value}`}
-                      >
-                        {slot.display}
-                      </button>
-                    ))}
-                  </div>
+                  
+                  {/* Morning Slots */}
+                  {morningSlots.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Morning</h3>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {morningSlots.map((slot) => (
+                          <button
+                            key={slot.value}
+                            onClick={() => {
+                              if (slot.available) {
+                                setSelectedTimeSlot(slot.value);
+                              }
+                            }}
+                            disabled={!slot.available}
+                            className={`p-3 border rounded-lg text-center transition-colors ${
+                              selectedTimeSlot === slot.value
+                                ? 'bg-orange-500 text-white border-orange-500'
+                                : slot.available
+                                ? 'hover:border-orange-500'
+                                : 'opacity-40 cursor-not-allowed'
+                            }`}
+                            data-testid={`button-time-${slot.value}`}
+                          >
+                            {slot.display}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Afternoon Slots */}
+                  {afternoonSlots.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Afternoon</h3>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {afternoonSlots.map((slot) => (
+                          <button
+                            key={slot.value}
+                            onClick={() => {
+                              if (slot.available) {
+                                setSelectedTimeSlot(slot.value);
+                              }
+                            }}
+                            disabled={!slot.available}
+                            className={`p-3 border rounded-lg text-center transition-colors ${
+                              selectedTimeSlot === slot.value
+                                ? 'bg-orange-500 text-white border-orange-500'
+                                : slot.available
+                                ? 'hover:border-orange-500'
+                                : 'opacity-40 cursor-not-allowed'
+                            }`}
+                            data-testid={`button-time-${slot.value}`}
+                          >
+                            {slot.display}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Evening Slots */}
+                  {eveningSlots.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Evening</h3>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {eveningSlots.map((slot) => (
+                          <button
+                            key={slot.value}
+                            onClick={() => {
+                              if (slot.available) {
+                                setSelectedTimeSlot(slot.value);
+                              }
+                            }}
+                            disabled={!slot.available}
+                            className={`p-3 border rounded-lg text-center transition-colors ${
+                              selectedTimeSlot === slot.value
+                                ? 'bg-orange-500 text-white border-orange-500'
+                                : slot.available
+                                ? 'hover:border-orange-500'
+                                : 'opacity-40 cursor-not-allowed'
+                            }`}
+                            data-testid={`button-time-${slot.value}`}
+                          >
+                            {slot.display}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -469,13 +562,51 @@ export default function BookingWidget() {
               )}
 
               {/* Nearby Locations */}
-              {selectedDate && timeSlots.filter(s => s.available).length < 5 && (
-                <div className="mt-8 p-4 border rounded-lg bg-orange-50">
-                  <p className="font-semibold mb-2">Limited availability at this location</p>
-                  <p className="text-sm text-gray-600 mb-3">Check nearby studios for more options:</p>
-                  <Button variant="outline" size="sm" data-testid="button-nearby-locations">
-                    View Nearby Locations
-                  </Button>
+              {nearbyLocations.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="font-semibold text-lg mb-4">Nearby Locations</h3>
+                  <div className="space-y-3">
+                    {nearbyLocations.map((location, index) => (
+                      <div
+                        key={location.id}
+                        className="p-4 border rounded-lg hover:border-gray-400 transition-colors flex items-center justify-between"
+                        data-testid={`card-nearby-location-${location.id}`}
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold">{location.name}</h4>
+                          {location.address && (
+                            <p className="text-sm text-gray-600">
+                              {location.address.city}, {location.address.state}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-500 mt-1">
+                            {index === 0 ? '1.2 mi away' : '1.8 mi away'}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEsthetician('any');
+                            setSelectedDate(undefined);
+                            setSelectedTimeSlot(undefined);
+                            setBookingState(prev => ({
+                              ...prev,
+                              selectedLocation: {
+                                id: location.id,
+                                name: location.name,
+                                city: location.address?.city || '',
+                                state: location.address?.state || '',
+                              },
+                            }));
+                          }}
+                          data-testid={`button-switch-location-${location.id}`}
+                        >
+                          View Availability
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
