@@ -86,6 +86,8 @@ export default function BookingWidget() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | undefined>(undefined);
   const [esthetician, setEsthetician] = useState('any');
+  const [expandedNearbyLocations, setExpandedNearbyLocations] = useState<Set<string>>(new Set());
+  const [selectedNearbyLocation, setSelectedNearbyLocation] = useState<{locationId: string; locationName: string; time: string} | null>(null);
   
   // Checkout state
   const [promoCode, setPromoCode] = useState('');
@@ -393,7 +395,7 @@ export default function BookingWidget() {
     const afternoonSlots = timeSlots.filter(slot => slot.hour >= 12 && slot.hour < 17);
     const eveningSlots = timeSlots.filter(slot => slot.hour >= 17);
     
-    // Get nearby locations (top 2 that are not the current location)
+    // Get nearby locations (top 3 that are not the current location)
     const getNearbyLocations = () => {
       if (!locationsData) return [];
       
@@ -404,13 +406,66 @@ export default function BookingWidget() {
         });
       });
       
-      // Filter out current location and return first 2
+      // Filter out current location and return first 3
       return allLocations
         .filter(loc => loc.id !== bookingState.selectedLocation?.id)
-        .slice(0, 2);
+        .slice(0, 3);
     };
     
     const nearbyLocations = getNearbyLocations();
+    
+    // Fetch availability for each nearby location
+    const nearbyAvailability1 = useQuery<AvailabilityResponse>({
+      queryKey: ['/api/booking/availability', nearbyLocations[0]?.id, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''],
+      enabled: !!nearbyLocations[0]?.id && !!selectedDate,
+    });
+    
+    const nearbyAvailability2 = useQuery<AvailabilityResponse>({
+      queryKey: ['/api/booking/availability', nearbyLocations[1]?.id, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''],
+      enabled: !!nearbyLocations[1]?.id && !!selectedDate,
+    });
+    
+    const nearbyAvailability3 = useQuery<AvailabilityResponse>({
+      queryKey: ['/api/booking/availability', nearbyLocations[2]?.id, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''],
+      enabled: !!nearbyLocations[2]?.id && !!selectedDate,
+    });
+    
+    const nearbyAvailabilityData = [nearbyAvailability1, nearbyAvailability2, nearbyAvailability3];
+    
+    // Helper to format time slots for nearby locations
+    const formatNearbyTimeSlots = (availData: AvailabilityResponse | undefined) => {
+      if (!availData?.success || !availData.availableSlots) return [];
+      
+      const now = new Date();
+      const isToday = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
+      
+      return availData.availableSlots
+        .map((slot) => {
+          const match = slot.startTime.match(/T(\d{2}):(\d{2}):/);
+          if (!match) return null;
+          
+          const hour = parseInt(match[1]);
+          const minute = parseInt(match[2]);
+          const timeValue = `${hour}:${minute.toString().padStart(2, '0')}`;
+          
+          let isPast = false;
+          if (isToday) {
+            const slotTime = new Date();
+            slotTime.setHours(hour, minute, 0, 0);
+            isPast = slotTime < now;
+          }
+          
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+          
+          return {
+            value: timeValue,
+            display: `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`,
+            available: !isPast
+          };
+        })
+        .filter((slot): slot is { value: string; display: string; available: boolean } => slot !== null && slot.available);
+    };
 
     return (
       <div className="min-h-screen bg-white">
@@ -501,6 +556,7 @@ export default function BookingWidget() {
                             onClick={() => {
                               if (slot.available) {
                                 setSelectedTimeSlot(slot.value);
+                                setSelectedNearbyLocation(null);
                               }
                             }}
                             disabled={!slot.available}
@@ -531,6 +587,7 @@ export default function BookingWidget() {
                             onClick={() => {
                               if (slot.available) {
                                 setSelectedTimeSlot(slot.value);
+                                setSelectedNearbyLocation(null);
                               }
                             }}
                             disabled={!slot.available}
@@ -561,6 +618,7 @@ export default function BookingWidget() {
                             onClick={() => {
                               if (slot.available) {
                                 setSelectedTimeSlot(slot.value);
+                                setSelectedNearbyLocation(null);
                               }
                             }}
                             disabled={!slot.available}
@@ -582,74 +640,130 @@ export default function BookingWidget() {
                 </div>
               )}
 
-              {selectedTimeSlot && (
-                <Button
-                  onClick={() => {
-                    setBookingState(prev => ({
-                      ...prev,
-                      selectedDate,
-                      selectedTime: { id: selectedTimeSlot, time: selectedTimeSlot },
-                      selectedEsthetician: esthetician,
-                      step: 'questionnaire'
-                    }));
-                  }}
-                  className="w-full bg-black text-white hover:bg-gray-800 mt-6"
-                  data-testid="button-continue"
-                >
-                  CONTINUE TO CHECKOUT
-                </Button>
-              )}
 
               {/* Nearby Locations */}
-              {nearbyLocations.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="font-semibold text-lg mb-4">Nearby Locations</h3>
-                  <div className="space-y-3">
-                    {nearbyLocations.map((location, index) => (
-                      <div
-                        key={location.id}
-                        className="p-4 border rounded-lg hover:border-gray-400 transition-colors flex items-center justify-between"
-                        data-testid={`card-nearby-location-${location.id}`}
-                      >
-                        <div className="flex-1">
-                          <h4 className="font-semibold">{location.name}</h4>
-                          {location.address && (
-                            <p className="text-sm text-gray-600">
-                              {location.address.city}, {location.address.state}
-                            </p>
+              {nearbyLocations.length > 0 && selectedDate && (
+                <div className="mt-12">
+                  <p className="text-gray-600 mb-6">Don't see a time that works for you? Here are some other options nearby.</p>
+                  <div className="space-y-6">
+                    {nearbyLocations.map((location, index) => {
+                      const availData = nearbyAvailabilityData[index]?.data;
+                      const slots = formatNearbyTimeSlots(availData);
+                      const isExpanded = expandedNearbyLocations.has(location.id);
+                      const displaySlots = isExpanded ? slots : slots.slice(0, 5);
+                      const hasMore = slots.length > 5;
+                      
+                      return (
+                        <div key={location.id} data-testid={`card-nearby-location-${location.id}`}>
+                          <div className="mb-3">
+                            <h4 className="font-semibold text-lg">{location.name}</h4>
+                            {location.address && (
+                              <p className="text-sm text-gray-600">
+                                {location.address.line1 && `${location.address.line1}, `}
+                                {location.address.city}, {location.address.state}
+                              </p>
+                            )}
+                          </div>
+                          
+                          {slots.length > 0 ? (
+                            <div className="grid grid-cols-3 gap-3">
+                              {displaySlots.map((slot) => (
+                                <button
+                                  key={slot.value}
+                                  onClick={() => {
+                                    setSelectedNearbyLocation({
+                                      locationId: location.id,
+                                      locationName: location.name,
+                                      time: slot.display
+                                    });
+                                    setSelectedTimeSlot(undefined);
+                                  }}
+                                  className={`p-3 border rounded-full text-center transition-colors ${
+                                    selectedNearbyLocation?.locationId === location.id && selectedNearbyLocation?.time === slot.display
+                                      ? 'bg-black text-white border-black'
+                                      : 'hover:border-gray-400'
+                                  }`}
+                                  data-testid={`button-nearby-time-${location.id}-${slot.value}`}
+                                >
+                                  {slot.display.toLowerCase()}
+                                </button>
+                              ))}
+                              
+                              {hasMore && (
+                                <button
+                                  onClick={() => {
+                                    const newExpanded = new Set(expandedNearbyLocations);
+                                    if (isExpanded) {
+                                      newExpanded.delete(location.id);
+                                    } else {
+                                      newExpanded.add(location.id);
+                                    }
+                                    setExpandedNearbyLocations(newExpanded);
+                                  }}
+                                  className="p-3 border rounded-full text-center hover:border-gray-400 transition-colors"
+                                  data-testid={`button-toggle-nearby-${location.id}`}
+                                >
+                                  {isExpanded ? 'View Less' : 'View More'}
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500">No availability for this date</p>
                           )}
-                          <p className="text-xs text-gray-500 mt-1">
-                            {index === 0 ? '1.2 mi away' : '1.8 mi away'}
-                          </p>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEsthetician('any');
-                            setSelectedDate(undefined);
-                            setSelectedTimeSlot(undefined);
-                            setBookingState(prev => ({
-                              ...prev,
-                              selectedLocation: {
-                                id: location.id,
-                                name: location.name,
-                                city: location.address?.city || '',
-                                state: location.address?.state || '',
-                              },
-                            }));
-                          }}
-                          data-testid={`button-switch-location-${location.id}`}
-                        >
-                          View Availability
-                        </Button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
             </div>
           </div>
+          
+          {/* Sticky Bottom Continue Button */}
+          {(selectedTimeSlot || selectedNearbyLocation) && (
+            <div className="fixed bottom-0 left-0 right-0 bg-black text-white p-4 z-50">
+              <div className="max-w-3xl mx-auto">
+                <Button
+                  onClick={() => {
+                    if (selectedNearbyLocation) {
+                      // Switch to the nearby location
+                      const location = nearbyLocations.find(l => l.id === selectedNearbyLocation.locationId);
+                      if (location) {
+                        setBookingState(prev => ({
+                          ...prev,
+                          selectedLocation: {
+                            id: location.id,
+                            name: location.name,
+                            city: location.address?.city || '',
+                            state: location.address?.state || '',
+                          },
+                          selectedDate,
+                          selectedTime: { id: selectedNearbyLocation.time, time: selectedNearbyLocation.time },
+                          selectedEsthetician: esthetician,
+                          step: 'questionnaire'
+                        }));
+                      }
+                    } else {
+                      setBookingState(prev => ({
+                        ...prev,
+                        selectedDate,
+                        selectedTime: { id: selectedTimeSlot!, time: selectedTimeSlot! },
+                        selectedEsthetician: esthetician,
+                        step: 'questionnaire'
+                      }));
+                    }
+                  }}
+                  className="w-full bg-white text-black hover:bg-gray-100 text-lg py-6"
+                  data-testid="button-continue-sticky"
+                >
+                  {selectedNearbyLocation 
+                    ? `Continue with ${selectedNearbyLocation.time.toLowerCase()} at ${selectedNearbyLocation.locationName}`
+                    : 'Continue to Checkout'
+                  }
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Booking Summary Sidebar */}
           <div className="w-80 bg-gray-50 p-6 border-l">
