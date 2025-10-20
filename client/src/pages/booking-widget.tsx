@@ -110,6 +110,78 @@ export default function BookingWidget() {
     enabled: !!bookingState.selectedLocation?.id,
   });
 
+  // Get nearby locations (top 3 that are not the current location)
+  const getNearbyLocations = () => {
+    if (!locationsData) return [];
+    
+    const allLocations: Location[] = [];
+    Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
+      Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
+        allLocations.push(...(locations as Location[]));
+      });
+    });
+    
+    // Filter out current location and return first 3
+    return allLocations
+      .filter(loc => loc.id !== bookingState.selectedLocation?.id)
+      .slice(0, 3);
+  };
+  
+  const nearbyLocations = getNearbyLocations();
+  
+  // Fetch availability for each nearby location (always call these hooks)
+  const nearbyAvailability1 = useQuery<AvailabilityResponse>({
+    queryKey: ['/api/booking/availability', nearbyLocations[0]?.id, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''],
+    enabled: !!nearbyLocations[0]?.id && !!selectedDate && bookingState.step === 'datetime',
+  });
+  
+  const nearbyAvailability2 = useQuery<AvailabilityResponse>({
+    queryKey: ['/api/booking/availability', nearbyLocations[1]?.id, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''],
+    enabled: !!nearbyLocations[1]?.id && !!selectedDate && bookingState.step === 'datetime',
+  });
+  
+  const nearbyAvailability3 = useQuery<AvailabilityResponse>({
+    queryKey: ['/api/booking/availability', nearbyLocations[2]?.id, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''],
+    enabled: !!nearbyLocations[2]?.id && !!selectedDate && bookingState.step === 'datetime',
+  });
+  
+  const nearbyAvailabilityData = [nearbyAvailability1, nearbyAvailability2, nearbyAvailability3];
+
+  // Helper to format time slots for nearby locations
+  const formatNearbyTimeSlots = (availData: AvailabilityResponse | undefined) => {
+    if (!availData?.success || !availData.availableSlots) return [];
+    
+    const now = new Date();
+    const isToday = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
+    
+    return availData.availableSlots
+      .map((slot) => {
+        const match = slot.startTime.match(/T(\d{2}):(\d{2}):/);
+        if (!match) return null;
+        
+        const hour = parseInt(match[1]);
+        const minute = parseInt(match[2]);
+        const timeValue = `${hour}:${minute.toString().padStart(2, '0')}`;
+        
+        let isPast = false;
+        if (isToday) {
+          const slotTime = new Date();
+          slotTime.setHours(hour, minute, 0, 0);
+          isPast = slotTime < now;
+        }
+        
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+        
+        return {
+          value: timeValue,
+          display: `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`,
+          available: !isPast
+        };
+      })
+      .filter((slot): slot is { value: string; display: string; available: boolean } => slot !== null && slot.available);
+  };
+
   // Auto-select date when entering datetime step
   useEffect(() => {
     if (bookingState.step === 'datetime' && !selectedDate) {
@@ -394,78 +466,6 @@ export default function BookingWidget() {
     const morningSlots = timeSlots.filter(slot => slot.hour < 12);
     const afternoonSlots = timeSlots.filter(slot => slot.hour >= 12 && slot.hour < 17);
     const eveningSlots = timeSlots.filter(slot => slot.hour >= 17);
-    
-    // Get nearby locations (top 3 that are not the current location)
-    const getNearbyLocations = () => {
-      if (!locationsData) return [];
-      
-      const allLocations: Location[] = [];
-      Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
-        Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
-          allLocations.push(...(locations as Location[]));
-        });
-      });
-      
-      // Filter out current location and return first 3
-      return allLocations
-        .filter(loc => loc.id !== bookingState.selectedLocation?.id)
-        .slice(0, 3);
-    };
-    
-    const nearbyLocations = getNearbyLocations();
-    
-    // Fetch availability for each nearby location
-    const nearbyAvailability1 = useQuery<AvailabilityResponse>({
-      queryKey: ['/api/booking/availability', nearbyLocations[0]?.id, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''],
-      enabled: !!nearbyLocations[0]?.id && !!selectedDate,
-    });
-    
-    const nearbyAvailability2 = useQuery<AvailabilityResponse>({
-      queryKey: ['/api/booking/availability', nearbyLocations[1]?.id, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''],
-      enabled: !!nearbyLocations[1]?.id && !!selectedDate,
-    });
-    
-    const nearbyAvailability3 = useQuery<AvailabilityResponse>({
-      queryKey: ['/api/booking/availability', nearbyLocations[2]?.id, selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''],
-      enabled: !!nearbyLocations[2]?.id && !!selectedDate,
-    });
-    
-    const nearbyAvailabilityData = [nearbyAvailability1, nearbyAvailability2, nearbyAvailability3];
-    
-    // Helper to format time slots for nearby locations
-    const formatNearbyTimeSlots = (availData: AvailabilityResponse | undefined) => {
-      if (!availData?.success || !availData.availableSlots) return [];
-      
-      const now = new Date();
-      const isToday = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
-      
-      return availData.availableSlots
-        .map((slot) => {
-          const match = slot.startTime.match(/T(\d{2}):(\d{2}):/);
-          if (!match) return null;
-          
-          const hour = parseInt(match[1]);
-          const minute = parseInt(match[2]);
-          const timeValue = `${hour}:${minute.toString().padStart(2, '0')}`;
-          
-          let isPast = false;
-          if (isToday) {
-            const slotTime = new Date();
-            slotTime.setHours(hour, minute, 0, 0);
-            isPast = slotTime < now;
-          }
-          
-          const ampm = hour >= 12 ? 'PM' : 'AM';
-          const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-          
-          return {
-            value: timeValue,
-            display: `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`,
-            available: !isPast
-          };
-        })
-        .filter((slot): slot is { value: string; display: string; available: boolean } => slot !== null && slot.available);
-    };
 
     return (
       <div className="min-h-screen bg-white">
