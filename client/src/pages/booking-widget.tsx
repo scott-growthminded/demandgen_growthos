@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -108,6 +108,45 @@ export default function BookingWidget() {
     enabled: !!bookingState.selectedLocation?.id,
   });
 
+  // Auto-select date when entering datetime step
+  useEffect(() => {
+    if (bookingState.step === 'datetime' && !selectedDate) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      // Set today as default initially
+      setSelectedDate(today);
+    }
+  }, [bookingState.step, selectedDate]);
+
+  // Auto-switch to tomorrow if today has no available future slots
+  useEffect(() => {
+    if (bookingState.step === 'datetime' && selectedDate && !availabilityLoading && availabilityData) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const isToday = format(selectedDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+      
+      if (isToday && availabilityData.success) {
+        // Check if any slots are in the future
+        const hasFutureSlots = availabilityData.availableSlots.some(slot => {
+          const match = slot.startTime.match(/T(\d{2}):(\d{2}):/);
+          if (!match) return false;
+          
+          const hour = parseInt(match[1]);
+          const minute = parseInt(match[2]);
+          const slotTime = new Date();
+          slotTime.setHours(hour, minute, 0, 0);
+          
+          return slotTime > now;
+        });
+        
+        // If no future slots today, switch to tomorrow
+        if (!hasFutureSlots) {
+          setSelectedDate(addDays(today, 1));
+        }
+      }
+    }
+  }, [bookingState.step, selectedDate, availabilityData, availabilityLoading]);
 
   const handleBack = () => {
     const stepOrder: BookingStep[] = ['location', 'auth', 'datetime', 'questionnaire', 'checkout'];
