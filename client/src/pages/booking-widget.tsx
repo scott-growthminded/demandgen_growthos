@@ -327,6 +327,8 @@ export default function BookingWidget() {
       });
     }
 
+    console.log('All locations for map:', allLocations.length, allLocations);
+
     return (
       <div className="min-h-screen bg-white flex items-center">
         <div className="w-full max-w-6xl mx-auto px-6 py-8 grid grid-cols-2 gap-12">
@@ -365,6 +367,7 @@ export default function BookingWidget() {
 
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
             <MapContainer
+              key="region-map"
               center={[39.8283, -98.5795]}
               zoom={4}
               style={{ height: '100%', width: '100%' }}
@@ -375,11 +378,12 @@ export default function BookingWidget() {
                 attribution='&copy; <a href="https://carto.com/">CARTO</a>'
                 url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
               />
-              {allLocations.map((location: any) => {
+              {allLocations.length > 0 && allLocations.map((location: any, index: number) => {
+                console.log(`Rendering marker ${index}:`, location.name, location.coordinates);
                 if (location.coordinates?.latitude && location.coordinates?.longitude) {
                   return (
                     <Marker
-                      key={location.id}
+                      key={location.id || index}
                       position={[location.coordinates.latitude, location.coordinates.longitude]}
                       icon={blackIcon}
                     >
