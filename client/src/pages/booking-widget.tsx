@@ -290,16 +290,32 @@ export default function BookingWidget() {
   // Step 2: Region Selection
   if (bookingState.step === 'region') {
     const regionCounts: Record<string, number> = {};
+    const allLocations: any[] = [];
     
     if (locationsData) {
       Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
         let count = 0;
         Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
           count += (locations as Location[]).length;
+          allLocations.push(...(locations as any[]));
         });
         regionCounts[state] = count;
       });
     }
+
+    // Build markers for all locations
+    const markers = allLocations
+      .map(loc => {
+        const coords = loc.coordinates;
+        if (coords && coords.latitude && coords.longitude) {
+          return `&markers=color:0xFF6B35%7C${coords.latitude},${coords.longitude}`;
+        }
+        return '';
+      })
+      .filter(m => m)
+      .join('');
+
+    const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=39.8283,-98.5795&zoom=4&size=600x600&scale=2${markers}&style=feature:poi|visibility:off`;
 
     return (
       <div className="min-h-screen bg-white flex items-center">
@@ -338,14 +354,11 @@ export default function BookingWidget() {
           </div>
 
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
-            <iframe
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              loading="lazy"
-              allowFullScreen
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12429993.826538375!2d-96.6796875!3d39.5!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x54eab584e432360b%3A0x1c3bb99243deb742!2sUnited%20States!5e0!3m2!1sen!2sus!4v1234567890123!5m2!1sen!2sus&zoom=4"
-            ></iframe>
+            <img
+              src={mapUrl}
+              alt="Map showing all Glowbar locations"
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       </div>
@@ -354,13 +367,13 @@ export default function BookingWidget() {
 
   // Step 3: Location Selection (Studios in selected region)
   if (bookingState.step === 'location') {
-    const locationsInRegion: Location[] = [];
+    const locationsInRegion: any[] = [];
     
     if (locationsData && bookingState.selectedRegion) {
       const stateData = (locationsData as Record<string, any>)[bookingState.selectedRegion];
       if (stateData) {
         Object.values(stateData as Record<string, any>).forEach((locations) => {
-          locationsInRegion.push(...(locations as Location[]));
+          locationsInRegion.push(...(locations as any[]));
         });
       }
     }
@@ -369,28 +382,41 @@ export default function BookingWidget() {
     const getRegionCenter = () => {
       if (!locationsInRegion.length) return { lat: 40.7128, lng: -74.0060 }; // Default to NYC
       
-      const avgLat = locationsInRegion.reduce((sum, loc) => {
-        const coords = (locationsData as any)[bookingState.selectedRegion!];
-        // Find the location in the data to get coordinates
-        return sum;
-      }, 0) / locationsInRegion.length;
+      // Calculate average of all locations
+      const total = locationsInRegion.reduce(
+        (acc, loc) => {
+          if (loc.coordinates) {
+            acc.lat += loc.coordinates.latitude;
+            acc.lng += loc.coordinates.longitude;
+            acc.count++;
+          }
+          return acc;
+        },
+        { lat: 0, lng: 0, count: 0 }
+      );
       
-      // State-specific center coordinates
-      const stateCenters: Record<string, { lat: number; lng: number }> = {
-        'NY': { lat: 40.7128, lng: -74.0060 },
-        'MA': { lat: 42.3601, lng: -71.0589 },
-        'PA': { lat: 39.9526, lng: -75.1652 },
-        'DC': { lat: 38.9072, lng: -77.0369 },
-        'VA': { lat: 38.8816, lng: -77.0910 },
-        'NJ': { lat: 40.7357, lng: -74.1724 },
-        'CT': { lat: 41.1432, lng: -73.3613 },
-      };
+      if (total.count > 0) {
+        return { lat: total.lat / total.count, lng: total.lng / total.count };
+      }
       
-      return stateCenters[bookingState.selectedRegion!] || { lat: 40.7128, lng: -74.0060 };
+      return { lat: 40.7128, lng: -74.0060 };
     };
 
     const center = getRegionCenter();
-    const mapUrl = `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d100000!2d${center.lng}!3d${center.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1234567890123!5m2!1sen!2sus&zoom=10`;
+    
+    // Build markers for locations in this region
+    const markers = locationsInRegion
+      .map(loc => {
+        const coords = loc.coordinates;
+        if (coords && coords.latitude && coords.longitude) {
+          return `&markers=color:0xFF6B35%7C${coords.latitude},${coords.longitude}`;
+        }
+        return '';
+      })
+      .filter(m => m)
+      .join('');
+
+    const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${center.lat},${center.lng}&zoom=10&size=600x600&scale=2${markers}&style=feature:poi|visibility:off`;
 
     return (
       <div className="min-h-screen bg-white flex items-center">
@@ -443,14 +469,11 @@ export default function BookingWidget() {
           </div>
 
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
-            <iframe
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              loading="lazy"
-              allowFullScreen
+            <img
               src={mapUrl}
-            ></iframe>
+              alt={`Map showing Glowbar locations in ${bookingState.selectedRegion}`}
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       </div>
