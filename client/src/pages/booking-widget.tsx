@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +13,27 @@ import { ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
+// Fix Leaflet default marker icons
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Create custom orange marker icon
+const orangeIcon = new L.Icon({
+  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36">
+      <path fill="#FF6B35" stroke="#fff" stroke-width="2" d="M12 0C7.03 0 3 4.03 3 9c0 7.5 9 18 9 18s9-10.5 9-18c0-4.97-4.03-9-9-9z"/>
+      <circle cx="12" cy="9" r="3" fill="#fff"/>
+    </svg>
+  `),
+  iconSize: [24, 36],
+  iconAnchor: [12, 36],
+  popupAnchor: [0, -36],
+});
 
 type BookingStep = 
   | 'customer-type'
@@ -340,12 +364,35 @@ export default function BookingWidget() {
           </div>
 
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <p className="text-lg font-semibold mb-2">📍 {allLocations.length} Locations</p>
-                <p className="text-sm">Across {Object.keys(regionCounts).length} Regions</p>
-              </div>
-            </div>
+            <MapContainer
+              center={[39.8283, -98.5795]}
+              zoom={4}
+              style={{ height: '100%', width: '100%' }}
+              scrollWheelZoom={false}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {allLocations.map((location: any) => {
+                if (location.coordinates?.latitude && location.coordinates?.longitude) {
+                  return (
+                    <Marker
+                      key={location.id}
+                      position={[location.coordinates.latitude, location.coordinates.longitude]}
+                      icon={orangeIcon}
+                    >
+                      <Popup>
+                        <strong>{location.name}</strong><br />
+                        {location.address?.line1}<br />
+                        {location.address?.city}, {location.address?.state}
+                      </Popup>
+                    </Marker>
+                  );
+                }
+                return null;
+              })}
+            </MapContainer>
           </div>
         </div>
       </div>
@@ -416,12 +463,47 @@ export default function BookingWidget() {
           </div>
 
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <p className="text-lg font-semibold mb-2">📍 {locationsInRegion.length} Studios</p>
-                <p className="text-sm">in {bookingState.selectedRegion}</p>
+            {locationsInRegion.length > 0 && locationsInRegion[0].coordinates ? (
+              <MapContainer
+                center={[
+                  locationsInRegion.reduce((sum, loc) => sum + (loc.coordinates?.latitude || 0), 0) / locationsInRegion.length,
+                  locationsInRegion.reduce((sum, loc) => sum + (loc.coordinates?.longitude || 0), 0) / locationsInRegion.length
+                ]}
+                zoom={10}
+                style={{ height: '100%', width: '100%' }}
+                scrollWheelZoom={false}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {locationsInRegion.map((location: any) => {
+                  if (location.coordinates?.latitude && location.coordinates?.longitude) {
+                    return (
+                      <Marker
+                        key={location.id}
+                        position={[location.coordinates.latitude, location.coordinates.longitude]}
+                        icon={orangeIcon}
+                      >
+                        <Popup>
+                          <strong>{location.name}</strong><br />
+                          {location.address?.line1}<br />
+                          {location.address?.city}, {location.address?.state}
+                        </Popup>
+                      </Marker>
+                    );
+                  }
+                  return null;
+                })}
+              </MapContainer>
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
+                <div className="text-center">
+                  <p className="text-lg font-semibold mb-2">📍 {locationsInRegion.length} Studios</p>
+                  <p className="text-sm">in {bookingState.selectedRegion}</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
