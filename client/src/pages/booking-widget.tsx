@@ -386,22 +386,6 @@ export default function BookingWidget() {
                       key={location.id || index}
                       position={[lat, lng]}
                       icon={blackIcon}
-                      eventHandlers={{
-                        click: () => {
-                          setEsthetician('any');
-                          setBookingState(prev => ({
-                            ...prev,
-                            selectedLocation: {
-                              id: location.id,
-                              name: location.name,
-                              city: location.address?.city || '',
-                              state: location.address?.state || '',
-                            },
-                            selectedRegion: location.address?.state || prev.selectedRegion,
-                            step: 'datetime'
-                          }));
-                        }
-                      }}
                     >
                       <Popup
                         closeButton={true}
@@ -553,21 +537,6 @@ export default function BookingWidget() {
                         key={location.id || index}
                         position={[lat, lng]}
                         icon={blackIcon}
-                        eventHandlers={{
-                          click: () => {
-                            setEsthetician('any');
-                            setBookingState(prev => ({
-                              ...prev,
-                              selectedLocation: {
-                                id: location.id,
-                                name: location.name,
-                                city: location.address?.city || '',
-                                state: location.address?.state || '',
-                              },
-                              step: 'datetime'
-                            }));
-                          }
-                        }}
                       >
                         <Popup
                           closeButton={true}
