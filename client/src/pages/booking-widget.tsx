@@ -338,9 +338,14 @@ export default function BookingWidget() {
           </div>
 
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
-              Map Placeholder
-            </div>
+            <iframe
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              loading="lazy"
+              allowFullScreen
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12429993.826538375!2d-96.6796875!3d39.5!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x54eab584e432360b%3A0x1c3bb99243deb742!2sUnited%20States!5e0!3m2!1sen!2sus!4v1234567890123!5m2!1sen!2sus&zoom=4"
+            ></iframe>
           </div>
         </div>
       </div>
@@ -359,6 +364,33 @@ export default function BookingWidget() {
         });
       }
     }
+
+    // Get center coordinates for the region map
+    const getRegionCenter = () => {
+      if (!locationsInRegion.length) return { lat: 40.7128, lng: -74.0060 }; // Default to NYC
+      
+      const avgLat = locationsInRegion.reduce((sum, loc) => {
+        const coords = (locationsData as any)[bookingState.selectedRegion!];
+        // Find the location in the data to get coordinates
+        return sum;
+      }, 0) / locationsInRegion.length;
+      
+      // State-specific center coordinates
+      const stateCenters: Record<string, { lat: number; lng: number }> = {
+        'NY': { lat: 40.7128, lng: -74.0060 },
+        'MA': { lat: 42.3601, lng: -71.0589 },
+        'PA': { lat: 39.9526, lng: -75.1652 },
+        'DC': { lat: 38.9072, lng: -77.0369 },
+        'VA': { lat: 38.8816, lng: -77.0910 },
+        'NJ': { lat: 40.7357, lng: -74.1724 },
+        'CT': { lat: 41.1432, lng: -73.3613 },
+      };
+      
+      return stateCenters[bookingState.selectedRegion!] || { lat: 40.7128, lng: -74.0060 };
+    };
+
+    const center = getRegionCenter();
+    const mapUrl = `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d100000!2d${center.lng}!3d${center.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1234567890123!5m2!1sen!2sus&zoom=10`;
 
     return (
       <div className="min-h-screen bg-white flex items-center">
@@ -411,9 +443,14 @@ export default function BookingWidget() {
           </div>
 
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
-              Map Placeholder
-            </div>
+            <iframe
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              loading="lazy"
+              allowFullScreen
+              src={mapUrl}
+            ></iframe>
           </div>
         </div>
       </div>
