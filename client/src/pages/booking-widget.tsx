@@ -303,20 +303,6 @@ export default function BookingWidget() {
       });
     }
 
-    // Build markers for all locations
-    const markers = allLocations
-      .map(loc => {
-        const coords = loc.coordinates;
-        if (coords && coords.latitude && coords.longitude) {
-          return `&markers=color:0xFF6B35%7C${coords.latitude},${coords.longitude}`;
-        }
-        return '';
-      })
-      .filter(m => m)
-      .join('');
-
-    const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=39.8283,-98.5795&zoom=4&size=600x600&scale=2${markers}&style=feature:poi|visibility:off`;
-
     return (
       <div className="min-h-screen bg-white flex items-center">
         <div className="w-full max-w-6xl mx-auto px-6 py-8 grid grid-cols-2 gap-12">
@@ -354,11 +340,12 @@ export default function BookingWidget() {
           </div>
 
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
-            <img
-              src={mapUrl}
-              alt="Map showing all Glowbar locations"
-              className="w-full h-full object-cover"
-            />
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
+              <div className="text-center">
+                <p className="text-lg font-semibold mb-2">📍 {allLocations.length} Locations</p>
+                <p className="text-sm">Across {Object.keys(regionCounts).length} Regions</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -377,46 +364,6 @@ export default function BookingWidget() {
         });
       }
     }
-
-    // Get center coordinates for the region map
-    const getRegionCenter = () => {
-      if (!locationsInRegion.length) return { lat: 40.7128, lng: -74.0060 }; // Default to NYC
-      
-      // Calculate average of all locations
-      const total = locationsInRegion.reduce(
-        (acc, loc) => {
-          if (loc.coordinates) {
-            acc.lat += loc.coordinates.latitude;
-            acc.lng += loc.coordinates.longitude;
-            acc.count++;
-          }
-          return acc;
-        },
-        { lat: 0, lng: 0, count: 0 }
-      );
-      
-      if (total.count > 0) {
-        return { lat: total.lat / total.count, lng: total.lng / total.count };
-      }
-      
-      return { lat: 40.7128, lng: -74.0060 };
-    };
-
-    const center = getRegionCenter();
-    
-    // Build markers for locations in this region
-    const markers = locationsInRegion
-      .map(loc => {
-        const coords = loc.coordinates;
-        if (coords && coords.latitude && coords.longitude) {
-          return `&markers=color:0xFF6B35%7C${coords.latitude},${coords.longitude}`;
-        }
-        return '';
-      })
-      .filter(m => m)
-      .join('');
-
-    const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${center.lat},${center.lng}&zoom=10&size=600x600&scale=2${markers}&style=feature:poi|visibility:off`;
 
     return (
       <div className="min-h-screen bg-white flex items-center">
@@ -469,11 +416,12 @@ export default function BookingWidget() {
           </div>
 
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
-            <img
-              src={mapUrl}
-              alt={`Map showing Glowbar locations in ${bookingState.selectedRegion}`}
-              className="w-full h-full object-cover"
-            />
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
+              <div className="text-center">
+                <p className="text-lg font-semibold mb-2">📍 {locationsInRegion.length} Studios</p>
+                <p className="text-sm">in {bookingState.selectedRegion}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
