@@ -403,14 +403,52 @@ export default function BookingWidget() {
                         }
                       }}
                     >
-                      <Popup>
-                        <div style={{ cursor: 'pointer' }}>
-                          <strong style={{ fontSize: '16px' }}>{location.name}</strong><br />
-                          <span style={{ color: '#666' }}>{location.address?.line1}</span><br />
-                          <span style={{ color: '#666' }}>{location.address?.city}, {location.address?.state}</span><br />
-                          <div style={{ marginTop: '8px', color: '#FF6B35', fontWeight: 'bold' }}>
-                            Click pin to book →
-                          </div>
+                      <Popup
+                        closeButton={true}
+                        className="custom-popup"
+                      >
+                        <div style={{ padding: '8px 4px', minWidth: '200px' }}>
+                          <h3 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 16px 0' }}>
+                            {location.name}
+                          </h3>
+                          <p style={{ margin: '0 0 4px 0', color: '#333', fontSize: '14px' }}>
+                            {location.address?.line1}
+                          </p>
+                          <p style={{ margin: '0 0 20px 0', color: '#333', fontSize: '14px' }}>
+                            {location.address?.city}, {location.address?.state} {location.address?.zip || ''}
+                          </p>
+                          <button
+                            onClick={() => {
+                              setEsthetician('any');
+                              setBookingState(prev => ({
+                                ...prev,
+                                selectedLocation: {
+                                  id: location.id,
+                                  name: location.name,
+                                  city: location.address?.city || '',
+                                  state: location.address?.state || '',
+                                },
+                                selectedRegion: location.address?.state || prev.selectedRegion,
+                                step: 'datetime'
+                              }));
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '14px',
+                              backgroundColor: '#000',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontSize: '16px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              transition: 'background-color 0.2s'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
+                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#000'}
+                          >
+                            Select
+                          </button>
                         </div>
                       </Popup>
                     </Marker>
@@ -531,14 +569,51 @@ export default function BookingWidget() {
                           }
                         }}
                       >
-                        <Popup>
-                          <div style={{ cursor: 'pointer' }}>
-                            <strong style={{ fontSize: '16px' }}>{location.name}</strong><br />
-                            <span style={{ color: '#666' }}>{location.address?.line1}</span><br />
-                            <span style={{ color: '#666' }}>{location.address?.city}, {location.address?.state}</span><br />
-                            <div style={{ marginTop: '8px', color: '#FF6B35', fontWeight: 'bold' }}>
-                              Click pin to book →
-                            </div>
+                        <Popup
+                          closeButton={true}
+                          className="custom-popup"
+                        >
+                          <div style={{ padding: '8px 4px', minWidth: '200px' }}>
+                            <h3 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 16px 0' }}>
+                              {location.name}
+                            </h3>
+                            <p style={{ margin: '0 0 4px 0', color: '#333', fontSize: '14px' }}>
+                              {location.address?.line1}
+                            </p>
+                            <p style={{ margin: '0 0 20px 0', color: '#333', fontSize: '14px' }}>
+                              {location.address?.city}, {location.address?.state} {location.address?.zip || ''}
+                            </p>
+                            <button
+                              onClick={() => {
+                                setEsthetician('any');
+                                setBookingState(prev => ({
+                                  ...prev,
+                                  selectedLocation: {
+                                    id: location.id,
+                                    name: location.name,
+                                    city: location.address?.city || '',
+                                    state: location.address?.state || '',
+                                  },
+                                  step: 'datetime'
+                                }));
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '14px',
+                                backgroundColor: '#000',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '16px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'background-color 0.2s'
+                              }}
+                              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
+                              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#000'}
+                            >
+                              Select
+                            </button>
                           </div>
                         </Popup>
                       </Marker>

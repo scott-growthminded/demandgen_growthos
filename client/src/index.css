@@ -107,3 +107,32 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  padding: 0 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  width: auto !important;
+}
+
+.leaflet-popup-close-button {
+  top: 16px !important;
+  right: 16px !important;
+  font-size: 24px !important;
+  color: #999 !important;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-close-button:hover {
+  color: #333 !important;
+}
+
+.leaflet-popup-tip-container {
+  display: none !important;
+}
