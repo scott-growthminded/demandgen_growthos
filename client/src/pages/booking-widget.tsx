@@ -10,11 +10,14 @@ import { ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import glowbarInterior from "@assets/stock_images/modern_beauty_salon__75bdc783.jpg";
 
 type BookingStep = 
+  | 'customer-type'
+  | 'region'
   | 'location'
-  | 'auth'
   | 'datetime'
+  | 'auth'
   | 'questionnaire'
   | 'checkout';
 
@@ -30,14 +33,18 @@ interface Location {
 
 interface BookingState {
   step: BookingStep;
+  customerType?: 'new' | 'returning';
+  selectedRegion?: string;
   selectedLocation?: {
     id: string;
     name: string;
     city: string;
     state: string;
   };
+  userFirstName?: string;
+  userLastName?: string;
+  userEmail?: string;
   userPhone?: string;
-  userName?: string;
   questionnaireComplete?: boolean;
   selectedDate?: Date;
   selectedTime?: {
@@ -73,7 +80,7 @@ interface StaffResponse {
 export default function BookingWidget() {
   const { toast } = useToast();
   const [bookingState, setBookingState] = useState<BookingState>({
-    step: 'location',
+    step: 'customer-type',
   });
   const [expandedState, setExpandedState] = useState<string | null>(null);
   
@@ -223,14 +230,125 @@ export default function BookingWidget() {
   }, [bookingState.step, selectedDate, availabilityData, availabilityLoading]);
 
   const handleBack = () => {
-    const stepOrder: BookingStep[] = ['location', 'auth', 'datetime', 'questionnaire', 'checkout'];
+    const stepOrder: BookingStep[] = ['customer-type', 'region', 'location', 'datetime', 'auth', 'questionnaire', 'checkout'];
     const currentIndex = stepOrder.indexOf(bookingState.step);
     if (currentIndex > 0) {
       setBookingState(prev => ({ ...prev, step: stepOrder[currentIndex - 1] }));
     }
   };
 
-  // Step 1: Location Selection
+  // Step 1: Customer Type Selection
+  if (bookingState.step === 'customer-type') {
+    return (
+      <div className="min-h-screen bg-white flex items-center">
+        <div className="w-full max-w-6xl mx-auto px-6 py-8 grid grid-cols-2 gap-12">
+          <div className="flex flex-col justify-center">
+            <h1 className="text-5xl font-bold mb-4" data-testid="text-title">How can we help?</h1>
+            
+            <div className="space-y-4 mt-8">
+              <button
+                onClick={() => setBookingState(prev => ({ ...prev, customerType: 'new', step: 'region' }))}
+                className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
+                data-testid="button-new-customer"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">I'm new to Glowbar</h3>
+                    <p className="text-gray-600 text-sm">Schedule a complimentary consultation</p>
+                  </div>
+                  <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setBookingState(prev => ({ ...prev, customerType: 'returning', step: 'region' }))}
+                className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
+                data-testid="button-returning-customer"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">I'm returning to Glowbar</h3>
+                    <p className="text-gray-600 text-sm">Welcome back! Schedule a return visit</p>
+                  </div>
+                  <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
+            <img 
+              src={glowbarInterior} 
+              alt="Glowbar studio interior"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 2: Region Selection
+  if (bookingState.step === 'region') {
+    const regionCounts: Record<string, number> = {};
+    
+    if (locationsData) {
+      Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
+        let count = 0;
+        Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
+          count += (locations as Location[]).length;
+        });
+        regionCounts[state] = count;
+      });
+    }
+
+    return (
+      <div className="min-h-screen bg-white flex items-center">
+        <div className="w-full max-w-6xl mx-auto px-6 py-8 grid grid-cols-2 gap-12">
+          <div className="flex flex-col justify-center">
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="mb-6 self-start"
+              data-testid="button-back"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+
+            <h1 className="text-5xl font-bold mb-8" data-testid="text-title">Choose a region</h1>
+            
+            <div className="space-y-3">
+              {Object.entries(regionCounts).map(([state, count]) => (
+                <button
+                  key={state}
+                  onClick={() => setBookingState(prev => ({ ...prev, selectedRegion: state, step: 'location' }))}
+                  className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
+                  data-testid={`button-region-${state}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">{state}</h3>
+                      <p className="text-gray-600 text-sm">{count} {count === 1 ? 'Location' : 'Locations'}</p>
+                    </div>
+                    <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+              Map Placeholder
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 3: Location Selection
   if (bookingState.step === 'location') {
     const locationsByState: Record<string, Location[]> = {};
     
