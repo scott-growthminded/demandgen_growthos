@@ -327,8 +327,6 @@ export default function BookingWidget() {
       });
     }
 
-    console.log('All locations for map:', allLocations.length, allLocations);
-
     return (
       <div className="min-h-screen bg-white flex items-center">
         <div className="w-full max-w-6xl mx-auto px-6 py-8 grid grid-cols-2 gap-12">
@@ -379,12 +377,14 @@ export default function BookingWidget() {
                 url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
               />
               {allLocations.length > 0 && allLocations.map((location: any, index: number) => {
-                console.log(`Rendering marker ${index}:`, location.name, location.coordinates);
-                if (location.coordinates?.latitude && location.coordinates?.longitude) {
+                const lat = location.coordinates?.lat || location.coordinates?.latitude;
+                const lng = location.coordinates?.lng || location.coordinates?.longitude;
+                
+                if (lat && lng) {
                   return (
                     <Marker
                       key={location.id || index}
-                      position={[location.coordinates.latitude, location.coordinates.longitude]}
+                      position={[lat, lng]}
                       icon={blackIcon}
                     >
                       <Popup>
@@ -470,9 +470,10 @@ export default function BookingWidget() {
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
             {locationsInRegion.length > 0 && locationsInRegion[0].coordinates ? (
               <MapContainer
+                key="location-map"
                 center={[
-                  locationsInRegion.reduce((sum, loc) => sum + (loc.coordinates?.latitude || 0), 0) / locationsInRegion.length,
-                  locationsInRegion.reduce((sum, loc) => sum + (loc.coordinates?.longitude || 0), 0) / locationsInRegion.length
+                  locationsInRegion.reduce((sum, loc) => sum + ((loc.coordinates?.lat || loc.coordinates?.latitude) || 0), 0) / locationsInRegion.length,
+                  locationsInRegion.reduce((sum, loc) => sum + ((loc.coordinates?.lng || loc.coordinates?.longitude) || 0), 0) / locationsInRegion.length
                 ]}
                 zoom={10}
                 style={{ height: '100%', width: '100%' }}
@@ -483,12 +484,15 @@ export default function BookingWidget() {
                   attribution='&copy; <a href="https://carto.com/">CARTO</a>'
                   url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                 />
-                {locationsInRegion.map((location: any) => {
-                  if (location.coordinates?.latitude && location.coordinates?.longitude) {
+                {locationsInRegion.map((location: any, index: number) => {
+                  const lat = location.coordinates?.lat || location.coordinates?.latitude;
+                  const lng = location.coordinates?.lng || location.coordinates?.longitude;
+                  
+                  if (lat && lng) {
                     return (
                       <Marker
-                        key={location.id}
-                        position={[location.coordinates.latitude, location.coordinates.longitude]}
+                        key={location.id || index}
+                        position={[lat, lng]}
                         icon={blackIcon}
                       >
                         <Popup>
