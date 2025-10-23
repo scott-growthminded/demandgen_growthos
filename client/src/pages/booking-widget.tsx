@@ -386,11 +386,32 @@ export default function BookingWidget() {
                       key={location.id || index}
                       position={[lat, lng]}
                       icon={blackIcon}
+                      eventHandlers={{
+                        click: () => {
+                          setEsthetician('any');
+                          setBookingState(prev => ({
+                            ...prev,
+                            selectedLocation: {
+                              id: location.id,
+                              name: location.name,
+                              city: location.address?.city || '',
+                              state: location.address?.state || '',
+                            },
+                            selectedRegion: location.address?.state || prev.selectedRegion,
+                            step: 'datetime'
+                          }));
+                        }
+                      }}
                     >
                       <Popup>
-                        <strong>{location.name}</strong><br />
-                        {location.address?.line1}<br />
-                        {location.address?.city}, {location.address?.state}
+                        <div style={{ cursor: 'pointer' }}>
+                          <strong style={{ fontSize: '16px' }}>{location.name}</strong><br />
+                          <span style={{ color: '#666' }}>{location.address?.line1}</span><br />
+                          <span style={{ color: '#666' }}>{location.address?.city}, {location.address?.state}</span><br />
+                          <div style={{ marginTop: '8px', color: '#FF6B35', fontWeight: 'bold' }}>
+                            Click pin to book →
+                          </div>
+                        </div>
                       </Popup>
                     </Marker>
                   );
@@ -494,11 +515,31 @@ export default function BookingWidget() {
                         key={location.id || index}
                         position={[lat, lng]}
                         icon={blackIcon}
+                        eventHandlers={{
+                          click: () => {
+                            setEsthetician('any');
+                            setBookingState(prev => ({
+                              ...prev,
+                              selectedLocation: {
+                                id: location.id,
+                                name: location.name,
+                                city: location.address?.city || '',
+                                state: location.address?.state || '',
+                              },
+                              step: 'datetime'
+                            }));
+                          }
+                        }}
                       >
                         <Popup>
-                          <strong>{location.name}</strong><br />
-                          {location.address?.line1}<br />
-                          {location.address?.city}, {location.address?.state}
+                          <div style={{ cursor: 'pointer' }}>
+                            <strong style={{ fontSize: '16px' }}>{location.name}</strong><br />
+                            <span style={{ color: '#666' }}>{location.address?.line1}</span><br />
+                            <span style={{ color: '#666' }}>{location.address?.city}, {location.address?.state}</span><br />
+                            <div style={{ marginTop: '8px', color: '#FF6B35', fontWeight: 'bold' }}>
+                              Click pin to book →
+                            </div>
+                          </div>
                         </Popup>
                       </Marker>
                     );
