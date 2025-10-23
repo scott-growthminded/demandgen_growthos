@@ -366,8 +366,8 @@ export default function BookingWidget() {
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
             <MapContainer
               key="region-map"
-              center={[39.8283, -98.5795]}
-              zoom={4}
+              center={[40.7128, -74.0060]}
+              zoom={11}
               style={{ height: '100%', width: '100%' }}
               scrollWheelZoom={false}
               zoomControl={true}
