@@ -22,17 +22,17 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Create custom orange marker icon
-const orangeIcon = new L.Icon({
+// Create custom black marker icon (Peachy style)
+const blackIcon = new L.Icon({
   iconUrl: 'data:image/svg+xml;base64,' + btoa(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36">
-      <path fill="#FF6B35" stroke="#fff" stroke-width="2" d="M12 0C7.03 0 3 4.03 3 9c0 7.5 9 18 9 18s9-10.5 9-18c0-4.97-4.03-9-9-9z"/>
+      <path fill="#000000" stroke="#fff" stroke-width="1.5" d="M12 0C7.03 0 3 4.03 3 9c0 7.5 9 18 9 18s9-10.5 9-18c0-4.97-4.03-9-9-9z"/>
       <circle cx="12" cy="9" r="3" fill="#fff"/>
     </svg>
   `),
-  iconSize: [24, 36],
-  iconAnchor: [12, 36],
-  popupAnchor: [0, -36],
+  iconSize: [28, 42],
+  iconAnchor: [14, 42],
+  popupAnchor: [0, -42],
 });
 
 type BookingStep = 
@@ -369,10 +369,11 @@ export default function BookingWidget() {
               zoom={4}
               style={{ height: '100%', width: '100%' }}
               scrollWheelZoom={false}
+              zoomControl={true}
             >
               <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
               />
               {allLocations.map((location: any) => {
                 if (location.coordinates?.latitude && location.coordinates?.longitude) {
@@ -380,7 +381,7 @@ export default function BookingWidget() {
                     <Marker
                       key={location.id}
                       position={[location.coordinates.latitude, location.coordinates.longitude]}
-                      icon={orangeIcon}
+                      icon={blackIcon}
                     >
                       <Popup>
                         <strong>{location.name}</strong><br />
@@ -472,10 +473,11 @@ export default function BookingWidget() {
                 zoom={10}
                 style={{ height: '100%', width: '100%' }}
                 scrollWheelZoom={false}
+                zoomControl={true}
               >
                 <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                 />
                 {locationsInRegion.map((location: any) => {
                   if (location.coordinates?.latitude && location.coordinates?.longitude) {
@@ -483,7 +485,7 @@ export default function BookingWidget() {
                       <Marker
                         key={location.id}
                         position={[location.coordinates.latitude, location.coordinates.longitude]}
-                        icon={orangeIcon}
+                        icon={blackIcon}
                       >
                         <Popup>
                           <strong>{location.name}</strong><br />
