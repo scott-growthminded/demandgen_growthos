@@ -10,7 +10,6 @@ import { ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import glowbarInterior from "@assets/stock_images/modern_beauty_salon__75bdc783.jpg";
 
 type BookingStep = 
   | 'customer-type'
@@ -278,8 +277,8 @@ export default function BookingWidget() {
 
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
             <img 
-              src={glowbarInterior} 
-              alt="Glowbar studio interior"
+              src="https://glowbar.com/cdn/shop/files/glowbar_estheticians_certified_985ba0ae-536e-48ac-832d-d86b6a70c1c6.jpg?v=1675461347&width=1500" 
+              alt="Glowbar certified estheticians"
               className="w-full h-full object-cover"
             />
           </div>
@@ -348,92 +347,74 @@ export default function BookingWidget() {
     );
   }
 
-  // Step 3: Location Selection
+  // Step 3: Location Selection (Studios in selected region)
   if (bookingState.step === 'location') {
-    const locationsByState: Record<string, Location[]> = {};
+    const locationsInRegion: Location[] = [];
     
-    if (locationsData) {
-      Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
-        Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
-          if (!locationsByState[state]) {
-            locationsByState[state] = [];
-          }
-          locationsByState[state].push(...(locations as Location[]));
+    if (locationsData && bookingState.selectedRegion) {
+      const stateData = (locationsData as Record<string, any>)[bookingState.selectedRegion];
+      if (stateData) {
+        Object.values(stateData as Record<string, any>).forEach((locations) => {
+          locationsInRegion.push(...(locations as Location[]));
         });
-      });
+      }
     }
 
     return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Select a Glowbar Location</h1>
-            <p className="text-gray-600" data-testid="text-subtitle">Choose your preferred studio</p>
-          </div>
+      <div className="min-h-screen bg-white flex items-center">
+        <div className="w-full max-w-6xl mx-auto px-6 py-8 grid grid-cols-2 gap-12">
+          <div className="flex flex-col justify-center">
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="mb-6 self-start"
+              data-testid="button-back"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
 
-          {locationsLoading ? (
-            <div className="text-center py-12" data-testid="text-loading">Loading locations...</div>
-          ) : (
-            <div className="space-y-4">
-              {Object.entries(locationsByState).map(([state, locations]) => (
-                <div key={state} className="border rounded-lg">
-                  <button
-                    onClick={() => setExpandedState(expandedState === state ? null : state)}
-                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                    data-testid={`accordion-state-${state}`}
-                  >
-                    <span className="text-xl font-semibold">{state}</span>
-                    {expandedState === state ? (
-                      <ChevronUp className="h-5 w-5" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5" />
-                    )}
-                  </button>
-                  {expandedState === state && (
-                    <div className="px-6 pb-6 space-y-4">
-                      {locations.map((location) => (
-                        <div
-                          key={location.id}
-                          className="flex items-center justify-between p-4 border rounded-lg hover:border-gray-400 transition-colors"
-                          data-testid={`card-location-${location.id}`}
-                        >
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg">{location.name}</h3>
-                            {location.address && (
-                              <p className="text-gray-600 text-sm">
-                                {location.address.line1 && `${location.address.line1}, `}
-                                {location.address.city}, {location.address.state}
-                              </p>
-                            )}
-                            <p className="text-gray-500 text-sm mt-1">0.5 mi</p>
-                          </div>
-                          <Button
-                            onClick={() => {
-                              setEsthetician('any');
-                              setBookingState(prev => ({
-                                ...prev,
-                                selectedLocation: {
-                                  id: location.id,
-                                  name: location.name,
-                                  city: location.address?.city || '',
-                                  state: location.address?.state || '',
-                                },
-                                step: 'auth'
-                              }));
-                            }}
-                            className="bg-black text-white hover:bg-gray-800 px-8"
-                            data-testid={`button-select-${location.id}`}
-                          >
-                            SELECT STUDIO
-                          </Button>
-                        </div>
-                      ))}
+            <h1 className="text-5xl font-bold mb-8" data-testid="text-title">Choose a studio</h1>
+            
+            <div className="space-y-3">
+              {locationsInRegion.map((location) => (
+                <button
+                  key={location.id}
+                  onClick={() => {
+                    setEsthetician('any');
+                    setBookingState(prev => ({
+                      ...prev,
+                      selectedLocation: {
+                        id: location.id,
+                        name: location.name,
+                        city: location.address?.city || '',
+                        state: location.address?.state || '',
+                      },
+                      step: 'datetime'
+                    }));
+                  }}
+                  className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
+                  data-testid={`button-location-${location.id}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">{location.name}</h3>
+                      <p className="text-gray-600 text-sm">
+                        {location.address?.line1}, {location.address?.city}, {location.address?.state}
+                      </p>
                     </div>
-                  )}
-                </div>
+                    <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
+                  </div>
+                </button>
               ))}
             </div>
-          )}
+          </div>
+
+          <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+              Map Placeholder
+            </div>
+          </div>
         </div>
       </div>
     );
