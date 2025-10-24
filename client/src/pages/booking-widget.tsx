@@ -747,27 +747,7 @@ export default function BookingWidget() {
 
             {/* Non-member service options */}
             {!isMember && (
-              <>
-                {/* GET THE MEMBERSHIP DEAL option */}
-                <Card className="border-[#FF6B35] border-2 hover:border-[#FF5520] transition-colors cursor-pointer" data-testid="card-membership-deal">
-                  <CardHeader>
-                    <CardTitle className="text-xl text-[#FF6B35]">
-                      GET THE MEMBERSHIP DEAL (SAVE $15)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Button
-                      onClick={() => setBookingState(prev => ({ ...prev, step: 'membership-purchase' }))}
-                      className="w-full bg-[#FF6B35] text-white hover:bg-[#FF5520]"
-                      data-testid="button-get-membership-deal"
-                    >
-                      Select
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Regular non-member treatment */}
-                <Card className="hover:border-gray-400 transition-colors cursor-pointer" data-testid="card-non-member-service">
+              <Card className="hover:border-gray-400 transition-colors cursor-pointer" data-testid="card-non-member-service">
                   <CardHeader>
                     <CardTitle className="text-xl">
                       {isNew ? '(Non-Member) First Time Treatment' : '(Non-Member) Returning Treatment'} <span className="text-gray-500 text-lg font-normal">30min</span>
@@ -796,7 +776,6 @@ export default function BookingWidget() {
                     </Button>
                   </CardContent>
                 </Card>
-              </>
             )}
           </div>
         </div>
