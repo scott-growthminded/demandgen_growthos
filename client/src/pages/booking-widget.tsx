@@ -57,6 +57,7 @@ interface Location {
 interface BookingState {
   step: BookingStep;
   customerType?: 'new' | 'returning';
+  isMember?: boolean;
   selectedRegion?: string;
   selectedLocation?: {
     id: string;
@@ -270,28 +271,42 @@ export default function BookingWidget() {
             
             <div className="space-y-4 mt-8">
               <button
-                onClick={() => setBookingState(prev => ({ ...prev, customerType: 'new', step: 'region' }))}
+                onClick={() => setBookingState(prev => ({ ...prev, customerType: 'returning', isMember: true, step: 'region' }))}
                 className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
-                data-testid="button-new-customer"
+                data-testid="button-member"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold mb-1">I'm new to Glowbar</h3>
-                    <p className="text-gray-600 text-sm">Schedule a complimentary consultation</p>
+                    <h3 className="text-lg font-semibold mb-1">I'm a Glowbar Member</h3>
+                    <p className="text-gray-600 text-sm">Book your member treatment</p>
                   </div>
                   <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
                 </div>
               </button>
 
               <button
-                onClick={() => setBookingState(prev => ({ ...prev, customerType: 'returning', step: 'region' }))}
+                onClick={() => setBookingState(prev => ({ ...prev, customerType: 'returning', isMember: false, step: 'region' }))}
                 className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
                 data-testid="button-returning-customer"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold mb-1">I'm returning to Glowbar</h3>
+                    <h3 className="text-lg font-semibold mb-1">I'm a Returning Customer</h3>
                     <p className="text-gray-600 text-sm">Welcome back! Schedule a return visit</p>
+                  </div>
+                  <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setBookingState(prev => ({ ...prev, customerType: 'new', isMember: false, step: 'region' }))}
+                className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
+                data-testid="button-new-customer"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">I'm New to Glowbar</h3>
+                    <p className="text-gray-600 text-sm">Schedule your first facial</p>
                   </div>
                   <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
                 </div>
