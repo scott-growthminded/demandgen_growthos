@@ -1,0 +1,23 @@
+0:00 Alright, so, going through the features that, uhm, Hetty showed as extra. need to make sure we have. Uh, first I'll go through this as a current member.
+0:16 So, uhm, we press book now and we want this like my account so that a client can access it. But right now I'm not logged in.
+0:26 So nothing, it would just bring you to the Boulevard page. So, if a member goes on to book an appointment and puts in their information, They're logging in, and it says your membership.
+0:52 It's doing this based off of the client tag, uhm, that we have set up. So, if you are an active member, we already have a webhook in place on Boulevard, that assigns a tag.
+1:06 So, because this membership is active, they don't see the option to purchase a membership. Because it wouldn't be applicable. And when they book a treatment, they're only seeing the treatment type that we've designated as for members.
+1:21 It doesn't show a price, because we want you to redeem with your voucher. Uh, you would press select, go through the whole process.
+1:29 Select a time, all that. Waitlist, you see it. Is, uh, morning, afternoon, and evening, and that's because that's how Boulevard allows you to join a waitlist.
+1:44 Boulevard doesn't really, as far as I know, have the ability to say, like, I want the- Nine-twenty appointment because every location, every business, all of that can have different increments of timing.
+1:57 Umm, then we know about nearby times. We know about esthetician requests. If I did select it. In esthetician, it will not show nearby times because it's not- checking if that person works elsewhere and that's by design.
+2:17 Then, if you were a- Okay. Non-member, it's a little bit different with an emphasis on upselling the membership. Oops. What's my, oop, that's why, uh, six.
+2:36 Thanks. There we go. What, uh, Oh my god, what's the number? There Hold on. Ehh, teh teh teh teh, ew.
+2:58 Move. I think it's There we go.
+3:11 So, let me wait for this text to come in. And, this account that I have set up does not have a member.
+3:25 first. So, we've hard coded this to say, get the membership deal. Full of art usually says, like, purchase a membership.
+3:32 But we wanted to emphasize that you're. . . So, if you click that, it's purchasing a certain membership type that we have tagged for online.
+3:40 line. Uh, you would press select, put to the in your cart, you purchased the membership. We also need to make sure that we're having this membership agreement.
+3:49 Uhm, this might be in BookSmart, I don't know. But what's happening here is, when you check this off, it's, ,then feeding to the boulevard profile, saying that this person agreed to terms and conditions, which was important to us.
+4:05 We could talk about, that more later. Uhm, the other part of member versus non-member that head is, talking about is, if you didn't do become a member, and you select a location, we have this banner of sign of f- the membership today.
+4:23 And if I click this, it brings me to purchase a membership for that location. If I click here, it brings me to purchase a membership.
+4:29 So. It's just really showing, like, hey, become a member, become a member, and you could be saving. Lastly, um, right now, this isn't.
+4:38 Non-member returning treatment. If the account doesn't have an appointment history, it would show non-member first-time treatment. Um, because we have different service types.
+4:48 So, that's the non-member versus member experience and the first time. I'm verse returning. And I think that's everything that heady is.
+5:01 You
