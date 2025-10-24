@@ -129,6 +129,13 @@ export default function BookingWidget() {
   // Membership purchase state
   const [membershipInCart, setMembershipInCart] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
+  
+  // Auth/Sign-up state
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [authPhone, setAuthPhone] = useState('');
+  const [emailOptIn, setEmailOptIn] = useState(true);
 
   // Fetch locations
   const { data: locationsData, isLoading: locationsLoading } = useQuery({
@@ -728,7 +735,7 @@ export default function BookingWidget() {
                 </CardHeader>
                 <CardContent>
                   <Button
-                    onClick={() => setBookingState(prev => ({ ...prev, step: 'questionnaire' }))}
+                    onClick={() => setBookingState(prev => ({ ...prev, step: 'auth' }))}
                     className="w-full bg-black text-white hover:bg-gray-800"
                     data-testid="button-select-member-service"
                   >
@@ -781,7 +788,7 @@ export default function BookingWidget() {
                   </CardHeader>
                   <CardContent>
                     <Button
-                      onClick={() => setBookingState(prev => ({ ...prev, step: 'questionnaire' }))}
+                      onClick={() => setBookingState(prev => ({ ...prev, step: 'auth' }))}
                       className="w-full bg-black text-white hover:bg-gray-800"
                       data-testid="button-select-non-member-service"
                     >
@@ -958,8 +965,10 @@ export default function BookingWidget() {
     );
   }
 
-  // Step 6: Mock Authentication
+  // Step 6: Authentication / Sign Up
   if (bookingState.step === 'auth') {
+    const isNewCustomer = bookingState.customerType === 'new';
+
     return (
       <div className="min-h-screen bg-white">
         <div className="max-w-2xl mx-auto px-6 py-8">
@@ -974,48 +983,151 @@ export default function BookingWidget() {
           </Button>
 
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Login or Create Account</h1>
+            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">
+              {isNewCustomer ? 'Create an Account' : 'Login'}
+            </h1>
             <p className="text-gray-600" data-testid="text-subtitle">
-              Enter your phone number to continue
+              {isNewCustomer ? 'Enter your information to get started' : 'Enter your phone number to continue'}
             </p>
           </div>
 
           <Card>
             <CardContent className="p-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="(555) 123-4567"
-                    value={bookingState.userPhone || ''}
-                    onChange={(e) => setBookingState(prev => ({ ...prev, userPhone: e.target.value }))}
-                    data-testid="input-phone"
-                  />
+              {isNewCustomer ? (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold mb-4">Basic Info</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input
+                          id="firstName"
+                          type="text"
+                          placeholder="First Name"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          data-testid="input-first-name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          type="text"
+                          placeholder="Last Name"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          data-testid="input-last-name"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-4">Contact Info</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="Email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          data-testid="input-email"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone">Phone</Label>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          placeholder="646-374-9666"
+                          value={authPhone}
+                          onChange={(e) => setAuthPhone(e.target.value)}
+                          data-testid="input-phone"
+                        />
+                      </div>
+
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          id="email-opt-in"
+                          checked={emailOptIn}
+                          onCheckedChange={(checked) => setEmailOptIn(checked as boolean)}
+                          data-testid="checkbox-email-opt-in"
+                        />
+                        <div className="flex-1">
+                          <label
+                            htmlFor="email-opt-in"
+                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            By sharing your email address you're signing up to receive news and special offers from Glowbar. You may unsubscribe at any time (but we hope you won't).
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={() => {
+                      if (!firstName || !lastName || !email || !authPhone) {
+                        toast({
+                          title: "All Fields Required",
+                          description: "Please fill in all fields to continue",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      setBookingState(prev => ({ 
+                        ...prev, 
+                        userName: `${firstName} ${lastName}`,
+                        userPhone: authPhone,
+                        userEmail: email,
+                        step: 'datetime' 
+                      }));
+                    }}
+                    className="w-full bg-black text-white hover:bg-gray-800"
+                    data-testid="button-continue"
+                  >
+                    CONTINUE
+                  </Button>
                 </div>
-                <Button
-                  onClick={() => {
-                    if (!bookingState.userPhone) {
-                      toast({
-                        title: "Phone Required",
-                        description: "Please enter your phone number",
-                        variant: "destructive"
-                      });
-                      return;
-                    }
-                    setBookingState(prev => ({ 
-                      ...prev, 
-                      userName: 'Guest',
-                      step: 'datetime' 
-                    }));
-                  }}
-                  className="w-full bg-black text-white hover:bg-gray-800"
-                  data-testid="button-continue"
-                >
-                  CONTINUE
-                </Button>
-              </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="(555) 123-4567"
+                      value={bookingState.userPhone || ''}
+                      onChange={(e) => setBookingState(prev => ({ ...prev, userPhone: e.target.value }))}
+                      data-testid="input-phone"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => {
+                      if (!bookingState.userPhone) {
+                        toast({
+                          title: "Phone Required",
+                          description: "Please enter your phone number",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      setBookingState(prev => ({ 
+                        ...prev, 
+                        userName: 'Guest',
+                        step: 'datetime' 
+                      }));
+                    }}
+                    className="w-full bg-black text-white hover:bg-gray-800"
+                    data-testid="button-continue"
+                  >
+                    CONTINUE
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
