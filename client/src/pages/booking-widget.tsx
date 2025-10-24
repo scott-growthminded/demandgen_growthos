@@ -125,6 +125,10 @@ export default function BookingWidget() {
   // Checkout state
   const [promoCode, setPromoCode] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
+  
+  // Membership purchase state
+  const [membershipInCart, setMembershipInCart] = useState(false);
+  const [agreementChecked, setAgreementChecked] = useState(false);
 
   // Fetch locations
   const { data: locationsData, isLoading: locationsLoading } = useQuery({
@@ -771,9 +775,6 @@ export default function BookingWidget() {
 
   // Step 5: Membership Purchase
   if (bookingState.step === 'membership-purchase') {
-    const [membershipInCart, setMembershipInCart] = useState(false);
-    const [agreementChecked, setAgreementChecked] = useState(false);
-    
     return (
       <div className="min-h-screen bg-white">
         <div className="max-w-2xl mx-auto px-6 py-8">
