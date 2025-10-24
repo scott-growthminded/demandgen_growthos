@@ -39,6 +39,8 @@ type BookingStep =
   | 'customer-type'
   | 'region'
   | 'location'
+  | 'service'
+  | 'membership-purchase'
   | 'datetime'
   | 'auth'
   | 'questionnaire'
@@ -254,7 +256,7 @@ export default function BookingWidget() {
   }, [bookingState.step, selectedDate, availabilityData, availabilityLoading]);
 
   const handleBack = () => {
-    const stepOrder: BookingStep[] = ['customer-type', 'region', 'location', 'datetime', 'auth', 'questionnaire', 'checkout'];
+    const stepOrder: BookingStep[] = ['customer-type', 'region', 'location', 'service', 'datetime', 'auth', 'questionnaire', 'checkout'];
     const currentIndex = stepOrder.indexOf(bookingState.step);
     if (currentIndex > 0) {
       setBookingState(prev => ({ ...prev, step: stepOrder[currentIndex - 1] }));
@@ -505,7 +507,7 @@ export default function BookingWidget() {
                         city: location.address?.city || '',
                         state: location.address?.state || '',
                       },
-                      step: 'datetime'
+                      step: 'service'
                     }));
                   }}
                   className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
@@ -578,7 +580,7 @@ export default function BookingWidget() {
                                     city: location.address?.city || '',
                                     state: location.address?.state || '',
                                   },
-                                  step: 'datetime'
+                                  step: 'service'
                                 }));
                               }}
                               style={{
@@ -620,7 +622,318 @@ export default function BookingWidget() {
     );
   }
 
-  // Step 2: Mock Authentication
+  // Step 4: Service Selection
+  if (bookingState.step === 'service') {
+    const isMember = bookingState.isMember === true;
+    const isNew = bookingState.customerType === 'new';
+    
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="max-w-2xl mx-auto px-6 py-8">
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            className="mb-6"
+            data-testid="button-back"
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">
+              {isMember ? 'Welcome Back!' : 'Book a Treatment'}
+            </h1>
+            {isMember && (
+              <p className="text-[#FF6B35] font-semibold" data-testid="text-member-status">
+                Your membership is Active
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            {/* Non-member upsell banner */}
+            {!isMember && (
+              <div 
+                className="relative rounded-lg overflow-hidden mb-6"
+                style={{
+                  backgroundImage: 'url(https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=800)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  height: '200px'
+                }}
+              >
+                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white p-6">
+                  <p className="text-xl font-semibold mb-4 text-center">
+                    Sign up for the Glowbar Membership today and save $15/month
+                  </p>
+                  <button
+                    onClick={() => setBookingState(prev => ({ ...prev, step: 'membership-purchase' }))}
+                    className="px-8 py-3 bg-[#FF6B35] hover:bg-[#FF5520] rounded-lg font-semibold transition-colors"
+                    data-testid="button-become-member-banner"
+                  >
+                    Become a member
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Member service option */}
+            {isMember && (
+              <Card className="hover:border-gray-400 transition-colors cursor-pointer" data-testid="card-member-service">
+                <CardHeader>
+                  <CardTitle className="text-xl">
+                    {isNew ? '(Member) First Time Treatment' : '(Member) First Time & Returning Treatment'} <span className="text-gray-500 text-lg font-normal">30min</span>
+                  </CardTitle>
+                  <CardDescription className="text-base mt-2">
+                    {isNew 
+                      ? "If you have purchased a membership online or in-studio, book this treatment."
+                      : "If you have purchased a membership online or in-studio, book this treatment."
+                    }
+                  </CardDescription>
+                  <p className="text-sm text-gray-600 mt-2 italic">
+                    Please note, your card will *not* be charged now and your monthly voucher will be applied to your appointment upon checkout. We can't wait to see your face.
+                  </p>
+                  <p className="text-[#FF6B35] font-semibold mt-3">
+                    Redeem with your voucher
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => setBookingState(prev => ({ ...prev, step: 'questionnaire' }))}
+                    className="w-full bg-black text-white hover:bg-gray-800"
+                    data-testid="button-select-member-service"
+                  >
+                    Select
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Non-member service options */}
+            {!isMember && (
+              <>
+                {/* GET THE MEMBERSHIP DEAL option */}
+                <Card className="border-[#FF6B35] border-2 hover:border-[#FF5520] transition-colors cursor-pointer" data-testid="card-membership-deal">
+                  <CardHeader>
+                    <CardTitle className="text-xl text-[#FF6B35]">
+                      GET THE MEMBERSHIP DEAL (SAVE $15)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      onClick={() => setBookingState(prev => ({ ...prev, step: 'membership-purchase' }))}
+                      className="w-full bg-[#FF6B35] text-white hover:bg-[#FF5520]"
+                      data-testid="button-get-membership-deal"
+                    >
+                      Select
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Regular non-member treatment */}
+                <Card className="hover:border-gray-400 transition-colors cursor-pointer" data-testid="card-non-member-service">
+                  <CardHeader>
+                    <CardTitle className="text-xl">
+                      {isNew ? '(Non-Member) First Time Treatment' : '(Non-Member) Returning Treatment'} <span className="text-gray-500 text-lg font-normal">30min</span>
+                    </CardTitle>
+                    <CardDescription className="text-base mt-2">
+                      {isNew
+                        ? "If you've never been to Glowbar before and don't have a membership, book this treatment."
+                        : "If you've been to Glowbar before and don't have a membership, book this treatment."
+                      }
+                    </CardDescription>
+                    <p className="text-sm text-gray-600 mt-2 italic">
+                      Please note, your card will *not* be charged now; it will be charged after your appointment at checkout. We can't wait to see your face.
+                    </p>
+                    <div className="mt-4">
+                      <p className="text-2xl font-bold">$80.00</p>
+                      <p className="text-sm text-[#FF6B35]">Members pay $65 - become a member and save $15</p>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Button
+                      onClick={() => setBookingState(prev => ({ ...prev, step: 'questionnaire' }))}
+                      className="w-full bg-black text-white hover:bg-gray-800"
+                      data-testid="button-select-non-member-service"
+                    >
+                      Select
+                    </Button>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 5: Membership Purchase
+  if (bookingState.step === 'membership-purchase') {
+    const [membershipInCart, setMembershipInCart] = useState(false);
+    const [agreementChecked, setAgreementChecked] = useState(false);
+    
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="max-w-2xl mx-auto px-6 py-8">
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            className="mb-6"
+            data-testid="button-back"
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+
+          {!membershipInCart ? (
+            <>
+              <div className="mb-8">
+                <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Purchase a Membership</h1>
+              </div>
+
+              <Card className="hover:border-gray-400 transition-colors" data-testid="card-membership-details">
+                <CardHeader>
+                  <CardTitle className="text-xl">
+                    Online Purchase - Glowbar Membership
+                  </CardTitle>
+                  <CardDescription className="text-base mt-4 space-y-2">
+                    <p>- 1 facial voucher per month, valid for 3 months</p>
+                    <p>- Additional facials at member price</p>
+                    <p>- 1 free guest pass per membership year</p>
+                    <p>- 15% off skincare (20% off at your first facial)</p>
+                  </CardDescription>
+                  <p className="text-sm text-gray-600 mt-4">
+                    Becoming a Glowbar member requires a four month minimum commitment. Memberships may be cancelled with 30 days notice. Memberships become active the day of purchase. Please note, gift cards are not applicable towards membership payments.
+                  </p>
+                  <p className="text-sm text-gray-600 mt-3">
+                    After purchasing your membership, please separately book a "(Member) First Time & Returning Treatment" appointment.
+                  </p>
+                  <p className="text-2xl font-bold mt-6">$65.00</p>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => setMembershipInCart(true)}
+                    className="w-full bg-black text-white hover:bg-gray-800"
+                    data-testid="button-add-membership-to-cart"
+                  >
+                    Select
+                  </Button>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <>
+              <div className="mb-8">
+                <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Before You Glow</h1>
+              </div>
+
+              <Card className="mb-6">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">Online Purchase - Glowbar Membership</CardTitle>
+                      <p className="text-2xl font-bold mt-2">$65.00</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => setMembershipInCart(false)}
+                      data-testid="button-remove-membership"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </CardHeader>
+              </Card>
+
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold mb-4">Order total: $69.13</h2>
+                <p className="text-sm text-gray-600 mb-4">Tax: $4.13</p>
+              </div>
+
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Payment Info</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600">Saved payment methods can only be deleted by a Glowbar staff member. Please call or visit a Glowbar location for assistance. Expired payment methods will automatically be removed.</p>
+                  <Button variant="outline" className="mt-4" data-testid="button-add-payment">
+                    ADD NEW PAYMENT METHOD
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Communication</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600">
+                    By purchasing this membership, you agree to receive texts and emails with account updates, news, and special offers. Texts will be sent via auto-SMS. Consent is optional. You can unsubscribe from an email anytime by clicking unsubscribe, and opt out of marketing texts anytime by replying NO PROMOS or all text communication by replying STOP. Text HELP for more info. Message frequency may vary. SMS and data rates may apply.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Membership Agreement</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      id="membership-agreement"
+                      checked={agreementChecked}
+                      onCheckedChange={(checked) => setAgreementChecked(checked as boolean)}
+                      data-testid="checkbox-membership-agreement"
+                    />
+                    <div className="flex-1">
+                      <label
+                        htmlFor="membership-agreement"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        By purchasing a membership, you agree to the <a href="#" className="text-[#FF6B35] underline">Glowbar Membership Terms & Conditions</a>
+                      </label>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Button
+                onClick={() => {
+                  if (!agreementChecked) {
+                    toast({
+                      title: "Agreement Required",
+                      description: "Please agree to the membership terms and conditions",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  toast({
+                    title: "Membership Purchased!",
+                    description: "You are now a Glowbar member. Please book your member treatment.",
+                  });
+                  // Update member status and go back to service selection
+                  setBookingState(prev => ({ 
+                    ...prev, 
+                    isMember: true,
+                    step: 'service'
+                  }));
+                }}
+                disabled={!agreementChecked}
+                className="w-full bg-black text-white hover:bg-gray-800"
+                data-testid="button-complete-membership-purchase"
+              >
+                COMPLETE PURCHASE
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Step 6: Mock Authentication
   if (bookingState.step === 'auth') {
     return (
       <div className="min-h-screen bg-white">
