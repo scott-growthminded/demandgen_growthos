@@ -67,6 +67,7 @@ interface BookingState {
     city: string;
     state: string;
   };
+  userName?: string;
   userFirstName?: string;
   userLastName?: string;
   userEmail?: string;
@@ -282,13 +283,13 @@ export default function BookingWidget() {
         setBookingState(prev => ({ ...prev, step: 'service' }));
         break;
       case 'datetime':
-        setBookingState(prev => ({ ...prev, step: 'auth' }));
+        setBookingState(prev => ({ ...prev, step: 'service' }));
         break;
       case 'auth':
-        setBookingState(prev => ({ ...prev, step: 'service' }));
+        setBookingState(prev => ({ ...prev, step: 'location' }));
         break;
       case 'questionnaire':
-        setBookingState(prev => ({ ...prev, step: 'service' }));
+        setBookingState(prev => ({ ...prev, step: 'datetime' }));
         break;
       case 'checkout':
         setBookingState(prev => ({ ...prev, step: 'questionnaire' }));
@@ -465,7 +466,7 @@ export default function BookingWidget() {
                                   state: location.address?.state || '',
                                 },
                                 selectedRegion: location.address?.state || prev.selectedRegion,
-                                step: 'datetime'
+                                step: 'auth'
                               }));
                             }}
                             style={{
@@ -542,7 +543,7 @@ export default function BookingWidget() {
                         city: location.address?.city || '',
                         state: location.address?.state || '',
                       },
-                      step: 'service'
+                      step: 'auth'
                     }));
                   }}
                   className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
@@ -615,7 +616,7 @@ export default function BookingWidget() {
                                     city: location.address?.city || '',
                                     state: location.address?.state || '',
                                   },
-                                  step: 'service'
+                                  step: 'auth'
                                 }));
                               }}
                               style={{
@@ -677,7 +678,7 @@ export default function BookingWidget() {
 
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2" data-testid="text-title">
-              {isMember ? 'Welcome Back!' : 'Book a Treatment'}
+              {isMember ? `Welcome back${bookingState.userName ? ' ' + bookingState.userName.split(' ')[0] : ''}!` : 'Book a Treatment'}
             </h1>
             {isMember && (
               <p className="text-[#FF6B35] font-semibold" data-testid="text-member-status">
@@ -718,13 +719,10 @@ export default function BookingWidget() {
               <Card className="hover:border-gray-400 transition-colors cursor-pointer" data-testid="card-member-service">
                 <CardHeader>
                   <CardTitle className="text-xl">
-                    {isNew ? '(Member) First Time Treatment' : '(Member) First Time & Returning Treatment'} <span className="text-gray-500 text-lg font-normal">30min</span>
+                    Member Treatment <span className="text-gray-500 text-lg font-normal">30min</span>
                   </CardTitle>
                   <CardDescription className="text-base mt-2">
-                    {isNew 
-                      ? "If you have purchased a membership online or in-studio, book this treatment."
-                      : "If you have purchased a membership online or in-studio, book this treatment."
-                    }
+                    If you have purchased a membership online or in-studio, book this treatment.
                   </CardDescription>
                   <p className="text-sm text-gray-600 mt-2 italic">
                     Please note, your card will *not* be charged now and your monthly voucher will be applied to your appointment upon checkout. We can't wait to see your face.
@@ -735,7 +733,7 @@ export default function BookingWidget() {
                 </CardHeader>
                 <CardContent>
                   <Button
-                    onClick={() => setBookingState(prev => ({ ...prev, step: 'auth' }))}
+                    onClick={() => setBookingState(prev => ({ ...prev, step: 'datetime' }))}
                     className="w-full bg-black text-white hover:bg-gray-800"
                     data-testid="button-select-member-service"
                   >
@@ -768,7 +766,7 @@ export default function BookingWidget() {
                   </CardHeader>
                   <CardContent>
                     <Button
-                      onClick={() => setBookingState(prev => ({ ...prev, step: 'auth' }))}
+                      onClick={() => setBookingState(prev => ({ ...prev, step: 'datetime' }))}
                       className="w-full bg-black text-white hover:bg-gray-800"
                       data-testid="button-select-non-member-service"
                     >
@@ -928,7 +926,7 @@ export default function BookingWidget() {
                   setBookingState(prev => ({ 
                     ...prev, 
                     isMember: true,
-                    step: 'service'
+                    step: 'region'
                   }));
                 }}
                 disabled={!agreementChecked}
@@ -1062,7 +1060,7 @@ export default function BookingWidget() {
                         userName: `${firstName} ${lastName}`,
                         userPhone: authPhone,
                         userEmail: email,
-                        step: 'datetime' 
+                        step: 'service' 
                       }));
                     }}
                     className="w-full bg-black text-white hover:bg-gray-800"
@@ -1097,7 +1095,7 @@ export default function BookingWidget() {
                       setBookingState(prev => ({ 
                         ...prev, 
                         userName: 'Guest',
-                        step: 'datetime' 
+                        step: 'service' 
                       }));
                     }}
                     className="w-full bg-black text-white hover:bg-gray-800"
