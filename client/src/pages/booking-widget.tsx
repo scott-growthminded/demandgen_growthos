@@ -1224,7 +1224,7 @@ export default function BookingWidget() {
                 </Label>
                 <Select value={esthetician} onValueChange={setEsthetician}>
                   <SelectTrigger className="w-full" data-testid="select-esthetician">
-                    <SelectValue />
+                    <SelectValue placeholder="Select esthetician preference" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="any">Any Esthetician</SelectItem>
@@ -1272,142 +1272,136 @@ export default function BookingWidget() {
                   </Label>
                   
                   {/* Morning Slots */}
-                  {morningSlots.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Morning (before 12pm)</h3>
-                      {morningSlots.some(slot => slot.available) ? (
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                          {morningSlots.map((slot) => (
-                            <button
-                              key={slot.value}
-                              onClick={() => {
-                                if (slot.available) {
-                                  setSelectedTimeSlot(slot.value);
-                                  setSelectedNearbyLocation(null);
-                                }
-                              }}
-                              disabled={!slot.available}
-                              className={`p-3 border rounded-lg text-center transition-colors ${
-                                selectedTimeSlot === slot.value
-                                  ? 'bg-orange-500 text-white border-orange-500'
-                                  : slot.available
-                                  ? 'hover:border-orange-500'
-                                  : 'opacity-40 cursor-not-allowed'
-                              }`}
-                              data-testid={`button-time-${slot.value}`}
-                            >
-                              {slot.display}
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            toast({
-                              title: "Added to Waitlist",
-                              description: `You've been added to the morning waitlist for ${format(selectedDate!, 'MMM d, yyyy')}`,
-                            });
-                          }}
-                          className="w-full p-4 border-2 border-[#FF6B35] text-[#FF6B35] rounded-lg font-semibold hover:bg-[#FF6B35] hover:text-white transition-colors"
-                          data-testid="button-waitlist-morning"
-                        >
-                          Join Morning Waitlist
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Morning (before 12pm)</h3>
+                    {morningSlots.length > 0 && morningSlots.some(slot => slot.available) ? (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {morningSlots.map((slot) => (
+                          <button
+                            key={slot.value}
+                            onClick={() => {
+                              if (slot.available) {
+                                setSelectedTimeSlot(slot.value);
+                                setSelectedNearbyLocation(null);
+                              }
+                            }}
+                            disabled={!slot.available}
+                            className={`p-3 border rounded-lg text-center transition-colors ${
+                              selectedTimeSlot === slot.value
+                                ? 'bg-orange-500 text-white border-orange-500'
+                                : slot.available
+                                ? 'hover:border-orange-500'
+                                : 'opacity-40 cursor-not-allowed'
+                            }`}
+                            data-testid={`button-time-${slot.value}`}
+                          >
+                            {slot.display}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          toast({
+                            title: "Added to Waitlist",
+                            description: `You've been added to the morning waitlist for ${format(selectedDate!, 'MMM d, yyyy')}`,
+                          });
+                        }}
+                        className="w-full p-4 border-2 border-[#FF6B35] text-[#FF6B35] rounded-lg font-semibold hover:bg-[#FF6B35] hover:text-white transition-colors"
+                        data-testid="button-waitlist-morning"
+                      >
+                        Join Morning Waitlist
+                      </button>
+                    )}
+                  </div>
                   
                   {/* Afternoon Slots */}
-                  {afternoonSlots.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Afternoon (12pm - 5pm)</h3>
-                      {afternoonSlots.some(slot => slot.available) ? (
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                          {afternoonSlots.map((slot) => (
-                            <button
-                              key={slot.value}
-                              onClick={() => {
-                                if (slot.available) {
-                                  setSelectedTimeSlot(slot.value);
-                                  setSelectedNearbyLocation(null);
-                                }
-                              }}
-                              disabled={!slot.available}
-                              className={`p-3 border rounded-lg text-center transition-colors ${
-                                selectedTimeSlot === slot.value
-                                  ? 'bg-orange-500 text-white border-orange-500'
-                                  : slot.available
-                                  ? 'hover:border-orange-500'
-                                  : 'opacity-40 cursor-not-allowed'
-                              }`}
-                              data-testid={`button-time-${slot.value}`}
-                            >
-                              {slot.display}
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            toast({
-                              title: "Added to Waitlist",
-                              description: `You've been added to the afternoon waitlist for ${format(selectedDate!, 'MMM d, yyyy')}`,
-                            });
-                          }}
-                          className="w-full p-4 border-2 border-[#FF6B35] text-[#FF6B35] rounded-lg font-semibold hover:bg-[#FF6B35] hover:text-white transition-colors"
-                          data-testid="button-waitlist-afternoon"
-                        >
-                          Join Afternoon Waitlist
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Afternoon (12pm - 5pm)</h3>
+                    {afternoonSlots.length > 0 && afternoonSlots.some(slot => slot.available) ? (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {afternoonSlots.map((slot) => (
+                          <button
+                            key={slot.value}
+                            onClick={() => {
+                              if (slot.available) {
+                                setSelectedTimeSlot(slot.value);
+                                setSelectedNearbyLocation(null);
+                              }
+                            }}
+                            disabled={!slot.available}
+                            className={`p-3 border rounded-lg text-center transition-colors ${
+                              selectedTimeSlot === slot.value
+                                ? 'bg-orange-500 text-white border-orange-500'
+                                : slot.available
+                                ? 'hover:border-orange-500'
+                                : 'opacity-40 cursor-not-allowed'
+                            }`}
+                            data-testid={`button-time-${slot.value}`}
+                          >
+                            {slot.display}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          toast({
+                            title: "Added to Waitlist",
+                            description: `You've been added to the afternoon waitlist for ${format(selectedDate!, 'MMM d, yyyy')}`,
+                          });
+                        }}
+                        className="w-full p-4 border-2 border-[#FF6B35] text-[#FF6B35] rounded-lg font-semibold hover:bg-[#FF6B35] hover:text-white transition-colors"
+                        data-testid="button-waitlist-afternoon"
+                      >
+                        Join Afternoon Waitlist
+                      </button>
+                    )}
+                  </div>
                   
                   {/* Evening Slots */}
-                  {eveningSlots.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Evening (after 5pm)</h3>
-                      {eveningSlots.some(slot => slot.available) ? (
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                          {eveningSlots.map((slot) => (
-                            <button
-                              key={slot.value}
-                              onClick={() => {
-                                if (slot.available) {
-                                  setSelectedTimeSlot(slot.value);
-                                  setSelectedNearbyLocation(null);
-                                }
-                              }}
-                              disabled={!slot.available}
-                              className={`p-3 border rounded-lg text-center transition-colors ${
-                                selectedTimeSlot === slot.value
-                                  ? 'bg-orange-500 text-white border-orange-500'
-                                  : slot.available
-                                  ? 'hover:border-orange-500'
-                                  : 'opacity-40 cursor-not-allowed'
-                              }`}
-                              data-testid={`button-time-${slot.value}`}
-                            >
-                              {slot.display}
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            toast({
-                              title: "Added to Waitlist",
-                              description: `You've been added to the evening waitlist for ${format(selectedDate!, 'MMM d, yyyy')}`,
-                            });
-                          }}
-                          className="w-full p-4 border-2 border-[#FF6B35] text-[#FF6B35] rounded-lg font-semibold hover:bg-[#FF6B35] hover:text-white transition-colors"
-                          data-testid="button-waitlist-evening"
-                        >
-                          Join Evening Waitlist
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Evening (after 5pm)</h3>
+                    {eveningSlots.length > 0 && eveningSlots.some(slot => slot.available) ? (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {eveningSlots.map((slot) => (
+                          <button
+                            key={slot.value}
+                            onClick={() => {
+                              if (slot.available) {
+                                setSelectedTimeSlot(slot.value);
+                                setSelectedNearbyLocation(null);
+                              }
+                            }}
+                            disabled={!slot.available}
+                            className={`p-3 border rounded-lg text-center transition-colors ${
+                              selectedTimeSlot === slot.value
+                                ? 'bg-orange-500 text-white border-orange-500'
+                                : slot.available
+                                ? 'hover:border-orange-500'
+                                : 'opacity-40 cursor-not-allowed'
+                            }`}
+                            data-testid={`button-time-${slot.value}`}
+                          >
+                            {slot.display}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          toast({
+                            title: "Added to Waitlist",
+                            description: `You've been added to the evening waitlist for ${format(selectedDate!, 'MMM d, yyyy')}`,
+                          });
+                        }}
+                        className="w-full p-4 border-2 border-[#FF6B35] text-[#FF6B35] rounded-lg font-semibold hover:bg-[#FF6B35] hover:text-white transition-colors"
+                        data-testid="button-waitlist-evening"
+                      >
+                        Join Evening Waitlist
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
 
