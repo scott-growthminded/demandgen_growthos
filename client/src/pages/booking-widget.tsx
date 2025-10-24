@@ -260,10 +260,34 @@ export default function BookingWidget() {
   }, [bookingState.step, selectedDate, availabilityData, availabilityLoading]);
 
   const handleBack = () => {
-    const stepOrder: BookingStep[] = ['customer-type', 'region', 'location', 'service', 'datetime', 'auth', 'questionnaire', 'checkout'];
-    const currentIndex = stepOrder.indexOf(bookingState.step);
-    if (currentIndex > 0) {
-      setBookingState(prev => ({ ...prev, step: stepOrder[currentIndex - 1] }));
+    // Handle back navigation based on current step and booking state
+    switch (bookingState.step) {
+      case 'region':
+        setBookingState(prev => ({ ...prev, step: 'customer-type' }));
+        break;
+      case 'location':
+        setBookingState(prev => ({ ...prev, step: 'region' }));
+        break;
+      case 'service':
+        setBookingState(prev => ({ ...prev, step: 'location' }));
+        break;
+      case 'membership-purchase':
+        setBookingState(prev => ({ ...prev, step: 'service' }));
+        break;
+      case 'datetime':
+        setBookingState(prev => ({ ...prev, step: 'auth' }));
+        break;
+      case 'auth':
+        setBookingState(prev => ({ ...prev, step: 'service' }));
+        break;
+      case 'questionnaire':
+        setBookingState(prev => ({ ...prev, step: 'service' }));
+        break;
+      case 'checkout':
+        setBookingState(prev => ({ ...prev, step: 'questionnaire' }));
+        break;
+      default:
+        break;
     }
   };
 
