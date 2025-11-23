@@ -514,102 +514,6 @@ export default function BookingWidget() {
               {allLocations.length > 0 && allLocations.slice(0, 10).map((location: any, index: number) => (
                 <button
                   key={location.id || index}
-                      position={[lat, lng]}
-                      icon={blackIcon}
-                    >
-                      <Popup
-                        closeButton={true}
-                        className="custom-popup"
-                      >
-                        <div style={{ padding: '8px 4px', minWidth: '200px' }}>
-                          <h3 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 16px 0' }}>
-                            {location.name}
-                          </h3>
-                          <p style={{ margin: '0 0 4px 0', color: '#333', fontSize: '14px' }}>
-                            {location.address?.line1}
-                          </p>
-                          <p style={{ margin: '0 0 20px 0', color: '#333', fontSize: '14px' }}>
-                            {location.address?.city}, {location.address?.state} {location.address?.zip || ''}
-                          </p>
-                          <button
-                            onClick={() => {
-                              setEsthetician('any');
-                              setBookingState(prev => ({
-                                ...prev,
-                                selectedLocation: {
-                                  id: location.id,
-                                  name: location.name,
-                                  city: location.address?.city || '',
-                                  state: location.address?.state || '',
-                                },
-                                selectedRegion: location.address?.state || prev.selectedRegion,
-                                step: 'auth'
-                              }));
-                            }}
-                            style={{
-                              width: '100%',
-                              padding: '14px',
-                              backgroundColor: '#000',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: '8px',
-                              fontSize: '16px',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                              transition: 'background-color 0.2s'
-                            }}
-                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
-                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#000'}
-                          >
-                            Select
-                          </button>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  );
-                }
-                return null;
-              })}
-            </MapContainer>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Step 3: Location Selection (Studios in selected region)
-  if (bookingState.step === 'location') {
-    const locationsInRegion: any[] = [];
-    
-    if (locationsData && bookingState.selectedRegion) {
-      const stateData = (locationsData as Record<string, any>)[bookingState.selectedRegion];
-      if (stateData) {
-        Object.values(stateData as Record<string, any>).forEach((locations) => {
-          locationsInRegion.push(...(locations as any[]));
-        });
-      }
-    }
-
-    return (
-      <div className="min-h-screen bg-white flex items-center">
-        <div className="w-full max-w-6xl mx-auto px-6 py-8 grid grid-cols-2 gap-12">
-          <div className="flex flex-col justify-center">
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              className="mb-6 self-start"
-              data-testid="button-back"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-
-            <h1 className="text-5xl font-bold mb-8" data-testid="text-title">Choose a studio</h1>
-            
-            <div className="space-y-3">
-              {locationsInRegion.map((location) => (
-                <button
-                  key={location.id}
                   onClick={() => {
                     setEsthetician('any');
                     setBookingState(prev => ({
@@ -620,7 +524,7 @@ export default function BookingWidget() {
                         city: location.address?.city || '',
                         state: location.address?.state || '',
                       },
-                      step: 'auth'
+                      step: 'datetime'
                     }));
                   }}
                   className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
@@ -641,12 +545,12 @@ export default function BookingWidget() {
           </div>
 
           <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
-            {locationsInRegion.length > 0 && locationsInRegion[0].coordinates ? (
+            {allLocations.length > 0 && allLocations[0].coordinates ? (
               <MapContainer
                 key="location-map"
                 center={[
-                  locationsInRegion.reduce((sum, loc) => sum + ((loc.coordinates?.lat || loc.coordinates?.latitude) || 0), 0) / locationsInRegion.length,
-                  locationsInRegion.reduce((sum, loc) => sum + ((loc.coordinates?.lng || loc.coordinates?.longitude) || 0), 0) / locationsInRegion.length
+                  allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lat || loc.coordinates?.latitude) || 0), 0) / allLocations.length,
+                  allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lng || loc.coordinates?.longitude) || 0), 0) / allLocations.length
                 ]}
                 zoom={10}
                 style={{ height: '100%', width: '100%' }}
@@ -657,7 +561,7 @@ export default function BookingWidget() {
                   attribution='&copy; <a href="https://carto.com/">CARTO</a>'
                   url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                 />
-                {locationsInRegion.map((location: any, index: number) => {
+                {allLocations.slice(0, 10).map((location: any, index: number) => {
                   const lat = location.coordinates?.lat || location.coordinates?.latitude;
                   const lng = location.coordinates?.lng || location.coordinates?.longitude;
                   
@@ -693,7 +597,7 @@ export default function BookingWidget() {
                                     city: location.address?.city || '',
                                     state: location.address?.state || '',
                                   },
-                                  step: 'auth'
+                                  step: 'datetime'
                                 }));
                               }}
                               style={{
@@ -724,8 +628,8 @@ export default function BookingWidget() {
             ) : (
               <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
                 <div className="text-center">
-                  <p className="text-lg font-semibold mb-2">📍 {locationsInRegion.length} Studios</p>
-                  <p className="text-sm">in {bookingState.selectedRegion}</p>
+                  <p className="text-lg font-semibold mb-2">📍 {allLocations.length} Studios</p>
+                  <p className="text-sm">Glowbar Locations</p>
                 </div>
               </div>
             )}
@@ -735,453 +639,6 @@ export default function BookingWidget() {
     );
   }
 
-  // Step 4: Service Selection
-  if (bookingState.step === 'service') {
-    const isMember = bookingState.isMember === true;
-    const isNew = bookingState.customerType === 'new';
-    
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-2xl mx-auto px-6 py-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">
-              {isMember ? `Welcome back${bookingState.userName ? ' ' + bookingState.userName.split(' ')[0] : ''}!` : 'Book a Treatment'}
-            </h1>
-            {isMember && (
-              <p className="text-[#FF6B35] font-semibold" data-testid="text-member-status">
-                Your membership is Active
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            {/* Non-member upsell banner */}
-            {!isMember && (
-              <div 
-                className="relative rounded-lg overflow-hidden mb-6"
-                style={{
-                  backgroundImage: 'url(https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=800)',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  height: '200px'
-                }}
-              >
-                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white p-6">
-                  <p className="text-xl font-semibold mb-4 text-center">
-                    Sign up for the Glowbar Membership today and save $15/month
-                  </p>
-                  <button
-                    onClick={() => setBookingState(prev => ({ ...prev, step: 'membership-purchase' }))}
-                    className="px-8 py-3 bg-[#FF6B35] hover:bg-[#FF5520] rounded-lg font-semibold transition-colors"
-                    data-testid="button-become-member-banner"
-                  >
-                    Become a member
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Member service option */}
-            {isMember && (
-              <Card className="hover:border-gray-400 transition-colors cursor-pointer" data-testid="card-member-service">
-                <CardHeader>
-                  <CardTitle className="text-xl">
-                    Member Treatment <span className="text-gray-500 text-lg font-normal">30min</span>
-                  </CardTitle>
-                  <CardDescription className="text-base mt-2">
-                    If you have purchased a membership online or in-studio, book this treatment.
-                  </CardDescription>
-                  <p className="text-sm text-gray-600 mt-2 italic">
-                    Please note, your card will *not* be charged now and your monthly voucher will be applied to your appointment upon checkout. We can't wait to see your face.
-                  </p>
-                  <p className="text-[#FF6B35] font-semibold mt-3">
-                    Redeem with your voucher
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={() => setBookingState(prev => ({ ...prev, step: 'datetime' }))}
-                    className="w-full bg-black text-white hover:bg-gray-800"
-                    data-testid="button-select-member-service"
-                  >
-                    Select
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Non-member service options */}
-            {!isMember && (
-              <Card className="hover:border-gray-400 transition-colors cursor-pointer" data-testid="card-non-member-service">
-                  <CardHeader>
-                    <CardTitle className="text-xl">
-                      {isNew ? '(Non-Member) First Time Treatment' : '(Non-Member) Returning Treatment'} <span className="text-gray-500 text-lg font-normal">30min</span>
-                    </CardTitle>
-                    <CardDescription className="text-base mt-2">
-                      {isNew
-                        ? "If you've never been to Glowbar before and don't have a membership, book this treatment."
-                        : "If you've been to Glowbar before and don't have a membership, book this treatment."
-                      }
-                    </CardDescription>
-                    <p className="text-sm text-gray-600 mt-2 italic">
-                      Please note, your card will *not* be charged now; it will be charged after your appointment at checkout. We can't wait to see your face.
-                    </p>
-                    <div className="mt-4">
-                      <p className="text-2xl font-bold">$80.00</p>
-                      <p className="text-sm text-[#FF6B35]">Members pay $65 - become a member and save $15</p>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Button
-                      onClick={() => setBookingState(prev => ({ ...prev, step: 'datetime' }))}
-                      className="w-full bg-black text-white hover:bg-gray-800"
-                      data-testid="button-select-non-member-service"
-                    >
-                      Select
-                    </Button>
-                  </CardContent>
-                </Card>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Step 5: Membership Purchase
-  if (bookingState.step === 'membership-purchase') {
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-2xl mx-auto px-6 py-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-
-          {!membershipInCart ? (
-            <>
-              <div className="mb-8">
-                <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Purchase a Membership</h1>
-              </div>
-
-              <Card className="hover:border-gray-400 transition-colors" data-testid="card-membership-details">
-                <CardHeader>
-                  <CardTitle className="text-xl">
-                    Online Purchase - Glowbar Membership
-                  </CardTitle>
-                  <CardDescription className="text-base mt-4 space-y-2">
-                    <p>- 1 facial voucher per month, valid for 3 months</p>
-                    <p>- Additional facials at member price</p>
-                    <p>- 1 free guest pass per membership year</p>
-                    <p>- 15% off skincare (20% off at your first facial)</p>
-                  </CardDescription>
-                  <p className="text-sm text-gray-600 mt-4">
-                    Becoming a Glowbar member requires a four month minimum commitment. Memberships may be cancelled with 30 days notice. Memberships become active the day of purchase. Please note, gift cards are not applicable towards membership payments.
-                  </p>
-                  <p className="text-sm text-gray-600 mt-3">
-                    After purchasing your membership, please separately book a "(Member) First Time & Returning Treatment" appointment.
-                  </p>
-                  <p className="text-2xl font-bold mt-6">$65.00</p>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={() => setMembershipInCart(true)}
-                    className="w-full bg-black text-white hover:bg-gray-800"
-                    data-testid="button-add-membership-to-cart"
-                  >
-                    Select
-                  </Button>
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <>
-              <div className="mb-8">
-                <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Before You Glow</h1>
-              </div>
-
-              <Card className="mb-6">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">Online Purchase - Glowbar Membership</CardTitle>
-                      <p className="text-2xl font-bold mt-2">$65.00</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => setMembershipInCart(false)}
-                      data-testid="button-remove-membership"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </CardHeader>
-              </Card>
-
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-4">Order total: $69.13</h2>
-                <p className="text-sm text-gray-600 mb-4">Tax: $4.13</p>
-              </div>
-
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Payment Info</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600">Saved payment methods can only be deleted by a Glowbar staff member. Please call or visit a Glowbar location for assistance. Expired payment methods will automatically be removed.</p>
-                  <Button variant="outline" className="mt-4" data-testid="button-add-payment">
-                    ADD NEW PAYMENT METHOD
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Communication</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600">
-                    By purchasing this membership, you agree to receive texts and emails with account updates, news, and special offers. Texts will be sent via auto-SMS. Consent is optional. You can unsubscribe from an email anytime by clicking unsubscribe, and opt out of marketing texts anytime by replying NO PROMOS or all text communication by replying STOP. Text HELP for more info. Message frequency may vary. SMS and data rates may apply.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Membership Agreement</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="membership-agreement"
-                      checked={agreementChecked}
-                      onCheckedChange={(checked) => setAgreementChecked(checked as boolean)}
-                      data-testid="checkbox-membership-agreement"
-                    />
-                    <div className="flex-1">
-                      <label
-                        htmlFor="membership-agreement"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        By purchasing a membership, you agree to the <a href="#" className="text-[#FF6B35] underline">Glowbar Membership Terms & Conditions</a>
-                      </label>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Button
-                onClick={() => {
-                  if (!agreementChecked) {
-                    toast({
-                      title: "Agreement Required",
-                      description: "Please agree to the membership terms and conditions",
-                      variant: "destructive"
-                    });
-                    return;
-                  }
-                  toast({
-                    title: "Membership Purchased!",
-                    description: "You are now a Glowbar member. Please book your member treatment.",
-                  });
-                  // Update member status and go back to service selection
-                  setBookingState(prev => ({ 
-                    ...prev, 
-                    isMember: true,
-                    step: 'region'
-                  }));
-                }}
-                disabled={!agreementChecked}
-                className="w-full bg-black text-white hover:bg-gray-800"
-                data-testid="button-complete-membership-purchase"
-              >
-                COMPLETE PURCHASE
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Step 6: Authentication / Sign Up
-  if (bookingState.step === 'auth') {
-    const isNewCustomer = bookingState.customerType === 'new';
-
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-2xl mx-auto px-6 py-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">
-              {isNewCustomer ? 'Create an Account' : 'Login'}
-            </h1>
-            <p className="text-gray-600" data-testid="text-subtitle">
-              {isNewCustomer ? 'Enter your information to get started' : 'Enter your phone number to continue'}
-            </p>
-          </div>
-
-          <Card>
-            <CardContent className="p-6">
-              {isNewCustomer ? (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="font-semibold mb-4">Basic Info</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="firstName">First Name</Label>
-                        <Input
-                          id="firstName"
-                          type="text"
-                          placeholder="First Name"
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          data-testid="input-first-name"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="lastName">Last Name</Label>
-                        <Input
-                          id="lastName"
-                          type="text"
-                          placeholder="Last Name"
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          data-testid="input-last-name"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-4">Contact Info</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="Email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          data-testid="input-email"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="phone">Phone</Label>
-                        <Input
-                          id="phone"
-                          type="tel"
-                          placeholder="646-374-9666"
-                          value={authPhone}
-                          onChange={(e) => setAuthPhone(e.target.value)}
-                          data-testid="input-phone"
-                        />
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <Checkbox
-                          id="email-opt-in"
-                          checked={emailOptIn}
-                          onCheckedChange={(checked) => setEmailOptIn(checked as boolean)}
-                          data-testid="checkbox-email-opt-in"
-                        />
-                        <div className="flex-1">
-                          <label
-                            htmlFor="email-opt-in"
-                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            By sharing your email address you're signing up to receive news and special offers from Glowbar. You may unsubscribe at any time (but we hope you won't).
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={() => {
-                      if (!firstName || !lastName || !email || !authPhone) {
-                        toast({
-                          title: "All Fields Required",
-                          description: "Please fill in all fields to continue",
-                          variant: "destructive"
-                        });
-                        return;
-                      }
-                      setBookingState(prev => ({ 
-                        ...prev, 
-                        userName: `${firstName} ${lastName}`,
-                        userPhone: authPhone,
-                        userEmail: email,
-                        step: 'service' 
-                      }));
-                    }}
-                    className="w-full bg-black text-white hover:bg-gray-800"
-                    data-testid="button-continue"
-                  >
-                    CONTINUE
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="(555) 123-4567"
-                      value={bookingState.userPhone || ''}
-                      onChange={(e) => setBookingState(prev => ({ ...prev, userPhone: e.target.value }))}
-                      data-testid="input-phone"
-                    />
-                  </div>
-                  <Button
-                    onClick={() => {
-                      if (!bookingState.userPhone) {
-                        toast({
-                          title: "Phone Required",
-                          description: "Please enter your phone number",
-                          variant: "destructive"
-                        });
-                        return;
-                      }
-                      setBookingState(prev => ({ 
-                        ...prev, 
-                        userName: 'Guest',
-                        step: 'service' 
-                      }));
-                    }}
-                    className="w-full bg-black text-white hover:bg-gray-800"
-                    data-testid="button-continue"
-                  >
-                    CONTINUE
-                  </Button>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -1279,108 +736,6 @@ export default function BookingWidget() {
               <Button
                 variant="ghost"
                 onClick={handleBack}
-                className="mb-6"
-                data-testid="button-back"
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-
-              <div className="mb-8">
-                <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Select Date & Time</h1>
-                <p className="text-gray-600" data-testid="text-subtitle">
-                  Book your appointment at {bookingState.selectedLocation?.name}
-                </p>
-              </div>
-
-              {/* Esthetician Filter */}
-              <div className="mb-6">
-                <Label>
-                  Esthetician Preference
-                  {staffLoading && <span className="text-sm text-gray-500 ml-2">(Loading...)</span>}
-                </Label>
-                <Select value={esthetician} onValueChange={setEsthetician}>
-                  <SelectTrigger className="w-full" data-testid="select-esthetician">
-                    <SelectValue placeholder="Select esthetician preference" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any Esthetician</SelectItem>
-                    {staffData?.staff?.map((staff) => (
-                      <SelectItem key={staff.id} value={staff.id}>
-                        {staff.displayName || `${staff.firstName} ${staff.lastName}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Simple Calendar */}
-              <div className="mb-6">
-                <Label className="mb-4 block">Select a Date</Label>
-                <div className="grid grid-cols-7 gap-2">
-                  {Array.from({ length: 14 }, (_, i) => {
-                    const date = addDays(new Date(), i);
-                    const isSelected = selectedDate && format(date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setSelectedDate(date)}
-                        className={`p-3 border rounded-lg text-center transition-colors ${
-                          isSelected
-                            ? 'bg-orange-500 text-white border-orange-500'
-                            : 'hover:border-orange-500'
-                        }`}
-                        data-testid={`button-date-${i}`}
-                      >
-                        <div className="text-xs">{format(date, 'EEE')}</div>
-                        <div className="text-lg font-semibold">{format(date, 'd')}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Time Slots - Grouped by Period */}
-              {selectedDate && (
-                <div className="space-y-6">
-                  <Label className="mb-4 block">
-                    Available Times
-                    {availabilityLoading && <span className="text-sm text-gray-500 ml-2">(Loading...)</span>}
-                  </Label>
-                  
-                  {/* Morning Slots */}
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Morning (before 12pm)</h3>
-                    {morningSlots.length > 0 && morningSlots.some(slot => slot.available) ? (
-                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                        {morningSlots.map((slot) => (
-                          <button
-                            key={slot.value}
-                            onClick={() => {
-                              if (slot.available) {
-                                setSelectedTimeSlot(slot.value);
-                                setSelectedNearbyLocation(null);
-                              }
-                            }}
-                            disabled={!slot.available}
-                            className={`p-3 border rounded-lg text-center transition-colors ${
-                              selectedTimeSlot === slot.value
-                                ? 'bg-orange-500 text-white border-orange-500'
-                                : slot.available
-                                ? 'hover:border-orange-500'
-                                : 'opacity-40 cursor-not-allowed'
-                            }`}
-                            data-testid={`button-time-${slot.value}`}
-                          >
-                            {slot.display}
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          toast({
-                            title: "Added to Waitlist",
                             description: `You've been added to the morning waitlist for ${format(selectedDate!, 'MMM d, yyyy')}`,
                           });
                         }}
@@ -1582,7 +937,7 @@ export default function BookingWidget() {
                           selectedDate,
                           selectedTime: { id: selectedNearbyLocation.time, time: selectedNearbyLocation.time },
                           selectedEsthetician: esthetician,
-                          step: 'questionnaire'
+                          step: 'personal-info'
                         }));
                       }
                     } else {
@@ -1591,7 +946,7 @@ export default function BookingWidget() {
                         selectedDate,
                         selectedTime: { id: selectedTimeSlot!, time: selectedTimeSlot! },
                         selectedEsthetician: esthetician,
-                        step: 'questionnaire'
+                        step: 'personal-info'
                       }));
                     }
                   }}
@@ -1633,7 +988,7 @@ export default function BookingWidget() {
   }
 
   // Step 4: Pre-Treatment Questionnaire
-  if (bookingState.step === 'questionnaire') {
+  // OLD STEP - REMOVED:   if (bookingState.step === 'questionnaire') {
     const allChecked = accutane && injections && waxing;
 
     return (
