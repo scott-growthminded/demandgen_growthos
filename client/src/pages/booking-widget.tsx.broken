@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronDown, ChevronUp, CheckCircle } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -136,8 +136,6 @@ export default function BookingWidget() {
   const [email, setEmail] = useState('');
   const [authPhone, setAuthPhone] = useState('');
   const [emailOptIn, setEmailOptIn] = useState(true);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
 
   // Fetch locations
   const { data: locationsData, isLoading: locationsLoading } = useQuery({
@@ -358,6 +356,9 @@ export default function BookingWidget() {
 
   // Step 2: Login (for returning users)
   if (bookingState.step === 'login') {
+    const [loginEmail, setLoginEmail] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
+
     const handleLogin = () => {
       // Mock login - set member status based on email for demo
       const isMember = loginEmail.includes('member');
@@ -638,139 +639,357 @@ export default function BookingWidget() {
     );
   }
 
-  // DateTime Step
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 3: Date/Time Selection
   if (bookingState.step === 'datetime') {
-    // Generate time slots from Boulevard availability data
+    // Generate time slots directly from Boulevard availability data
     const generateTimeSlots = () => {
-      if (!availabilityData || !availabilityData.availableSlots) {
-        return [];
+      // Get current time for filtering past slots
+      const now = new Date();
+      const isToday = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
+      
+      // If we have Boulevard availability data, use it to generate slots
+      if (availabilityData?.success && availabilityData.availableSlots && availabilityData.availableSlots.length > 0) {
+        const slots = availabilityData.availableSlots
+          .map((slot) => {
+            // Parse ISO time like "2025-10-18T20:00:00-04:00" to get hour and minute
+            const match = slot.startTime.match(/T(\d{2}):(\d{2}):/);
+            if (!match) return null;
+            
+            const hour = parseInt(match[1]);
+            const minute = parseInt(match[2]);
+            const timeValue = `${hour}:${minute.toString().padStart(2, '0')}`;
+            
+            // Check if this slot is in the past (for today only)
+            let isPast = false;
+            if (isToday) {
+              const slotTime = new Date();
+              slotTime.setHours(hour, minute, 0, 0);
+              isPast = slotTime < now;
+            }
+            
+            // Format for display
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+            
+            return {
+              value: timeValue,
+              display: `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`,
+              available: !isPast,
+              hour: hour
+            };
+          })
+          .filter((slot): slot is { value: string; display: string; available: boolean; hour: number } => slot !== null);
+        
+        return slots;
       }
       
-      return availabilityData.availableSlots.map((slot: any) => ({
-        id: slot.id,
-        time: format(new Date(slot.startTime), 'h:mm a'),
-        startTime: slot.startTime
-      }));
+      // Fallback: generate placeholder slots from 8 AM to 8 PM (40-minute intervals)
+      // This shows while loading or when no availability data is returned
+      const slots: string[] = [];
+      for (let hour = 8; hour <= 20; hour++) {
+        if (hour < 20) {
+          slots.push(`${hour}:00`);
+          slots.push(`${hour}:20`);
+          slots.push(`${hour}:40`);
+        } else {
+          // Include 8:00 PM
+          slots.push(`${hour}:00`);
+        }
+      }
+      
+      return slots.map(time => {
+        const [h, m] = time.split(':');
+        const hour = parseInt(h);
+        const minute = parseInt(m);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+        
+        return {
+          value: time,
+          display: `${displayHour}:${m} ${ampm}`,
+          available: false, // All unavailable until we get real data
+          hour: hour
+        };
+      });
     };
 
     const timeSlots = generateTimeSlots();
-    const hasAvailability = timeSlots.length > 0;
-
-    const nextDays = Array.from({ length: 7 }, (_, i) => {
-      const date = addDays(new Date(), i);
-      return {
-        date: date,
-        display: format(date, 'EEE, MMM d')
-      };
-    });
-
-    const isValid = selectedDate && selectedTimeSlot;
+    
+    // Group time slots by period (morning, afternoon, evening)
+    const morningSlots = timeSlots.filter(slot => slot.hour < 12);
+    const afternoonSlots = timeSlots.filter(slot => slot.hour >= 12 && slot.hour < 17);
+    const eveningSlots = timeSlots.filter(slot => slot.hour >= 17);
 
     return (
       <div className="min-h-screen bg-white">
-        <div className="max-w-2xl mx-auto px-6 py-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Select Date & Time</h1>
-            <p className="text-gray-600" data-testid="text-subtitle">
-              Choose your appointment time at {bookingState.selectedLocation?.name || 'the selected location'}
-            </p>
-          </div>
-
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Select Date</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-2">
-                {nextDays.map((day) => (
-                  <button
-                    key={format(day.date, 'yyyy-MM-dd')}
-                    onClick={() => {
-                      setSelectedDate(day.date);
-                      setSelectedTimeSlot(undefined); // Reset time when date changes
-                    }}
-                    className={`p-4 border rounded-lg text-left transition-colors ${
-                      selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(day.date, 'yyyy-MM-dd')
-                        ? 'border-black bg-black text-white'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    data-testid={`button-date-${format(day.date, 'yyyy-MM-dd')}`}
-                  >
-                    {day.display}
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {selectedDate && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Select Time</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {availabilityLoading ? (
-                  <p className="text-center text-gray-500">Loading available times...</p>
-                ) : hasAvailability ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {timeSlots.map((slot) => (
-                      <button
-                        key={slot.id}
-                        onClick={() => setSelectedTimeSlot(slot.time)}
-                        className={`p-3 border rounded-lg text-sm transition-colors ${
-                          selectedTimeSlot === slot.time
-                            ? 'border-black bg-black text-white'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
+        <div className="flex">
+          {/* Main Content */}
+          <div className="flex-1 px-6 py-8">
+            <div className="max-w-3xl mx-auto">
+              <Button
+                variant="ghost"
+                onClick={handleBack}
+                            description: `You've been added to the morning waitlist for ${format(selectedDate!, 'MMM d, yyyy')}`,
+                          });
+                        }}
+                        className="w-full p-4 border-2 border-[#FF6B35] text-[#FF6B35] rounded-lg font-semibold hover:bg-[#FF6B35] hover:text-white transition-colors"
+                        data-testid="button-waitlist-morning"
                       >
-                        {slot.time}
+                        Join Morning Waitlist
                       </button>
-                    ))}
+                    )}
                   </div>
-                ) : (
-                  <p className="text-center text-gray-500">No availability for this date. Please select another date.</p>
+                  
+                  {/* Afternoon Slots */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Afternoon (12pm - 5pm)</h3>
+                    {afternoonSlots.length > 0 && afternoonSlots.some(slot => slot.available) ? (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {afternoonSlots.map((slot) => (
+                          <button
+                            key={slot.value}
+                            onClick={() => {
+                              if (slot.available) {
+                                setSelectedTimeSlot(slot.value);
+                                setSelectedNearbyLocation(null);
+                              }
+                            }}
+                            disabled={!slot.available}
+                            className={`p-3 border rounded-lg text-center transition-colors ${
+                              selectedTimeSlot === slot.value
+                                ? 'bg-orange-500 text-white border-orange-500'
+                                : slot.available
+                                ? 'hover:border-orange-500'
+                                : 'opacity-40 cursor-not-allowed'
+                            }`}
+                            data-testid={`button-time-${slot.value}`}
+                          >
+                            {slot.display}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          toast({
+                            title: "Added to Waitlist",
+                            description: `You've been added to the afternoon waitlist for ${format(selectedDate!, 'MMM d, yyyy')}`,
+                          });
+                        }}
+                        className="w-full p-4 border-2 border-[#FF6B35] text-[#FF6B35] rounded-lg font-semibold hover:bg-[#FF6B35] hover:text-white transition-colors"
+                        data-testid="button-waitlist-afternoon"
+                      >
+                        Join Afternoon Waitlist
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Evening Slots */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Evening (after 5pm)</h3>
+                    {eveningSlots.length > 0 && eveningSlots.some(slot => slot.available) ? (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {eveningSlots.map((slot) => (
+                          <button
+                            key={slot.value}
+                            onClick={() => {
+                              if (slot.available) {
+                                setSelectedTimeSlot(slot.value);
+                                setSelectedNearbyLocation(null);
+                              }
+                            }}
+                            disabled={!slot.available}
+                            className={`p-3 border rounded-lg text-center transition-colors ${
+                              selectedTimeSlot === slot.value
+                                ? 'bg-orange-500 text-white border-orange-500'
+                                : slot.available
+                                ? 'hover:border-orange-500'
+                                : 'opacity-40 cursor-not-allowed'
+                            }`}
+                            data-testid={`button-time-${slot.value}`}
+                          >
+                            {slot.display}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          toast({
+                            title: "Added to Waitlist",
+                            description: `You've been added to the evening waitlist for ${format(selectedDate!, 'MMM d, yyyy')}`,
+                          });
+                        }}
+                        className="w-full p-4 border-2 border-[#FF6B35] text-[#FF6B35] rounded-lg font-semibold hover:bg-[#FF6B35] hover:text-white transition-colors"
+                        data-testid="button-waitlist-evening"
+                      >
+                        Join Evening Waitlist
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+
+              {/* Nearby Locations */}
+              {nearbyLocations.length > 0 && selectedDate && (
+                <div className="mt-12">
+                  <p className="text-gray-600 mb-6">Don't see a time that works for you? Here are some other options nearby.</p>
+                  <div className="space-y-6">
+                    {nearbyLocations.map((location, index) => {
+                      const availData = nearbyAvailabilityData[index]?.data;
+                      const slots = formatNearbyTimeSlots(availData);
+                      const isExpanded = expandedNearbyLocations.has(location.id);
+                      const displaySlots = isExpanded ? slots : slots.slice(0, 5);
+                      const hasMore = slots.length > 5;
+                      
+                      return (
+                        <div key={location.id} data-testid={`card-nearby-location-${location.id}`}>
+                          <div className="mb-3">
+                            <h4 className="font-semibold text-lg">{location.name}</h4>
+                            {location.address && (
+                              <p className="text-sm text-gray-600">
+                                {location.address.line1 && `${location.address.line1}, `}
+                                {location.address.city}, {location.address.state}
+                              </p>
+                            )}
+                          </div>
+                          
+                          {slots.length > 0 ? (
+                            <div className="grid grid-cols-3 gap-3">
+                              {displaySlots.map((slot) => (
+                                <button
+                                  key={slot.value}
+                                  onClick={() => {
+                                    setSelectedNearbyLocation({
+                                      locationId: location.id,
+                                      locationName: location.name,
+                                      time: slot.display
+                                    });
+                                    setSelectedTimeSlot(undefined);
+                                  }}
+                                  className={`p-3 border rounded-full text-center transition-colors ${
+                                    selectedNearbyLocation?.locationId === location.id && selectedNearbyLocation?.time === slot.display
+                                      ? 'bg-black text-white border-black'
+                                      : 'hover:border-gray-400'
+                                  }`}
+                                  data-testid={`button-nearby-time-${location.id}-${slot.value}`}
+                                >
+                                  {slot.display.toLowerCase()}
+                                </button>
+                              ))}
+                              
+                              {hasMore && (
+                                <button
+                                  onClick={() => {
+                                    const newExpanded = new Set(expandedNearbyLocations);
+                                    if (isExpanded) {
+                                      newExpanded.delete(location.id);
+                                    } else {
+                                      newExpanded.add(location.id);
+                                    }
+                                    setExpandedNearbyLocations(newExpanded);
+                                  }}
+                                  className="p-3 border rounded-full text-center hover:border-gray-400 transition-colors"
+                                  data-testid={`button-toggle-nearby-${location.id}`}
+                                >
+                                  {isExpanded ? 'View Less' : 'View More'}
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500">No availability for this date</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Sticky Bottom Continue Button */}
+          {(selectedTimeSlot || selectedNearbyLocation) && (
+            <div className="fixed bottom-0 left-0 right-0 bg-black text-white p-4 z-50">
+              <div className="max-w-3xl mx-auto">
+                <Button
+                  onClick={() => {
+                    if (selectedNearbyLocation) {
+                      // Switch to the nearby location
+                      const location = nearbyLocations.find(l => l.id === selectedNearbyLocation.locationId);
+                      if (location) {
+                        setBookingState(prev => ({
+                          ...prev,
+                          selectedLocation: {
+                            id: location.id,
+                            name: location.name,
+                            city: location.address?.city || '',
+                            state: location.address?.state || '',
+                          },
+                          selectedDate,
+                          selectedTime: { id: selectedNearbyLocation.time, time: selectedNearbyLocation.time },
+                          selectedEsthetician: esthetician,
+                          step: 'personal-info'
+                        }));
+                      }
+                    } else {
+                      setBookingState(prev => ({
+                        ...prev,
+                        selectedDate,
+                        selectedTime: { id: selectedTimeSlot!, time: selectedTimeSlot! },
+                        selectedEsthetician: esthetician,
+                        step: 'personal-info'
+                      }));
+                    }
+                  }}
+                  className="w-full bg-white text-black hover:bg-gray-100 text-lg py-6"
+                  data-testid="button-continue-sticky"
+                >
+                  {selectedNearbyLocation 
+                    ? `Continue with ${selectedNearbyLocation.time.toLowerCase()} at ${selectedNearbyLocation.locationName}`
+                    : 'Continue to Checkout'
+                  }
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Booking Summary Sidebar */}
+          <div className="w-80 bg-gray-50 p-6 border-l">
+            <h2 className="text-xl font-bold mb-4">Your Booking</h2>
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Location</p>
+                  <p className="font-semibold">{bookingState.selectedLocation?.name}</p>
+                </div>
+                {selectedDate && selectedTimeSlot && (
+                  <div>
+                    <p className="text-sm text-gray-600">Date & Time</p>
+                    <p className="font-semibold">
+                      {format(selectedDate, 'MMM d, yyyy')} at {selectedTimeSlot}
+                    </p>
+                  </div>
                 )}
               </CardContent>
             </Card>
-          )}
-
-          {isValid && (
-            <Button
-              onClick={() => {
-                // Determine next step based on customer type
-                const nextStep = bookingState.customerType === 'new' ? 'personal-info' : 'checkout';
-                setBookingState(prev => ({
-                  ...prev,
-                  selectedDate: selectedDate,
-                  selectedTime: { id: selectedTimeSlot || '', time: selectedTimeSlot || '' },
-                  step: nextStep
-                }));
-              }}
-              className="w-full bg-black text-white hover:bg-gray-800"
-              data-testid="button-continue"
-            >
-              Continue
-            </Button>
-          )}
+          </div>
         </div>
       </div>
     );
   }
 
-  // Personal Info Step (for new users)
-  if (bookingState.step === 'personal-info') {
-    const isValid = firstName && lastName && email && authPhone;
+  // Step 4: Pre-Treatment Questionnaire
+  // OLD STEP - REMOVED:   if (bookingState.step === 'questionnaire') {
+    const allChecked = accutane && injections && waxing;
 
     return (
       <div className="min-h-screen bg-white">
@@ -786,76 +1005,86 @@ export default function BookingWidget() {
           </Button>
 
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Personal Information</h1>
-            <p className="text-gray-600">Please provide your contact information</p>
+            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Before You Glow</h1>
+            <p className="text-gray-600" data-testid="text-subtitle">
+              Please confirm the following for your safety
+            </p>
           </div>
 
           <Card>
-            <CardContent className="p-6 space-y-4">
-              <div>
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="mt-2"
-                  data-testid="input-first-name"
+            <CardContent className="p-6 space-y-6">
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="accutane"
+                  checked={accutane}
+                  onCheckedChange={(checked) => setAccutane(checked as boolean)}
+                  data-testid="checkbox-accutane"
                 />
+                <div className="flex-1">
+                  <label
+                    htmlFor="accutane"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    I confirm I am not currently taking Accutane or have not taken it in the last 6 months
+                  </label>
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="mt-2"
-                  data-testid="input-last-name"
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="injections"
+                  checked={injections}
+                  onCheckedChange={(checked) => setInjections(checked as boolean)}
+                  data-testid="checkbox-injections"
                 />
+                <div className="flex-1">
+                  <label
+                    htmlFor="injections"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    I confirm I have not had any injections or laser treatments in the last 2 weeks
+                  </label>
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-2"
-                  data-testid="input-email"
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="waxing"
+                  checked={waxing}
+                  onCheckedChange={(checked) => setWaxing(checked as boolean)}
+                  data-testid="checkbox-waxing"
                 />
+                <div className="flex-1">
+                  <label
+                    htmlFor="waxing"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    I confirm I have not had any waxing or threading on my face in the last 48 hours
+                  </label>
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={authPhone}
-                  onChange={(e) => setAuthPhone(e.target.value)}
-                  className="mt-2"
-                  data-testid="input-phone"
-                />
-              </div>
+              {allChecked && (
+                <Button
+                  onClick={() => {
+                    setBookingState(prev => ({
+                      ...prev,
+                      questionnaireComplete: true,
+                      step: 'checkout'
+                    }));
+                  }}
+                  className="w-full bg-black text-white hover:bg-gray-800 mt-4"
+                  data-testid="button-continue"
+                >
+                  CONTINUE TO CHECKOUT
+                </Button>
+              )}
 
-              <Button
-                onClick={() => {
-                  setBookingState(prev => ({
-                    ...prev,
-                    userFirstName: firstName,
-                    userLastName: lastName,
-                    userEmail: email,
-                    userPhone: authPhone,
-                    userName: `${firstName} ${lastName}`,
-                    step: 'checkout'
-                  }));
-                }}
-                className="w-full bg-black text-white hover:bg-gray-800 mt-6"
-                disabled={!isValid}
-                data-testid="button-continue"
-              >
-                Continue to Checkout
-              </Button>
+              {!allChecked && (
+                <p className="text-sm text-gray-500 text-center mt-4">
+                  Please check all boxes to continue
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -863,6 +1092,7 @@ export default function BookingWidget() {
     );
   }
 
+  // Step 5: Checkout Summary
   if (bookingState.step === 'checkout') {
     return (
       <div className="min-h-screen bg-white">
@@ -1005,7 +1235,12 @@ export default function BookingWidget() {
                         });
                         return;
                       }
-                      setBookingState(prev => ({ ...prev, step: 'confirmation' }));
+                      toast({
+                        title: "Booking Confirmed!",
+                        description: "Your appointment has been scheduled successfully"
+                      });
+                      // Reset to start
+                      setBookingState({ step: 'location' });
                     }}
                     disabled={!acceptTerms}
                     className="w-full bg-orange-500 text-white hover:bg-orange-600 text-lg py-6"
@@ -1016,74 +1251,6 @@ export default function BookingWidget() {
                 </CardContent>
               </Card>
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Confirmation Step
-  if (bookingState.step === 'confirmation') {
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-2xl mx-auto px-6 py-8">
-          <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-12 h-12 text-green-600" />
-            </div>
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Booking Confirmed!</h1>
-            <p className="text-gray-600" data-testid="text-subtitle">
-              Your appointment has been successfully scheduled
-            </p>
-          </div>
-
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Appointment Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600">Service</p>
-                <p className="font-semibold">{bookingState.selectedService || 'Glowbar Signature Facial'}</p>
-              </div>
-              {bookingState.selectedLocation && (
-                <div>
-                  <p className="text-sm text-gray-600">Location</p>
-                  <p className="font-semibold">{bookingState.selectedLocation.name}</p>
-                  <p className="text-sm text-gray-500">{bookingState.selectedLocation.address}</p>
-                </div>
-              )}
-              {bookingState.selectedDate && (
-                <div>
-                  <p className="text-sm text-gray-600">Date & Time</p>
-                  <p className="font-semibold">{format(bookingState.selectedDate, 'EEE, MMM d, yyyy')}</p>
-                  <p className="text-sm text-gray-500">{bookingState.selectedTime?.time || 'Time TBD'}</p>
-                </div>
-              )}
-              {bookingState.userName && (
-                <div>
-                  <p className="text-sm text-gray-600">Guest</p>
-                  <p className="font-semibold">{bookingState.userName}</p>
-                  <p className="text-sm text-gray-500">{bookingState.userEmail}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <div className="space-y-3">
-            <Button
-              onClick={() => {
-                setBookingState({ step: 'customer-type' });
-                setAcceptTerms(false);
-              }}
-              className="w-full bg-black text-white hover:bg-gray-800"
-              data-testid="button-new-booking"
-            >
-              Book Another Appointment
-            </Button>
-            <p className="text-sm text-gray-500 text-center">
-              A confirmation email has been sent to {bookingState.userEmail || 'your email'}
-            </p>
           </div>
         </div>
       </div>
