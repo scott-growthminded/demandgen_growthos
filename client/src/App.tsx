@@ -6,11 +6,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import BlvdApiTest from "@/pages/blvd-api-test";
 import BookingWidget from "@/pages/booking-widget";
+import BookingFlowPage from "@/pages/booking-flow";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={BookingWidget} />
+      <Route path="/" component={BookingFlowPage} />
+      <Route path="/old-widget" component={BookingWidget} />
       <Route component={NotFound} />
     </Switch>
   );
