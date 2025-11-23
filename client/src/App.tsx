@@ -11,8 +11,7 @@ import BookingFlowPage from "@/pages/booking-flow";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={BookingFlowPage} />
-      <Route path="/old-widget" component={BookingWidget} />
+      <Route path="/" component={BookingWidget} />
       <Route component={NotFound} />
     </Switch>
   );

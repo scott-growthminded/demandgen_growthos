@@ -37,14 +37,13 @@ const blackIcon = new L.Icon({
 
 type BookingStep = 
   | 'customer-type'
-  | 'region'
+  | 'login'
+  | 'product'
   | 'location'
-  | 'service'
-  | 'membership-purchase'
   | 'datetime'
-  | 'auth'
-  | 'questionnaire'
-  | 'checkout';
+  | 'personal-info'
+  | 'checkout'
+  | 'confirmation';
 
 interface Location {
   id: string;
@@ -270,29 +269,34 @@ export default function BookingWidget() {
   const handleBack = () => {
     // Handle back navigation based on current step and booking state
     switch (bookingState.step) {
-      case 'region':
+      case 'login':
         setBookingState(prev => ({ ...prev, step: 'customer-type' }));
         break;
+      case 'product':
+        if (bookingState.customerType === 'new') {
+          setBookingState(prev => ({ ...prev, step: 'customer-type' }));
+        } else {
+          setBookingState(prev => ({ ...prev, step: 'login' }));
+        }
+        break;
       case 'location':
-        setBookingState(prev => ({ ...prev, step: 'region' }));
-        break;
-      case 'service':
-        setBookingState(prev => ({ ...prev, step: 'location' }));
-        break;
-      case 'membership-purchase':
-        setBookingState(prev => ({ ...prev, step: 'service' }));
+        setBookingState(prev => ({ ...prev, step: 'product' }));
         break;
       case 'datetime':
-        setBookingState(prev => ({ ...prev, step: 'service' }));
-        break;
-      case 'auth':
         setBookingState(prev => ({ ...prev, step: 'location' }));
         break;
-      case 'questionnaire':
+      case 'personal-info':
         setBookingState(prev => ({ ...prev, step: 'datetime' }));
         break;
       case 'checkout':
-        setBookingState(prev => ({ ...prev, step: 'questionnaire' }));
+        if (bookingState.customerType === 'new') {
+          setBookingState(prev => ({ ...prev, step: 'personal-info' }));
+        } else {
+          setBookingState(prev => ({ ...prev, step: 'datetime' }));
+        }
+        break;
+      case 'confirmation':
+        setBookingState(prev => ({ ...prev, step: 'customer-type' }));
         break;
       default:
         break;
@@ -309,42 +313,28 @@ export default function BookingWidget() {
             
             <div className="space-y-4 mt-8">
               <button
-                onClick={() => setBookingState(prev => ({ ...prev, customerType: 'returning', isMember: true, step: 'region' }))}
-                className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
-                data-testid="button-member"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1">I'm a Glowbar Member</h3>
-                    <p className="text-gray-600 text-sm">Book your member treatment</p>
-                  </div>
-                  <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setBookingState(prev => ({ ...prev, customerType: 'returning', isMember: false, step: 'region' }))}
-                className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
-                data-testid="button-returning-customer"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1">I'm a Returning Customer</h3>
-                    <p className="text-gray-600 text-sm">Welcome back! Schedule a return visit</p>
-                  </div>
-                  <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setBookingState(prev => ({ ...prev, customerType: 'new', isMember: false, step: 'region' }))}
+                onClick={() => setBookingState(prev => ({ ...prev, customerType: 'new', isMember: false, step: 'product' }))}
                 className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
                 data-testid="button-new-customer"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold mb-1">I'm New to Glowbar</h3>
+                    <h3 className="text-lg font-semibold mb-1">I'm new to Glowbar</h3>
                     <p className="text-gray-600 text-sm">Schedule your first facial</p>
+                  </div>
+                  <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setBookingState(prev => ({ ...prev, customerType: 'returning', step: 'login' }))}
+                className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
+                data-testid="button-returning-customer"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">I already have a Glowbar Account</h3>
+                    <p className="text-gray-600 text-sm">Log in to book</p>
                   </div>
                   <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
                 </div>
@@ -364,79 +354,166 @@ export default function BookingWidget() {
     );
   }
 
-  // Step 2: Region Selection
-  if (bookingState.step === 'region') {
-    const regionCounts: Record<string, number> = {};
+  // Step 2: Login (for returning users)
+  if (bookingState.step === 'login') {
+    const [loginEmail, setLoginEmail] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
+
+    const handleLogin = () => {
+      // Mock login - set member status based on email for demo
+      const isMember = loginEmail.includes('member');
+      setBookingState(prev => ({ 
+        ...prev, 
+        isMember,
+        userEmail: loginEmail,
+        step: 'product'
+      }));
+    };
+
+    return (
+      <div className="min-h-screen bg-white flex items-center">
+        <div className="w-full max-w-lg mx-auto px-6 py-8">
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            className="mb-6"
+            data-testid="button-back"
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+
+          <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Log in</h1>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="email" className="text-base mb-2 block">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                className="h-12"
+                placeholder="your@email.com"
+                data-testid="input-email"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="password" className="text-base mb-2 block">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                className="h-12"
+                placeholder="••••••••"
+                data-testid="input-password"
+              />
+            </div>
+
+            <Button
+              onClick={handleLogin}
+              className="w-full h-12 mt-6"
+              disabled={!loginEmail || !loginPassword}
+              data-testid="button-login"
+            >
+              Continue
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 3: Product Selection (replaces old 'service' step)  
+  if (bookingState.step === 'product') {
+    const isMember = bookingState.isMember;
+    
+    const products = isMember ? [
+      { id: 'member-treatment', name: 'Member Treatment', price: 65, description: 'Redeem with voucher' },
+    ] : [
+      { id: 'first-time-treatment', name: 'First Time Treatment', price: 80, description: '60-minute facial' },
+      { id: 'returning-treatment', name: 'Returning Treatment', price: 80, description: '60-minute facial' },
+    ];
+
+    const handleProductSelect = (productId: string) => {
+      setBookingState(prev => ({ ...prev, step: 'location' }));
+    };
+
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="w-full max-w-4xl mx-auto px-6 py-8">
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            className="mb-6"
+            data-testid="button-back"
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
+
+          <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select product</h1>
+          
+          <div className="space-y-4">
+            {products.map((product) => (
+              <button
+                key={product.id}
+                onClick={() => handleProductSelect(product.id)}
+                className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
+                data-testid={`button-product-${product.id}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">{product.name}</h3>
+                    <p className="text-gray-600 text-sm">{product.description}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xl font-bold">${product.price}</span>
+                    <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 4: Location Selection
+  if (bookingState.step === 'location') {
     const allLocations: any[] = [];
     
     if (locationsData) {
       Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
-        let count = 0;
         Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
-          count += (locations as Location[]).length;
           allLocations.push(...(locations as any[]));
         });
-        regionCounts[state] = count;
       });
     }
 
     return (
-      <div className="min-h-screen bg-white flex items-center">
-        <div className="w-full max-w-6xl mx-auto px-6 py-8 grid grid-cols-2 gap-12">
-          <div className="flex flex-col justify-center">
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              className="mb-6 self-start"
-              data-testid="button-back"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
+      <div className="min-h-screen bg-white">
+        <div className="w-full max-w-6xl mx-auto px-6 py-8">
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            className="mb-6"
+            data-testid="button-back"
+          >
+            <ChevronLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
 
-            <h1 className="text-5xl font-bold mb-8" data-testid="text-title">Choose a region</h1>
-            
+          <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Choose a location</h1>
+          
+          <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-3">
-              {Object.entries(regionCounts).map(([state, count]) => (
+              {allLocations.length > 0 && allLocations.slice(0, 10).map((location: any, index: number) => (
                 <button
-                  key={state}
-                  onClick={() => setBookingState(prev => ({ ...prev, selectedRegion: state, step: 'location' }))}
-                  className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
-                  data-testid={`button-region-${state}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold">{state}</h3>
-                      <p className="text-gray-600 text-sm">{count} {count === 1 ? 'Location' : 'Locations'}</p>
-                    </div>
-                    <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
-            <MapContainer
-              key="region-map"
-              center={[40.7128, -74.0060]}
-              zoom={11}
-              style={{ height: '100%', width: '100%' }}
-              scrollWheelZoom={false}
-              zoomControl={true}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-              />
-              {allLocations.length > 0 && allLocations.map((location: any, index: number) => {
-                const lat = location.coordinates?.lat || location.coordinates?.latitude;
-                const lng = location.coordinates?.lng || location.coordinates?.longitude;
-                
-                if (lat && lng) {
-                  return (
-                    <Marker
-                      key={location.id || index}
+                  key={location.id || index}
                       position={[lat, lng]}
                       icon={blackIcon}
                     >
