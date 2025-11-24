@@ -1096,12 +1096,12 @@ export default function BookingWidget() {
           </div>
         )}
 
-        <div className="flex-1 grid lg:grid-cols-2">
+        <div className="flex-1 grid md:grid-cols-2">
           {/* Image Section */}
-          <div className="hidden lg:block relative">
+          <div className="hidden md:block relative">
             <img 
-              src={luxurySpaImage} 
-              alt="Luxury spa facial treatment" 
+              src={facialTreatmentImage} 
+              alt="Facial treatment at Glowbar" 
               className="absolute inset-0 w-full h-full object-cover"
               data-testid="img-service"
             />
