@@ -173,6 +173,19 @@ export default function BookingWidget() {
   // Phone verification state
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otpCode, setOtpCode] = useState('');
+  
+  // Card details state
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvc, setCardCvc] = useState('');
+  const [cardName, setCardName] = useState('');
+  
+  // Pre-fill phone number from verification when reaching personal info
+  useEffect(() => {
+    if (phoneNumber && !authPhone) {
+      setAuthPhone(phoneNumber);
+    }
+  }, [phoneNumber, authPhone]);
 
   // Fetch locations
   const { data: locationsData, isLoading: locationsLoading } = useQuery({
@@ -2068,13 +2081,37 @@ export default function BookingWidget() {
               </Card>
 
               {/* Cancellation Policy */}
-              <Card>
+              <Card className="mb-6">
                 <CardHeader>
                   <CardTitle className="text-lg">Cancellation Policy</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-600">
-                    Please cancel or reschedule at least 24 hours before your appointment to avoid a cancellation fee.
+                  <p className="text-sm text-gray-700">
+                    Free cancellation or modification before {bookingState.selectedDate && format(addDays(bookingState.selectedDate, -1), 'EEEE MM/dd/yyyy')} at {bookingState.selectedTime?.time}. After that, changes to the appointment will result in a charge of $30 plus any applicable taxes and fees. <a href="#" className="text-orange-600 underline">Learn More</a>.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Communication */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Communication</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-700">
+                    By booking this appointment, you agree to receive texts and emails with appointment reminders, account updates, news, and special offers. Texts will be sent via auto-SMS. Consent is optional. You can unsubscribe from an email anytime by clicking unsubscribe, and opt out of marketing texts anytime by replying NO PROMOS or all text communication by replying STOP. Text HELP for more info. Message frequency may vary. SMS and data rates may apply.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Terms of Service */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Terms of Service</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-700">
+                    By booking this appointment you are agreeing to Glowbar's <a href="#" className="text-orange-600 underline">Terms of Service</a>
                   </p>
                 </CardContent>
               </Card>
@@ -2082,15 +2119,76 @@ export default function BookingWidget() {
 
             {/* Right Column - Payment */}
             <div>
+              {/* Payment Info Notice */}
+              <Card className="mb-6 bg-blue-50 border-blue-200">
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-2">Payment Info</h3>
+                  <p className="text-sm text-gray-700 font-medium mb-1">Your card won't be charged today</p>
+                  <p className="text-sm text-gray-600">
+                    Your card will be used to hold your appointment time and will not be charged until after your appointment has been completed. If you are an active member, your voucher will be used to redeem your monthly facial on the day of your appointment.
+                  </p>
+                </CardContent>
+              </Card>
+
               <Card className="mb-6">
                 <CardHeader>
                   <CardTitle>Payment Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Promo Code */}
+                  {/* Card Details */}
                   <div>
-                    <Label htmlFor="promo">Promo Code</Label>
-                    <div className="flex gap-2">
+                    <Label htmlFor="cardName">Cardholder Name</Label>
+                    <Input
+                      id="cardName"
+                      value={cardName}
+                      onChange={(e) => setCardName(e.target.value)}
+                      placeholder="Name on card"
+                      className="mt-2"
+                      data-testid="input-card-name"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="cardNumber">Card Number</Label>
+                    <Input
+                      id="cardNumber"
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(e.target.value)}
+                      placeholder="1234 5678 9012 3456"
+                      className="mt-2"
+                      data-testid="input-card-number"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="cardExpiry">Expiry Date</Label>
+                      <Input
+                        id="cardExpiry"
+                        value={cardExpiry}
+                        onChange={(e) => setCardExpiry(e.target.value)}
+                        placeholder="MM/YY"
+                        className="mt-2"
+                        data-testid="input-card-expiry"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cardCvc">CVC</Label>
+                      <Input
+                        id="cardCvc"
+                        value={cardCvc}
+                        onChange={(e) => setCardCvc(e.target.value)}
+                        placeholder="123"
+                        className="mt-2"
+                        data-testid="input-card-cvc"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Promo Code */}
+                  <div className="pt-4 border-t">
+                    <Label htmlFor="promo">Promo Code (Optional)</Label>
+                    <div className="flex gap-2 mt-2">
                       <Input
                         id="promo"
                         value={promoCode}
@@ -2139,41 +2237,19 @@ export default function BookingWidget() {
                     )}
                   </div>
 
-                  {/* Terms */}
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="terms"
-                      checked={acceptTerms}
-                      onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
-                      data-testid="checkbox-terms"
-                    />
-                    <div className="flex-1">
-                      <label
-                        htmlFor="terms"
-                        className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        I agree to the{' '}
-                        <a href="#" className="text-orange-600 underline">
-                          Terms of Service
-                        </a>{' '}
-                        and cancellation policy
-                      </label>
-                    </div>
-                  </div>
-
                   <Button
                     onClick={() => {
-                      if (!acceptTerms) {
+                      if (!cardName || !cardNumber || !cardExpiry || !cardCvc) {
                         toast({
-                          title: "Terms Required",
-                          description: "Please accept the terms to continue",
+                          title: "Card Details Required",
+                          description: "Please enter your card details to continue",
                           variant: "destructive"
                         });
                         return;
                       }
                       setBookingState(prev => ({ ...prev, step: 'confirmation' }));
                     }}
-                    disabled={!acceptTerms}
+                    disabled={!cardName || !cardNumber || !cardExpiry || !cardCvc}
                     className="w-full bg-orange-500 text-white hover:bg-orange-600 text-lg py-6"
                     data-testid="button-book-now"
                   >
