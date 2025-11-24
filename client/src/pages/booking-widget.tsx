@@ -2073,8 +2073,9 @@ export default function BookingWidget() {
           </div>
         )}
 
-        <div className="flex-1">
-          <div className="max-w-2xl mx-auto px-6 py-8">
+        <div className="flex-1 flex">
+          {/* Left Side: Form */}
+          <div className="w-1/2 overflow-y-auto px-6 py-8">
             <Button
               variant="ghost"
               onClick={handleBack}
@@ -2087,77 +2088,87 @@ export default function BookingWidget() {
 
             <div className="mb-8">
               <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Personal Information</h1>
-            <p className="text-gray-600">Please provide your contact information</p>
+              <p className="text-gray-600">Please provide your contact information</p>
+            </div>
+
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <div>
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="mt-2"
+                    data-testid="input-first-name"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="mt-2"
+                    data-testid="input-last-name"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="mt-2"
+                    data-testid="input-email"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={authPhone}
+                    onChange={(e) => setAuthPhone(e.target.value)}
+                    className="mt-2"
+                    data-testid="input-phone"
+                  />
+                </div>
+
+                <Button
+                  onClick={() => {
+                    setBookingState(prev => ({
+                      ...prev,
+                      userFirstName: firstName,
+                      userLastName: lastName,
+                      userEmail: email,
+                      userPhone: authPhone,
+                      userName: `${firstName} ${lastName}`,
+                      step: 'checkout'
+                    }));
+                  }}
+                  className="w-full bg-black text-white hover:bg-gray-800 mt-6"
+                  disabled={!isValid}
+                  data-testid="button-continue"
+                >
+                  Continue to Checkout
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <div>
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="mt-2"
-                  data-testid="input-first-name"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="mt-2"
-                  data-testid="input-last-name"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-2"
-                  data-testid="input-email"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={authPhone}
-                  onChange={(e) => setAuthPhone(e.target.value)}
-                  className="mt-2"
-                  data-testid="input-phone"
-                />
-              </div>
-
-              <Button
-                onClick={() => {
-                  setBookingState(prev => ({
-                    ...prev,
-                    userFirstName: firstName,
-                    userLastName: lastName,
-                    userEmail: email,
-                    userPhone: authPhone,
-                    userName: `${firstName} ${lastName}`,
-                    step: 'checkout'
-                  }));
-                }}
-                className="w-full bg-black text-white hover:bg-gray-800 mt-6"
-                disabled={!isValid}
-                data-testid="button-continue"
-              >
-                Continue to Checkout
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Right Side: Image */}
+          <div className="w-1/2 relative">
+            <img 
+              src={spaImagePath} 
+              alt="Luxury spa" 
+              className="w-full h-full object-cover"
+              data-testid="img-personal-info"
+            />
           </div>
         </div>
       </div>
