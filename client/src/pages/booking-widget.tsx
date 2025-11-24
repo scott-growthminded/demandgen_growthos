@@ -179,6 +179,11 @@ export default function BookingWidget() {
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvc, setCardCvc] = useState('');
   const [cardName, setCardName] = useState('');
+
+  // Gift card recipient info
+  const [giftRecipientName, setGiftRecipientName] = useState('');
+  const [giftRecipientEmail, setGiftRecipientEmail] = useState('');
+  const [giftMessage, setGiftMessage] = useState('');
   
   // Pre-fill phone number from verification when reaching personal info
   useEffect(() => {
@@ -327,6 +332,7 @@ export default function BookingWidget() {
               width: bookingState.step === 'location' ? '0%' 
                    : bookingState.step === 'phone-verification' || bookingState.step === 'otp' || bookingState.step === 'customer-type' || bookingState.step === 'login' ? '20%'
                    : bookingState.step === 'product' ? '40%'
+                   : bookingState.step === 'gift-recipient' ? '50%'
                    : bookingState.step === 'datetime' || bookingState.step === 'personal-info' ? '60%'
                    : bookingState.step === 'checkout' ? '80%'
                    : bookingState.step === 'confirmation' ? '100%'
@@ -372,6 +378,9 @@ export default function BookingWidget() {
       case 'personal-info':
         setBookingState(prev => ({ ...prev, step: 'datetime' }));
         break;
+      case 'gift-recipient':
+        setBookingState(prev => ({ ...prev, step: 'product' }));
+        break;
       case 'checkout':
         // Check if this is a purchase-only flow (no appointment)
         const isMembership = bookingState.selectedProduct?.id.startsWith('membership-');
@@ -379,8 +388,11 @@ export default function BookingWidget() {
         const isGiftCard = bookingState.selectedProduct?.id.startsWith('giftcard-');
         const isPurchaseOnly = isMembership || isPackage || isGiftCard;
         
-        if (isPurchaseOnly) {
-          // For purchase-only, go back to product selection
+        if (isGiftCard) {
+          // For gift cards, go back to recipient info
+          setBookingState(prev => ({ ...prev, step: 'gift-recipient' }));
+        } else if (isPurchaseOnly) {
+          // For other purchases, go back to product selection
           setBookingState(prev => ({ ...prev, step: 'product' }));
         } else if (bookingState.customerType === 'new') {
           setBookingState(prev => ({ ...prev, step: 'personal-info' }));
@@ -1060,8 +1072,15 @@ export default function BookingWidget() {
       const isPackage = product.id.startsWith('package-');
       const isGiftCard = product.id.startsWith('giftcard-');
       
-      if (isMembership || isPackage || isGiftCard) {
-        // Go directly to checkout for memberships, packages, and gift cards
+      if (isGiftCard) {
+        // For gift cards, go to recipient info page
+        setBookingState(prev => ({ 
+          ...prev, 
+          selectedProduct: product,
+          step: 'gift-recipient'
+        }));
+      } else if (isMembership || isPackage) {
+        // Go directly to checkout for memberships and packages
         setBookingState(prev => ({ 
           ...prev, 
           selectedProduct: product,
@@ -1493,6 +1512,125 @@ export default function BookingWidget() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      </div>
+    );
+  }
+
+  // Step 3.5: Gift Card Recipient Information
+  if (bookingState.step === 'gift-recipient') {
+    const isValid = giftRecipientName && giftRecipientEmail;
+
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        {/* Header */}
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
+          <img src={glowbarLogoPath} alt="Glowbar" className="h-8" data-testid="img-logo" />
+          <Button variant="ghost" data-testid="button-my-account">
+            <User className="w-4 h-4 mr-2" />
+            My Account
+          </Button>
+        </div>
+
+        <ProgressBar />
+
+        <div className="flex-1">
+          <div className="max-w-2xl mx-auto px-6 py-8">
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="mb-6"
+              data-testid="button-back"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Gift Card Recipient</h1>
+              <p className="text-gray-600" data-testid="text-subtitle">
+                Who are you sending this gift card to?
+              </p>
+            </div>
+
+            <Card>
+              <CardContent className="pt-6 space-y-6">
+                <div>
+                  <Label htmlFor="recipientName">Recipient Name *</Label>
+                  <Input
+                    id="recipientName"
+                    value={giftRecipientName}
+                    onChange={(e) => setGiftRecipientName(e.target.value)}
+                    placeholder="Enter recipient's name"
+                    className="mt-2"
+                    data-testid="input-recipient-name"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="recipientEmail">Recipient Email *</Label>
+                  <Input
+                    id="recipientEmail"
+                    type="email"
+                    value={giftRecipientEmail}
+                    onChange={(e) => setGiftRecipientEmail(e.target.value)}
+                    placeholder="recipient@example.com"
+                    className="mt-2"
+                    data-testid="input-recipient-email"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    The gift card will be sent to this email address
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="giftMessage">Personal Message (Optional)</Label>
+                  <textarea
+                    id="giftMessage"
+                    value={giftMessage}
+                    onChange={(e) => setGiftMessage(e.target.value)}
+                    placeholder="Write a personal message..."
+                    rows={4}
+                    className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    data-testid="input-gift-message"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Maximum 200 characters
+                  </p>
+                </div>
+
+                <div className="pt-4">
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h3 className="font-semibold mb-2">Gift Card Summary</h3>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Gift Card</span>
+                        <span className="font-medium">{bookingState.selectedProduct?.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Amount</span>
+                        <span className="font-medium">${bookingState.selectedProduct?.price.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={() => {
+                      setBookingState(prev => ({ 
+                        ...prev, 
+                        step: bookingState.customerType === 'new' ? 'personal-info' : 'checkout'
+                      }));
+                    }}
+                    disabled={!isValid}
+                    className="w-full bg-orange-500 text-white hover:bg-orange-600"
+                    data-testid="button-continue"
+                  >
+                    Continue to {bookingState.customerType === 'new' ? 'Your Info' : 'Checkout'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     );
   }
