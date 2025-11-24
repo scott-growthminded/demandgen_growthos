@@ -341,40 +341,41 @@ export default function BookingWidget() {
     }
   };
 
-  // Step 1: Location Selection (NEW FIRST STEP)
-  if (bookingState.step === 'location') {
-    // Group locations by state
-    const groupedLocations: Record<string, any[]> = {};
-    if (locationsData) {
-      Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
-        if (!groupedLocations[state]) {
-          groupedLocations[state] = [];
-        }
-        Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
-          groupedLocations[state].push(...(locations as any[]));
-        });
+  // Group locations by state (needs to be at component level)
+  const groupedLocations: Record<string, any[]> = {};
+  if (locationsData) {
+    Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
+      if (!groupedLocations[state]) {
+        groupedLocations[state] = [];
+      }
+      Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
+        groupedLocations[state].push(...(locations as any[]));
       });
-    }
+    });
+  }
 
-    // Zoom to expanded state's locations
-    useEffect(() => {
-      if (expandedState && mapRef.current) {
-        const stateLocations = groupedLocations[expandedState] || [];
-        if (stateLocations.length > 0) {
-          const coordinates = stateLocations
-            .map((loc: any) => [
-              loc.coordinates?.lat || loc.coordinates?.latitude,
-              loc.coordinates?.lng || loc.coordinates?.longitude
-            ])
-            .filter((coord: any) => coord[0] && coord[1]);
+  // Zoom to expanded state's locations - useEffect at component level
+  useEffect(() => {
+    if (bookingState.step === 'location' && expandedState && mapRef.current) {
+      const stateLocations = groupedLocations[expandedState] || [];
+      if (stateLocations.length > 0) {
+        const coordinates = stateLocations
+          .map((loc: any) => [
+            loc.coordinates?.lat || loc.coordinates?.latitude,
+            loc.coordinates?.lng || loc.coordinates?.longitude
+          ])
+          .filter((coord: any) => coord[0] && coord[1]);
 
-          if (coordinates.length > 0) {
-            const bounds = L.latLngBounds(coordinates);
-            mapRef.current.fitBounds(bounds, { padding: [50, 50] });
-          }
+        if (coordinates.length > 0) {
+          const bounds = L.latLngBounds(coordinates as any);
+          mapRef.current.fitBounds(bounds, { padding: [50, 50] });
         }
       }
-    }, [expandedState]);
+    }
+  }, [expandedState, bookingState.step, groupedLocations]);
+
+  // Step 1: Location Selection (NEW FIRST STEP)
+  if (bookingState.step === 'location') {
 
     // Get all locations for the map
     const allLocations: any[] = [];
@@ -436,38 +437,42 @@ export default function BookingWidget() {
                   </button>
                   
                   {isExpanded && (
-                    <div className="pb-4 space-y-2">
+                    <div className="pb-4 space-y-3 ml-4">
                       {locations.map((location: any) => (
-                        <button
-                          key={location.id}
-                          onClick={() => {
-                            setSelectedDate(undefined);
-                            setSelectedTimeSlot(undefined);
-                            setBookingState(prev => ({
-                              ...prev,
-                              selectedLocation: {
-                                id: location.id,
-                                name: location.name,
-                                address: location.address?.line1 
-                                  ? `${location.address.line1}, ${location.address?.city}, ${location.address?.state}`
-                                  : `${location.address?.city}, ${location.address?.state}`,
-                                city: location.address?.city || '',
-                                state: location.address?.state || '',
-                              },
-                              selectedDate: undefined,
-                              selectedTime: undefined,
-                              selectedProduct: undefined,
-                              step: 'customer-type'
-                            }));
-                          }}
-                          className="w-full p-4 ml-4 text-left border rounded-lg hover:border-gray-400 transition-colors"
-                          data-testid={`button-location-${location.id}`}
-                        >
-                          <h3 className="font-semibold mb-1">{location.name}</h3>
-                          <p className="text-sm text-gray-600">
-                            {location.address?.line1}, {location.address?.city}
-                          </p>
-                        </button>
+                        <Card key={location.id} className="overflow-hidden">
+                          <CardContent className="p-4">
+                            <h3 className="font-semibold mb-1">{location.name}</h3>
+                            <p className="text-sm text-gray-600 mb-3">
+                              {location.address?.line1}, {location.address?.city}, {location.address?.state}
+                            </p>
+                            <Button
+                              onClick={() => {
+                                setSelectedDate(undefined);
+                                setSelectedTimeSlot(undefined);
+                                setBookingState(prev => ({
+                                  ...prev,
+                                  selectedLocation: {
+                                    id: location.id,
+                                    name: location.name,
+                                    address: location.address?.line1 
+                                      ? `${location.address.line1}, ${location.address?.city}, ${location.address?.state}`
+                                      : `${location.address?.city}, ${location.address?.state}`,
+                                    city: location.address?.city || '',
+                                    state: location.address?.state || '',
+                                  },
+                                  selectedDate: undefined,
+                                  selectedTime: undefined,
+                                  selectedProduct: undefined,
+                                  step: 'customer-type'
+                                }));
+                              }}
+                              className="w-full bg-black text-white hover:bg-gray-800"
+                              data-testid={`button-select-studio-${location.id}`}
+                            >
+                              SELECT STUDIO
+                            </Button>
+                          </CardContent>
+                        </Card>
                       ))}
                     </div>
                   )}
@@ -551,8 +556,9 @@ export default function BookingWidget() {
                               }}
                               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
                               onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#000'}
+                              data-testid={`button-select-studio-popup-${location.id}`}
                             >
-                              Select
+                              SELECT STUDIO
                             </button>
                           </div>
                         </Popup>
