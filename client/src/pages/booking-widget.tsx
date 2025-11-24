@@ -151,6 +151,7 @@ export default function BookingWidget() {
   const [esthetician, setEsthetician] = useState('any');
   const [expandedNearbyLocations, setExpandedNearbyLocations] = useState<Set<string>>(new Set());
   const [selectedNearbyLocation, setSelectedNearbyLocation] = useState<{locationId: string; locationName: string; time: string} | null>(null);
+  const [currentCalendarMonth, setCurrentCalendarMonth] = useState<Date>(new Date()); // Track current month being viewed
   
   // Checkout state
   const [promoCode, setPromoCode] = useState('');
@@ -1572,9 +1573,127 @@ export default function BookingWidget() {
               </p>
             </div>
 
-            {/* Main Content: Appointments Left, Calendar Right */}
+            {/* Main Content: Calendar Left, Appointments Right */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              {/* Left Side: Available Appointments */}
+              {/* Left Side: Calendar */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Select a Date</CardTitle>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const newMonth = new Date(currentCalendarMonth);
+                          newMonth.setMonth(newMonth.getMonth() - 1);
+                          setCurrentCalendarMonth(newMonth);
+                        }}
+                        disabled={currentCalendarMonth.getMonth() === new Date().getMonth() && currentCalendarMonth.getFullYear() === new Date().getFullYear()}
+                        data-testid="button-prev-month"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const newMonth = new Date(currentCalendarMonth);
+                          newMonth.setMonth(newMonth.getMonth() + 1);
+                          setCurrentCalendarMonth(newMonth);
+                        }}
+                        data-testid="button-next-month"
+                      >
+                        <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
+                      </Button>
+                    </div>
+                  </div>
+                  <CardDescription className="flex items-center gap-4 mt-2">
+                    <span className="flex items-center gap-1">
+                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                      <span className="text-xs">Discounted</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-3 h-3 rounded-full bg-black"></div>
+                      <span className="text-xs">Selected</span>
+                    </span>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const today = new Date();
+                    const monthStart = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth(), 1);
+                    const monthName = format(monthStart, 'MMMM yyyy');
+                    const firstDayOfWeek = monthStart.getDay();
+                    const paddingDays = Array(firstDayOfWeek).fill(null);
+                    const daysInMonth = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + 1, 0).getDate();
+                    
+                    return (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3">{monthName}</h3>
+                        
+                        {/* Day labels */}
+                        <div className="grid grid-cols-7 gap-2 mb-2">
+                          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                            <div key={day} className="text-center text-xs font-medium text-gray-500 py-1">
+                              {day}
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Calendar grid */}
+                        <div className="grid grid-cols-7 gap-2">
+                          {/* Padding cells */}
+                          {paddingDays.map((_, idx) => (
+                            <div key={`padding-${idx}`} className="aspect-square"></div>
+                          ))}
+                          
+                          {/* Actual days */}
+                          {Array.from({ length: daysInMonth }, (_, i) => {
+                            const day = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth(), i + 1);
+                            const isPast = day < today && format(day, 'yyyy-MM-dd') !== format(today, 'yyyy-MM-dd');
+                            const isSelected = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
+                            const isDiscounted = isDiscountedDate(day);
+                            
+                            if (isPast) {
+                              return (
+                                <div key={i} className="aspect-square flex items-center justify-center text-gray-300">
+                                  {i + 1}
+                                </div>
+                              );
+                            }
+                            
+                            return (
+                              <button
+                                key={i}
+                                onClick={() => {
+                                  setSelectedDate(day);
+                                  setSelectedTimeSlot(undefined);
+                                }}
+                                className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-colors relative ${
+                                  isSelected
+                                    ? 'bg-black text-white'
+                                    : isDiscounted
+                                    ? 'bg-orange-100 text-orange-900 hover:bg-orange-200'
+                                    : 'hover:bg-gray-100'
+                                }`}
+                                data-testid={`calendar-day-${format(day, 'yyyy-MM-dd')}`}
+                              >
+                                {i + 1}
+                                {isDiscounted && !isSelected && (
+                                  <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-orange-500"></div>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              {/* Right Side: Available Appointments */}
               <div className="space-y-6">
                 {/* Esthetician Filter */}
                 <Card>
@@ -1658,114 +1777,6 @@ export default function BookingWidget() {
                   </Button>
                 )}
               </div>
-
-              {/* Right Side: Calendar */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Select a Date</CardTitle>
-                  <CardDescription className="flex items-center gap-4 mt-2">
-                    <span className="flex items-center gap-1">
-                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                      <span className="text-xs">Discounted</span>
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <div className="w-3 h-3 rounded-full bg-black"></div>
-                      <span className="text-xs">Selected</span>
-                    </span>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    {/* Calendar View */}
-                    {(() => {
-                      const today = new Date();
-                      const months: { month: number; year: number; days: Date[] }[] = [];
-                      
-                      // Group days by month
-                      calendarDays.forEach(day => {
-                        const monthYear = `${day.getMonth()}-${day.getFullYear()}`;
-                        let monthGroup = months.find(m => m.month === day.getMonth() && m.year === day.getFullYear());
-                        if (!monthGroup) {
-                          monthGroup = { month: day.getMonth(), year: day.getFullYear(), days: [] };
-                          months.push(monthGroup);
-                        }
-                        monthGroup.days.push(day);
-                      });
-
-                      return months.map((monthData) => {
-                        const monthStart = new Date(monthData.year, monthData.month, 1);
-                        const monthName = format(monthStart, 'MMMM yyyy');
-                        const firstDayOfWeek = monthStart.getDay(); // 0 = Sunday
-                        
-                        // Create padding for days before the month starts
-                        const paddingDays = Array(firstDayOfWeek).fill(null);
-                        
-                        return (
-                          <div key={`${monthData.month}-${monthData.year}`}>
-                            <h3 className="text-lg font-semibold mb-3">{monthName}</h3>
-                            
-                            {/* Day labels */}
-                            <div className="grid grid-cols-7 gap-2 mb-2">
-                              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                <div key={day} className="text-center text-xs font-medium text-gray-500 py-1">
-                                  {day}
-                                </div>
-                              ))}
-                            </div>
-                            
-                            {/* Calendar grid */}
-                            <div className="grid grid-cols-7 gap-2">
-                              {/* Padding cells */}
-                              {paddingDays.map((_, idx) => (
-                                <div key={`padding-${idx}`} className="aspect-square"></div>
-                              ))}
-                              
-                              {/* Actual days */}
-                              {Array.from({ length: new Date(monthData.year, monthData.month + 1, 0).getDate() }, (_, i) => {
-                                const day = new Date(monthData.year, monthData.month, i + 1);
-                                const isPast = day < today && format(day, 'yyyy-MM-dd') !== format(today, 'yyyy-MM-dd');
-                                const isSelected = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
-                                const isDiscounted = isDiscountedDate(day);
-                                
-                                if (isPast) {
-                                  return (
-                                    <div key={i} className="aspect-square flex items-center justify-center text-gray-300">
-                                      {i + 1}
-                                    </div>
-                                  );
-                                }
-                                
-                                return (
-                                  <button
-                                    key={i}
-                                    onClick={() => {
-                                      setSelectedDate(day);
-                                      setSelectedTimeSlot(undefined);
-                                    }}
-                                    className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-colors relative ${
-                                      isSelected
-                                        ? 'bg-black text-white'
-                                        : isDiscounted
-                                        ? 'bg-orange-100 text-orange-900 hover:bg-orange-200'
-                                        : 'hover:bg-gray-100'
-                                    }`}
-                                    data-testid={`calendar-day-${format(day, 'yyyy-MM-dd')}`}
-                                  >
-                                    {i + 1}
-                                    {isDiscounted && !isSelected && (
-                                      <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-orange-500"></div>
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                </CardContent>
-              </Card>
             </div>
 
             {/* Alternative Locations */}
