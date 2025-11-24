@@ -16,6 +16,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { format, addDays } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -127,6 +135,13 @@ export default function BookingWidget() {
   const [accutane, setAccutane] = useState(false);
   const [injections, setInjections] = useState(false);
   const [waxing, setWaxing] = useState(false);
+  
+  // Confirmation dialog state (for product selection)
+  const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] = useState(false);
+  const [pendingProduct, setPendingProduct] = useState<any>(null);
+  const [confirmAccutane, setConfirmAccutane] = useState(false);
+  const [confirmInjections, setConfirmInjections] = useState(false);
+  const [confirmWaxing, setConfirmWaxing] = useState(false);
   
   // Date/Time state
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -946,15 +961,27 @@ export default function BookingWidget() {
   // Step 3: Product Selection (replaces old 'service' step)  
   if (bookingState.step === 'product') {
     const handleProductSelect = (product: any) => {
-      setSelectedDate(undefined);
-      setSelectedTimeSlot(undefined);
-      setBookingState(prev => ({ 
-        ...prev, 
-        selectedProduct: product,
-        selectedDate: undefined,
-        selectedTime: undefined,
-        step: 'datetime' 
-      }));
+      setPendingProduct(product);
+      setConfirmAccutane(false);
+      setConfirmInjections(false);
+      setConfirmWaxing(false);
+      setIsConfirmationDialogOpen(true);
+    };
+
+    const handleConfirmationContinue = () => {
+      if (confirmAccutane && confirmInjections && confirmWaxing && pendingProduct) {
+        setSelectedDate(undefined);
+        setSelectedTimeSlot(undefined);
+        setBookingState(prev => ({ 
+          ...prev, 
+          selectedProduct: pendingProduct,
+          selectedDate: undefined,
+          selectedTime: undefined,
+          step: 'datetime' 
+        }));
+        setIsConfirmationDialogOpen(false);
+        setPendingProduct(null);
+      }
     };
 
     return (
@@ -1267,6 +1294,74 @@ export default function BookingWidget() {
             </Accordion>
           </div>
         </div>
+
+        {/* Confirmation Dialog */}
+        <Dialog open={isConfirmationDialogOpen} onOpenChange={setIsConfirmationDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]" data-testid="dialog-confirmation">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold">Please check the following boxes to confirm you have not:</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6 py-4">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="confirm-accutane"
+                  checked={confirmAccutane}
+                  onCheckedChange={(checked) => setConfirmAccutane(checked as boolean)}
+                  className="mt-1 h-6 w-6 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                  data-testid="checkbox-accutane"
+                />
+                <label
+                  htmlFor="confirm-accutane"
+                  className="text-lg leading-relaxed cursor-pointer"
+                >
+                  Taken Accutane in the last six (6) months
+                </label>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="confirm-injections"
+                  checked={confirmInjections}
+                  onCheckedChange={(checked) => setConfirmInjections(checked as boolean)}
+                  className="mt-1 h-6 w-6 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                  data-testid="checkbox-injections"
+                />
+                <label
+                  htmlFor="confirm-injections"
+                  className="text-lg leading-relaxed cursor-pointer"
+                >
+                  Received injections (Botox, fillers, etc.) or laser/electrolysis hair removal in the last two (2) weeks
+                </label>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="confirm-waxing"
+                  checked={confirmWaxing}
+                  onCheckedChange={(checked) => setConfirmWaxing(checked as boolean)}
+                  className="mt-1 h-6 w-6 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                  data-testid="checkbox-waxing"
+                />
+                <label
+                  htmlFor="confirm-waxing"
+                  className="text-lg leading-relaxed cursor-pointer"
+                >
+                  Received waxing or threading facial hair removal in the last three (3) days
+                </label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                onClick={handleConfirmationContinue}
+                disabled={!confirmAccutane || !confirmInjections || !confirmWaxing}
+                className="w-full h-12 bg-black text-white hover:bg-gray-800 disabled:opacity-50"
+                data-testid="button-confirm-continue"
+              >
+                Continue
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
