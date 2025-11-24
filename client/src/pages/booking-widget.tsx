@@ -1394,6 +1394,7 @@ export default function BookingWidget() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+            </div>
           </div>
         </div>
 
