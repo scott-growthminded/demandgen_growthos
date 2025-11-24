@@ -1652,9 +1652,20 @@ export default function BookingWidget() {
     const allTimeSlots = generateTimeSlots();
     
     // Filter time slots by selected esthetician
-    const timeSlots = esthetician === 'any' 
-      ? allTimeSlots 
-      : allTimeSlots.filter((slot: any) => slot.staffVariantId === esthetician || slot.staffId === esthetician);
+    let timeSlots = allTimeSlots;
+    if (esthetician !== 'any') {
+      // Map hardcoded esthetician selections to actual staff IDs
+      let targetStaffId = esthetician;
+      if (esthetician === 'esthetician-one' && staffData?.staff?.[0]) {
+        targetStaffId = staffData.staff[0].id;
+      } else if (esthetician === 'esthetician-two' && staffData?.staff?.[1]) {
+        targetStaffId = staffData.staff[1].id;
+      }
+      
+      timeSlots = allTimeSlots.filter((slot: any) => 
+        slot.staffVariantId === targetStaffId || slot.staffId === targetStaffId
+      );
+    }
     
     const hasAvailability = timeSlots.length > 0;
 
@@ -1856,6 +1867,8 @@ export default function BookingWidget() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="any">Any esthetician</SelectItem>
+                        <SelectItem value="esthetician-one">Esthetician One</SelectItem>
+                        <SelectItem value="esthetician-two">Esthetician Two</SelectItem>
                         {staffData?.staff?.map((staff) => (
                           <SelectItem key={staff.id} value={staff.id}>
                             {staff.displayName}
