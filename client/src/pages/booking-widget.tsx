@@ -270,6 +270,40 @@ export default function BookingWidget() {
     }
   }, [bookingState.step, selectedDate, availabilityData, availabilityLoading]);
 
+  // Progress Bar Component
+  const ProgressBar = () => (
+    <div className="border-b border-gray-200 bg-gray-50">
+      <div className="px-6 py-3">
+        <div className="flex items-center justify-center gap-8 text-sm font-medium text-gray-600 mb-3">
+          <span>LOCATION</span>
+          <span className="text-gray-300">•</span>
+          <span>WHO'S COMING</span>
+          <span className="text-gray-300">•</span>
+          <span>SERVICES</span>
+          <span className="text-gray-300">•</span>
+          <span>SCHEDULING</span>
+          <span className="text-gray-300">•</span>
+          <span>CHECKOUT</span>
+        </div>
+        <div className="w-full bg-gray-200 h-1 rounded-full overflow-hidden">
+          <div 
+            className="bg-orange-500 h-full rounded-full transition-all duration-300"
+            style={{ 
+              width: bookingState.step === 'location' ? '0%' 
+                   : bookingState.step === 'customer-type' || bookingState.step === 'login' ? '20%'
+                   : bookingState.step === 'product' ? '40%'
+                   : bookingState.step === 'datetime' || bookingState.step === 'personal-info' ? '60%'
+                   : bookingState.step === 'checkout' ? '80%'
+                   : bookingState.step === 'confirmation' ? '100%'
+                   : '0%'
+            }}
+            data-testid="progress-bar"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   const handleBack = () => {
     // Handle back navigation based on current step and booking state
     switch (bookingState.step) {
@@ -374,22 +408,7 @@ export default function BookingWidget() {
           </Button>
         </div>
 
-        {/* Status Bar */}
-        <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
-          <div className="flex items-center justify-between text-sm font-medium text-gray-600">
-            <span>LOCATION</span>
-            <span className="text-gray-300">•</span>
-            <span>WHO'S COMING</span>
-            <span className="text-gray-300">•</span>
-            <span>SERVICES</span>
-            <span className="text-gray-300">•</span>
-            <span>ADD-ONS</span>
-            <span className="text-gray-300">•</span>
-            <span>SCHEDULING</span>
-            <span className="text-gray-300">•</span>
-            <span>CHECKOUT</span>
-          </div>
-        </div>
+        <ProgressBar />
 
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden gap-8 px-6 py-8">
@@ -560,8 +579,10 @@ export default function BookingWidget() {
   // Step 2: Customer Type Selection
   if (bookingState.step === 'customer-type') {
     return (
-      <div className="min-h-screen bg-white flex items-center">
-        <div className="w-full max-w-6xl mx-auto px-6 py-8 grid grid-cols-2 gap-12">
+      <div className="min-h-screen bg-white flex flex-col">
+        <ProgressBar />
+        <div className="flex-1 flex items-center">
+          <div className="w-full max-w-6xl mx-auto px-6 py-8 grid grid-cols-2 gap-12">
           <div className="flex flex-col justify-center">
             <h1 className="text-5xl font-bold mb-4" data-testid="text-title">How can we help?</h1>
             
@@ -596,12 +617,13 @@ export default function BookingWidget() {
             </div>
           </div>
 
-          <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
-            <img 
-              src="https://glowbar.com/cdn/shop/files/glowbar_estheticians_certified_985ba0ae-536e-48ac-832d-d86b6a70c1c6.jpg?v=1675461347&width=1500" 
-              alt="Glowbar certified estheticians"
-              className="w-full h-full object-cover"
-            />
+            <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
+              <img 
+                src="https://glowbar.com/cdn/shop/files/glowbar_estheticians_certified_985ba0ae-536e-48ac-832d-d86b6a70c1c6.jpg?v=1675461347&width=1500" 
+                alt="Glowbar certified estheticians"
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -622,23 +644,25 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white flex items-center">
-        <div className="w-full max-w-lg mx-auto px-6 py-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
+      <div className="min-h-screen bg-white flex flex-col">
+        <ProgressBar />
+        <div className="flex-1 flex items-center">
+          <div className="w-full max-w-lg mx-auto px-6 py-8">
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="mb-6"
+              data-testid="button-back"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
 
-          <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Log in</h1>
+            <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Log in</h1>
           
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="email" className="text-base mb-2 block">Email</Label>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="email" className="text-base mb-2 block">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -674,6 +698,7 @@ export default function BookingWidget() {
           </div>
         </div>
       </div>
+    </div>
     );
   }
 
@@ -705,8 +730,10 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white">
-        <div className="w-full max-w-4xl mx-auto px-6 py-8">
+      <div className="min-h-screen bg-white flex flex-col">
+        <ProgressBar />
+        <div className="flex-1">
+          <div className="w-full max-w-4xl mx-auto px-6 py-8">
           <Button
             variant="ghost"
             onClick={handleBack}
@@ -742,11 +769,11 @@ export default function BookingWidget() {
           </div>
         </div>
       </div>
+    </div>
     );
   }
 
-
-  // DateTime Step
+  // Step 4: DateTime Selection
   if (bookingState.step === 'datetime') {
     // Generate time slots from Boulevard availability data
     const generateTimeSlots = () => {
@@ -774,17 +801,19 @@ export default function BookingWidget() {
     const isValid = selectedDate && selectedTimeSlot;
 
     return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-2xl mx-auto px-6 py-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
+      <div className="min-h-screen bg-white flex flex-col">
+        <ProgressBar />
+        <div className="flex-1">
+          <div className="max-w-2xl mx-auto px-6 py-8">
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="mb-6"
+              data-testid="button-back"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
 
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Select Date & Time</h1>
@@ -870,30 +899,33 @@ export default function BookingWidget() {
               Continue
             </Button>
           )}
+          </div>
         </div>
       </div>
     );
   }
 
-  // Personal Info Step (for new users)
+  // Step 5: Personal Info (for new users)
   if (bookingState.step === 'personal-info') {
     const isValid = firstName && lastName && email && authPhone;
 
     return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-2xl mx-auto px-6 py-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
+      <div className="min-h-screen bg-white flex flex-col">
+        <ProgressBar />
+        <div className="flex-1">
+          <div className="max-w-2xl mx-auto px-6 py-8">
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="mb-6"
+              data-testid="button-back"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
 
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Personal Information</h1>
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Personal Information</h1>
             <p className="text-gray-600">Please provide your contact information</p>
           </div>
 
@@ -965,20 +997,13 @@ export default function BookingWidget() {
               </Button>
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Checkout guard: redirect if required data is missing (using useEffect to avoid render-time mutation)
-  useEffect(() => {
-    if (bookingState.step === 'checkout') {
-      if (!bookingState.selectedProduct || !bookingState.selectedLocation || !bookingState.selectedTime) {
-        setBookingState(prev => ({ ...prev, step: 'location' }));
-      }
-    }
-  }, [bookingState.step, bookingState.selectedProduct, bookingState.selectedLocation, bookingState.selectedTime]);
-
+  // Step 6: Checkout
   if (bookingState.step === 'checkout') {
     // Early return while redirecting
     if (!bookingState.selectedProduct || !bookingState.selectedLocation || !bookingState.selectedTime) {
@@ -990,20 +1015,22 @@ export default function BookingWidget() {
     const total = bookingState.isMember ? 0 : productPrice + tax;
 
     return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
+      <div className="min-h-screen bg-white flex flex-col">
+        <ProgressBar />
+        <div className="flex-1">
+          <div className="max-w-4xl mx-auto px-6 py-8">
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="mb-6"
+              data-testid="button-back"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
 
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Checkout</h1>
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Checkout</h1>
             <p className="text-gray-600" data-testid="text-subtitle">Review your appointment details</p>
           </div>
 
@@ -1163,19 +1190,22 @@ export default function BookingWidget() {
           </div>
         </div>
       </div>
+    </div>
     );
   }
 
-  // Confirmation Step
+  // Step 7: Confirmation
   if (bookingState.step === 'confirmation') {
     return (
-      <div className="min-h-screen bg-white">
-        <div className="max-w-2xl mx-auto px-6 py-8">
-          <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-12 h-12 text-green-600" />
-            </div>
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Booking Confirmed!</h1>
+      <div className="min-h-screen bg-white flex flex-col">
+        <ProgressBar />
+        <div className="flex-1">
+          <div className="max-w-2xl mx-auto px-6 py-8">
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-12 h-12 text-green-600" />
+              </div>
+              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Booking Confirmed!</h1>
             <p className="text-gray-600" data-testid="text-subtitle">
               Your appointment has been successfully scheduled
             </p>
@@ -1233,6 +1263,7 @@ export default function BookingWidget() {
           </div>
         </div>
       </div>
+    </div>
     );
   }
 
