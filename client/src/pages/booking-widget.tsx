@@ -37,6 +37,8 @@ const blackIcon = new L.Icon({
 });
 
 type BookingStep = 
+  | 'phone-verification'
+  | 'otp'
   | 'customer-type'
   | 'login'
   | 'product'
@@ -45,6 +47,8 @@ type BookingStep =
   | 'personal-info'
   | 'checkout'
   | 'confirmation';
+
+type UserFlow = 'lead' | 'non-member' | 'member';
 
 interface Location {
   id: string;
@@ -58,6 +62,7 @@ interface Location {
 
 interface BookingState {
   step: BookingStep;
+  userFlow?: UserFlow;
   customerType?: 'new' | 'returning';
   isMember?: boolean;
   selectedRegion?: string;
@@ -140,6 +145,10 @@ export default function BookingWidget() {
   const [emailOptIn, setEmailOptIn] = useState(true);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  
+  // Phone verification state
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [otpCode, setOtpCode] = useState('');
 
   // Fetch locations
   const { data: locationsData, isLoading: locationsLoading } = useQuery({
@@ -290,7 +299,7 @@ export default function BookingWidget() {
             className="bg-orange-500 h-full rounded-full transition-all duration-300"
             style={{ 
               width: bookingState.step === 'location' ? '0%' 
-                   : bookingState.step === 'customer-type' || bookingState.step === 'login' ? '20%'
+                   : bookingState.step === 'phone-verification' || bookingState.step === 'otp' || bookingState.step === 'customer-type' || bookingState.step === 'login' ? '20%'
                    : bookingState.step === 'product' ? '40%'
                    : bookingState.step === 'datetime' || bookingState.step === 'personal-info' ? '60%'
                    : bookingState.step === 'checkout' ? '80%'
@@ -307,6 +316,12 @@ export default function BookingWidget() {
   const handleBack = () => {
     // Handle back navigation based on current step and booking state
     switch (bookingState.step) {
+      case 'phone-verification':
+        setBookingState(prev => ({ ...prev, step: 'location' }));
+        break;
+      case 'otp':
+        setBookingState(prev => ({ ...prev, step: 'phone-verification' }));
+        break;
       case 'customer-type':
         setBookingState(prev => ({ ...prev, step: 'location' }));
         break;
@@ -314,7 +329,12 @@ export default function BookingWidget() {
         setBookingState(prev => ({ ...prev, step: 'customer-type' }));
         break;
       case 'product':
-        if (bookingState.customerType === 'new') {
+        // Route back based on user flow
+        if (bookingState.userFlow === 'lead') {
+          setBookingState(prev => ({ ...prev, step: 'phone-verification' }));
+        } else if (bookingState.userFlow === 'non-member' || bookingState.userFlow === 'member') {
+          setBookingState(prev => ({ ...prev, step: 'otp' }));
+        } else if (bookingState.customerType === 'new') {
           setBookingState(prev => ({ ...prev, step: 'customer-type' }));
         } else {
           setBookingState(prev => ({ ...prev, step: 'login' }));
@@ -463,7 +483,7 @@ export default function BookingWidget() {
                                   selectedDate: undefined,
                                   selectedTime: undefined,
                                   selectedProduct: undefined,
-                                  step: 'customer-type'
+                                  step: 'phone-verification'
                                 }));
                               }}
                               className="w-full bg-black text-white hover:bg-gray-800"
@@ -539,7 +559,7 @@ export default function BookingWidget() {
                                   selectedDate: undefined,
                                   selectedTime: undefined,
                                   selectedProduct: undefined,
-                                  step: 'customer-type'
+                                  step: 'phone-verification'
                                 }));
                               }}
                               style={{
@@ -582,7 +602,178 @@ export default function BookingWidget() {
     );
   }
 
-  // Step 2: Customer Type Selection
+  // Step 2: Phone Verification
+  if (bookingState.step === 'phone-verification') {
+    const handlePhoneSubmit = () => {
+      // Remove all non-digit characters
+      const cleanPhone = phoneNumber.replace(/\D/g, '');
+      
+      // Determine flow based on phone number pattern
+      if (/^1+$/.test(cleanPhone)) {
+        // All 1's - Lead flow
+        setBookingState(prev => ({
+          ...prev,
+          userFlow: 'lead',
+          userPhone: phoneNumber,
+          customerType: 'new',
+          isMember: false,
+          step: 'product'
+        }));
+      } else if (/^2+$/.test(cleanPhone)) {
+        // All 2's - Non-member flow
+        setBookingState(prev => ({
+          ...prev,
+          userFlow: 'non-member',
+          userPhone: phoneNumber,
+          customerType: 'returning',
+          isMember: false,
+          step: 'otp'
+        }));
+      } else if (/^3+$/.test(cleanPhone)) {
+        // All 3's - Member flow
+        setBookingState(prev => ({
+          ...prev,
+          userFlow: 'member',
+          userPhone: phoneNumber,
+          customerType: 'returning',
+          isMember: true,
+          step: 'otp'
+        }));
+      } else {
+        toast({
+          title: "Invalid Phone Number",
+          description: "Please enter a valid phone number (all 1's, all 2's, or all 3's for testing)",
+          variant: "destructive"
+        });
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <ProgressBar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-md px-6 py-8">
+            <button
+              onClick={handleBack}
+              className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
+              data-testid="button-back"
+            >
+              <ChevronLeft className="w-5 h-5 mr-1" />
+              Back
+            </button>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">Enter Your Phone Number</CardTitle>
+                <CardDescription>
+                  We'll use this to verify your account
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="(555) 555-5555"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    data-testid="input-phone"
+                  />
+                  <p className="text-sm text-gray-500">
+                    For testing: Use all 1's for new customers, all 2's for returning non-members, or all 3's for members
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handlePhoneSubmit}
+                  className="w-full bg-black text-white hover:bg-gray-800"
+                  disabled={!phoneNumber}
+                  data-testid="button-submit-phone"
+                >
+                  Continue
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 3: OTP Verification
+  if (bookingState.step === 'otp') {
+    const handleOtpSubmit = () => {
+      // Accept any OTP code
+      if (otpCode.length >= 4) {
+        setBookingState(prev => ({
+          ...prev,
+          step: 'product'
+        }));
+      } else {
+        toast({
+          title: "Invalid OTP",
+          description: "Please enter a valid OTP code",
+          variant: "destructive"
+        });
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <ProgressBar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-md px-6 py-8">
+            <button
+              onClick={handleBack}
+              className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
+              data-testid="button-back"
+            >
+              <ChevronLeft className="w-5 h-5 mr-1" />
+              Back
+            </button>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">Verify Your Phone Number</CardTitle>
+                <CardDescription>
+                  We've sent a code to {bookingState.userPhone}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="otp">Enter OTP Code</Label>
+                  <Input
+                    id="otp"
+                    type="text"
+                    placeholder="Enter code"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    maxLength={6}
+                    data-testid="input-otp"
+                  />
+                  <p className="text-sm text-gray-500">
+                    For testing: Any code with 4 or more characters will be accepted
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleOtpSubmit}
+                  className="w-full bg-black text-white hover:bg-gray-800"
+                  disabled={!otpCode}
+                  data-testid="button-submit-otp"
+                >
+                  Verify & Continue
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 4: Customer Type Selection
   if (bookingState.step === 'customer-type') {
     return (
       <div className="min-h-screen bg-white flex flex-col">
