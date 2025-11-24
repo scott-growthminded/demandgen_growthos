@@ -392,168 +392,165 @@ export default function BookingWidget() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex overflow-hidden px-6 py-8">
+        <div className="flex-1 flex overflow-hidden gap-8 px-6 py-8">
           {/* Left side - Grouped locations with dropdowns - SCROLLABLE */}
-          <div className="w-1/2 overflow-y-auto pr-8 space-y-2">
-              {stateOrder.map((stateCode) => {
-                const locations = groupedLocations[stateCode] || [];
-                if (locations.length === 0) return null;
-                
-                const isExpanded = expandedState === stateCode;
-                
-                return (
-                  <div key={stateCode} className="border-b border-gray-200">
-                    <button
-                      onClick={() => setExpandedState(isExpanded ? null : stateCode)}
-                      className="w-full py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
-                      data-testid={`button-state-${stateCode}`}
-                    >
-                      <span className="text-lg font-medium">{stateNames[stateCode]}</span>
-                      {isExpanded ? (
-                        <ChevronUp className="w-5 h-5" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5" />
-                      )}
-                    </button>
-                    
-                    {isExpanded && (
-                      <div className="pb-4 space-y-2">
-                        {locations.map((location: any) => (
-                          <button
-                            key={location.id}
-                            onClick={() => {
-                              // Reset date/time state when location changes
-                              setSelectedDate(undefined);
-                              setSelectedTimeSlot(undefined);
-                              setBookingState(prev => ({
-                                ...prev,
-                                selectedLocation: {
-                                  id: location.id,
-                                  name: location.name,
-                                  address: location.address?.line1 
-                                    ? `${location.address.line1}, ${location.address?.city}, ${location.address?.state}`
-                                    : `${location.address?.city}, ${location.address?.state}`,
-                                  city: location.address?.city || '',
-                                  state: location.address?.state || '',
-                                },
-                                selectedDate: undefined,
-                                selectedTime: undefined,
-                                selectedProduct: undefined,
-                                step: 'customer-type'
-                              }));
-                            }}
-                            className="w-full p-4 ml-4 text-left border rounded-lg hover:border-gray-400 transition-colors group"
-                            data-testid={`button-location-${location.id}`}
-                          >
-                            <h3 className="font-semibold mb-1">{location.name}</h3>
-                            <p className="text-sm text-gray-600">
-                              {location.address?.line1}, {location.address?.city}
-                            </p>
-                          </button>
-                        ))}
-                      </div>
+          <div className="w-1/2 overflow-y-auto space-y-2">
+            {stateOrder.map((stateCode) => {
+              const locations = groupedLocations[stateCode] || [];
+              if (locations.length === 0) return null;
+              
+              const isExpanded = expandedState === stateCode;
+              
+              return (
+                <div key={stateCode} className="border-b border-gray-200">
+                  <button
+                    onClick={() => setExpandedState(isExpanded ? null : stateCode)}
+                    className="w-full py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                    data-testid={`button-state-${stateCode}`}
+                  >
+                    <span className="text-lg font-medium">{stateNames[stateCode]}</span>
+                    {isExpanded ? (
+                      <ChevronUp className="w-5 h-5" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5" />
                     )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Right side - Map - FIXED */}
-            <div className="w-1/2 relative rounded-lg overflow-hidden bg-gray-100 sticky top-0">
-              {allLocations.length > 0 && allLocations[0].coordinates ? (
-                <MapContainer
-                  ref={mapRef}
-                  key="location-map"
-                  center={[
-                    allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lat || loc.coordinates?.latitude) || 0), 0) / allLocations.length,
-                    allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lng || loc.coordinates?.longitude) || 0), 0) / allLocations.length
-                  ]}
-                  zoom={7}
-                  style={{ height: '100%', width: '100%', filter: 'grayscale(100%)' }}
-                  scrollWheelZoom={true}
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
-                  {allLocations.map((location: any, index: number) => {
-                    const lat = location.coordinates?.lat || location.coordinates?.latitude;
-                    const lng = location.coordinates?.lng || location.coordinates?.longitude;
-                    
-                    if (lat && lng) {
-                      return (
-                        <Marker
-                          key={location.id || index}
-                          position={[lat, lng]}
-                          icon={blackIcon}
+                  </button>
+                  
+                  {isExpanded && (
+                    <div className="pb-4 space-y-2">
+                      {locations.map((location: any) => (
+                        <button
+                          key={location.id}
+                          onClick={() => {
+                            setSelectedDate(undefined);
+                            setSelectedTimeSlot(undefined);
+                            setBookingState(prev => ({
+                              ...prev,
+                              selectedLocation: {
+                                id: location.id,
+                                name: location.name,
+                                address: location.address?.line1 
+                                  ? `${location.address.line1}, ${location.address?.city}, ${location.address?.state}`
+                                  : `${location.address?.city}, ${location.address?.state}`,
+                                city: location.address?.city || '',
+                                state: location.address?.state || '',
+                              },
+                              selectedDate: undefined,
+                              selectedTime: undefined,
+                              selectedProduct: undefined,
+                              step: 'customer-type'
+                            }));
+                          }}
+                          className="w-full p-4 ml-4 text-left border rounded-lg hover:border-gray-400 transition-colors"
+                          data-testid={`button-location-${location.id}`}
                         >
-                          <Popup closeButton={true} className="custom-popup">
-                            <div style={{ padding: '8px 4px', minWidth: '200px' }}>
-                              <h3 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 16px 0' }}>
-                                {location.name}
-                              </h3>
-                              <p style={{ margin: '0 0 4px 0', color: '#333', fontSize: '14px' }}>
-                                {location.address?.line1}
-                              </p>
-                              <p style={{ margin: '0 0 20px 0', color: '#333', fontSize: '14px' }}>
-                                {location.address?.city}, {location.address?.state} {location.address?.zip || ''}
-                              </p>
-                              <button
-                                onClick={() => {
-                                  // Reset date/time state when location changes
-                                  setSelectedDate(undefined);
-                                  setSelectedTimeSlot(undefined);
-                                  setBookingState(prev => ({
-                                    ...prev,
-                                    selectedLocation: {
-                                      id: location.id,
-                                      name: location.name,
-                                      address: location.address?.line1 
-                                        ? `${location.address.line1}, ${location.address?.city}, ${location.address?.state}`
-                                        : `${location.address?.city}, ${location.address?.state}`,
-                                      city: location.address?.city || '',
-                                      state: location.address?.state || '',
-                                    },
-                                    selectedDate: undefined,
-                                    selectedTime: undefined,
-                                    selectedProduct: undefined,
-                                    step: 'customer-type'
-                                  }));
-                                }}
-                                style={{
-                                  width: '100%',
-                                  padding: '14px',
-                                  backgroundColor: '#000',
-                                  color: '#fff',
-                                  border: 'none',
-                                  borderRadius: '8px',
-                                  fontSize: '16px',
-                                  fontWeight: '600',
-                                  cursor: 'pointer',
-                                  transition: 'background-color 0.2s'
-                                }}
-                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
-                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#000'}
-                              >
-                                Select
-                              </button>
-                            </div>
-                          </Popup>
-                        </Marker>
-                      );
-                    }
-                    return null;
-                  })}
-                </MapContainer>
-              ) : (
-                <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
-                  <div className="text-center">
-                    <p className="text-lg font-semibold mb-2">📍 Loading locations...</p>
-                    <p className="text-sm">Glowbar Studios</p>
-                  </div>
+                          <h3 className="font-semibold mb-1">{location.name}</h3>
+                          <p className="text-sm text-gray-600">
+                            {location.address?.line1}, {location.address?.city}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })}
+          </div>
+
+          {/* Right side - Map - FIXED */}
+          <div className="w-1/2 relative rounded-lg overflow-hidden bg-gray-100 sticky top-8">
+            {allLocations.length > 0 && allLocations[0].coordinates ? (
+              <MapContainer
+                ref={mapRef}
+                key="location-map"
+                center={[
+                  allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lat || loc.coordinates?.latitude) || 0), 0) / allLocations.length,
+                  allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lng || loc.coordinates?.longitude) || 0), 0) / allLocations.length
+                ]}
+                zoom={7}
+                style={{ height: '100%', width: '100%', filter: 'grayscale(100%)' }}
+                scrollWheelZoom={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {allLocations.map((location: any, index: number) => {
+                  const lat = location.coordinates?.lat || location.coordinates?.latitude;
+                  const lng = location.coordinates?.lng || location.coordinates?.longitude;
+                  
+                  if (lat && lng) {
+                    return (
+                      <Marker
+                        key={location.id || index}
+                        position={[lat, lng]}
+                        icon={blackIcon}
+                      >
+                        <Popup closeButton={true} className="custom-popup">
+                          <div style={{ padding: '8px 4px', minWidth: '200px' }}>
+                            <h3 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 16px 0' }}>
+                              {location.name}
+                            </h3>
+                            <p style={{ margin: '0 0 4px 0', color: '#333', fontSize: '14px' }}>
+                              {location.address?.line1}
+                            </p>
+                            <p style={{ margin: '0 0 20px 0', color: '#333', fontSize: '14px' }}>
+                              {location.address?.city}, {location.address?.state} {location.address?.zip || ''}
+                            </p>
+                            <button
+                              onClick={() => {
+                                setSelectedDate(undefined);
+                                setSelectedTimeSlot(undefined);
+                                setBookingState(prev => ({
+                                  ...prev,
+                                  selectedLocation: {
+                                    id: location.id,
+                                    name: location.name,
+                                    address: location.address?.line1 
+                                      ? `${location.address.line1}, ${location.address?.city}, ${location.address?.state}`
+                                      : `${location.address?.city}, ${location.address?.state}`,
+                                    city: location.address?.city || '',
+                                    state: location.address?.state || '',
+                                  },
+                                  selectedDate: undefined,
+                                  selectedTime: undefined,
+                                  selectedProduct: undefined,
+                                  step: 'customer-type'
+                                }));
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '14px',
+                                backgroundColor: '#000',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '16px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'background-color 0.2s'
+                              }}
+                              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
+                              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#000'}
+                            >
+                              Select
+                            </button>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  }
+                  return null;
+                })}
+              </MapContainer>
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
+                <div className="text-center">
+                  <p className="text-lg font-semibold mb-2">📍 Loading locations...</p>
+                  <p className="text-sm">Glowbar Studios</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
