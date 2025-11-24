@@ -373,7 +373,16 @@ export default function BookingWidget() {
         setBookingState(prev => ({ ...prev, step: 'datetime' }));
         break;
       case 'checkout':
-        if (bookingState.customerType === 'new') {
+        // Check if this is a purchase-only flow (no appointment)
+        const isMembership = bookingState.selectedProduct?.id.startsWith('membership-');
+        const isPackage = bookingState.selectedProduct?.id.startsWith('package-');
+        const isGiftCard = bookingState.selectedProduct?.id.startsWith('giftcard-');
+        const isPurchaseOnly = isMembership || isPackage || isGiftCard;
+        
+        if (isPurchaseOnly) {
+          // For purchase-only, go back to product selection
+          setBookingState(prev => ({ ...prev, step: 'product' }));
+        } else if (bookingState.customerType === 'new') {
           setBookingState(prev => ({ ...prev, step: 'personal-info' }));
         } else {
           setBookingState(prev => ({ ...prev, step: 'datetime' }));
@@ -1991,8 +2000,17 @@ export default function BookingWidget() {
 
   // Step 6: Checkout
   if (bookingState.step === 'checkout') {
-    // Early return while redirecting
-    if (!bookingState.selectedProduct || !bookingState.selectedLocation || !bookingState.selectedTime) {
+    // Check if this is a booking or a purchase-only flow
+    const isMembership = bookingState.selectedProduct?.id.startsWith('membership-');
+    const isPackage = bookingState.selectedProduct?.id.startsWith('package-');
+    const isGiftCard = bookingState.selectedProduct?.id.startsWith('giftcard-');
+    const isPurchaseOnly = isMembership || isPackage || isGiftCard;
+
+    // For purchase-only, we only need product. For bookings, we need location and time too.
+    if (!bookingState.selectedProduct) {
+      return null;
+    }
+    if (!isPurchaseOnly && (!bookingState.selectedLocation || !bookingState.selectedTime)) {
       return null;
     }
 
@@ -2044,58 +2062,68 @@ export default function BookingWidget() {
 
             <div className="mb-8">
               <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Checkout</h1>
-            <p className="text-gray-600" data-testid="text-subtitle">Review your appointment details</p>
+            <p className="text-gray-600" data-testid="text-subtitle">
+              {isPurchaseOnly ? 'Review your order and complete purchase' : 'Review your appointment details'}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Left Column - Appointment Summary */}
+            {/* Left Column - Order/Appointment Summary */}
             <div>
               <Card className="mb-6">
                 <CardHeader>
-                  <CardTitle>Appointment Summary</CardTitle>
+                  <CardTitle>{isPurchaseOnly ? 'Order Summary' : 'Appointment Summary'}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-600">Service</p>
-                    <p className="font-semibold">{bookingState.selectedProduct?.name || 'Facial Treatment'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Location</p>
-                    <p className="font-semibold">{bookingState.selectedLocation?.name}</p>
-                    <p className="text-sm text-gray-500">{bookingState.selectedLocation?.city}, {bookingState.selectedLocation?.state}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Date & Time</p>
-                    <p className="font-semibold">
-                      {bookingState.selectedDate && format(bookingState.selectedDate, 'EEEE, MMMM d, yyyy')}
-                      {' at '}
-                      {bookingState.selectedTime?.time}
+                    <p className="text-sm text-gray-600">
+                      {isPurchaseOnly ? 'Product' : 'Service'}
                     </p>
+                    <p className="font-semibold">{bookingState.selectedProduct?.name}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Esthetician</p>
-                    <p className="font-semibold">
-                      {bookingState.selectedEsthetician === 'any' 
-                        ? 'No preference' 
-                        : staffData?.staff?.find(s => s.id === bookingState.selectedEsthetician)?.displayName 
-                          || staffData?.staff?.find(s => s.id === bookingState.selectedEsthetician)?.firstName 
-                          || 'No preference'}
-                    </p>
-                  </div>
+                  {!isPurchaseOnly && (
+                    <>
+                      <div>
+                        <p className="text-sm text-gray-600">Location</p>
+                        <p className="font-semibold">{bookingState.selectedLocation?.name}</p>
+                        <p className="text-sm text-gray-500">{bookingState.selectedLocation?.city}, {bookingState.selectedLocation?.state}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Date & Time</p>
+                        <p className="font-semibold">
+                          {bookingState.selectedDate && format(bookingState.selectedDate, 'EEEE, MMMM d, yyyy')}
+                          {' at '}
+                          {bookingState.selectedTime?.time}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Esthetician</p>
+                        <p className="font-semibold">
+                          {bookingState.selectedEsthetician === 'any' 
+                            ? 'No preference' 
+                            : staffData?.staff?.find(s => s.id === bookingState.selectedEsthetician)?.displayName 
+                              || staffData?.staff?.find(s => s.id === bookingState.selectedEsthetician)?.firstName 
+                              || 'No preference'}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
-              {/* Cancellation Policy */}
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="text-lg">Cancellation Policy</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-700">
-                    Free cancellation or modification before {bookingState.selectedDate && format(addDays(bookingState.selectedDate, -1), 'EEEE MM/dd/yyyy')} at {bookingState.selectedTime?.time}. After that, changes to the appointment will result in a charge of $30 plus any applicable taxes and fees. <a href="#" className="text-orange-600 underline">Learn More</a>.
-                  </p>
-                </CardContent>
-              </Card>
+              {/* Cancellation Policy - Only for bookings */}
+              {!isPurchaseOnly && (
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Cancellation Policy</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-700">
+                      Free cancellation or modification before {bookingState.selectedDate && format(addDays(bookingState.selectedDate, -1), 'EEEE MM/dd/yyyy')} at {bookingState.selectedTime?.time}. After that, changes to the appointment will result in a charge of $30 plus any applicable taxes and fees. <a href="#" className="text-orange-600 underline">Learn More</a>.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Communication */}
               <Card className="mb-6">
@@ -2104,7 +2132,7 @@ export default function BookingWidget() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-700">
-                    By booking this appointment, you agree to receive texts and emails with appointment reminders, account updates, news, and special offers. Texts will be sent via auto-SMS. Consent is optional. You can unsubscribe from an email anytime by clicking unsubscribe, and opt out of marketing texts anytime by replying NO PROMOS or all text communication by replying STOP. Text HELP for more info. Message frequency may vary. SMS and data rates may apply.
+                    By {isPurchaseOnly ? 'completing this purchase' : 'booking this appointment'}, you agree to receive texts and emails with {isPurchaseOnly ? 'order confirmations,' : 'appointment reminders,'} account updates, news, and special offers. Texts will be sent via auto-SMS. Consent is optional. You can unsubscribe from an email anytime by clicking unsubscribe, and opt out of marketing texts anytime by replying NO PROMOS or all text communication by replying STOP. Text HELP for more info. Message frequency may vary. SMS and data rates may apply.
                   </p>
                 </CardContent>
               </Card>
@@ -2116,7 +2144,7 @@ export default function BookingWidget() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-700">
-                    By booking this appointment you are agreeing to Glowbar's <a href="#" className="text-orange-600 underline">Terms of Service</a>
+                    By {isPurchaseOnly ? 'completing this purchase' : 'booking this appointment'} you are agreeing to Glowbar's <a href="#" className="text-orange-600 underline">Terms of Service</a>
                   </p>
                 </CardContent>
               </Card>
@@ -2125,15 +2153,17 @@ export default function BookingWidget() {
             {/* Right Column - Payment */}
             <div>
               {/* Payment Info Notice */}
-              <Card className="mb-6 bg-blue-50 border-blue-200">
-                <CardContent className="p-4">
-                  <h3 className="font-semibold mb-2">Payment Info</h3>
-                  <p className="text-sm text-gray-700 font-medium mb-1">Your card won't be charged today</p>
-                  <p className="text-sm text-gray-600">
-                    Your card will be used to hold your appointment time and will not be charged until after your appointment has been completed. If you are an active member, your voucher will be used to redeem your monthly facial on the day of your appointment.
-                  </p>
-                </CardContent>
-              </Card>
+              {!isPurchaseOnly && (
+                <Card className="mb-6 bg-blue-50 border-blue-200">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold mb-2">Payment Info</h3>
+                    <p className="text-sm text-gray-700 font-medium mb-1">Your card won't be charged today</p>
+                    <p className="text-sm text-gray-600">
+                      Your card will be used to hold your appointment time and will not be charged until after your appointment has been completed. If you are an active member, your voucher will be used to redeem your monthly facial on the day of your appointment.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
               <Card className="mb-6">
                 <CardHeader>
@@ -2209,7 +2239,7 @@ export default function BookingWidget() {
 
                   {/* Price Breakdown */}
                   <div className="border-t pt-4">
-                    {bookingState.isMember ? (
+                    {bookingState.isMember && !isPurchaseOnly ? (
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span>Treatment</span>
@@ -2227,7 +2257,7 @@ export default function BookingWidget() {
                     ) : (
                       <>
                         <div className="flex justify-between mb-2">
-                          <span>Treatment</span>
+                          <span>{isPurchaseOnly ? 'Subtotal' : 'Treatment'}</span>
                           <span>${productPrice.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between mb-2">
@@ -2258,7 +2288,7 @@ export default function BookingWidget() {
                     className="w-full bg-orange-500 text-white hover:bg-orange-600 text-lg py-6"
                     data-testid="button-book-now"
                   >
-                    BOOK NOW
+                    {isPurchaseOnly ? 'COMPLETE PURCHASE' : 'BOOK NOW'}
                   </Button>
                 </CardContent>
               </Card>
