@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronDown, ChevronUp, CheckCircle, User, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp, CheckCircle, User, MapPin, Tag } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -1924,9 +1924,10 @@ export default function BookingWidget() {
                           >
                             <div className="font-semibold">{slot.time}</div>
                             {slot.isDiscounted && (
-                              <div className="mt-1">
+                              <div className="mt-1 flex items-center gap-1 justify-center">
+                                <Tag className={`w-3 h-3 ${selectedTimeSlot?.id === slot.id ? 'text-orange-300' : 'text-orange-600'}`} />
                                 <span className={`text-xs font-medium ${selectedTimeSlot?.id === slot.id ? 'text-orange-300' : 'text-orange-600'}`}>
-                                  Discounted
+                                  $10 OFF
                                 </span>
                               </div>
                             )}
@@ -2014,7 +2015,10 @@ export default function BookingWidget() {
                               >
                                 <span className="font-medium">{slot.time}</span>
                                 {slot.isDiscounted && (
-                                  <span className="text-xs text-orange-600">Disc.</span>
+                                  <div className="flex items-center gap-1">
+                                    <Tag className="w-2.5 h-2.5 text-orange-600" />
+                                    <span className="text-xs text-orange-600">$10 OFF</span>
+                                  </div>
                                 )}
                               </button>
                             ))}
