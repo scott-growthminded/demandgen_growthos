@@ -63,8 +63,15 @@ interface BookingState {
   selectedLocation?: {
     id: string;
     name: string;
+    address?: string;
     city: string;
     state: string;
+  };
+  selectedProduct?: {
+    id: string;
+    name: string;
+    price: number;
+    description: string;
   };
   userName?: string;
   userFirstName?: string;
@@ -106,7 +113,7 @@ interface StaffResponse {
 export default function BookingWidget() {
   const { toast } = useToast();
   const [bookingState, setBookingState] = useState<BookingState>({
-    step: 'customer-type',
+    step: 'location',
   });
   const [expandedState, setExpandedState] = useState<string | null>(null);
   
@@ -117,7 +124,7 @@ export default function BookingWidget() {
   
   // Date/Time state
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | undefined>(undefined);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{id: string; time: string} | undefined>(undefined);
   const [esthetician, setEsthetician] = useState('any');
   const [expandedNearbyLocations, setExpandedNearbyLocations] = useState<Set<string>>(new Set());
   const [selectedNearbyLocation, setSelectedNearbyLocation] = useState<{locationId: string; locationName: string; time: string} | null>(null);
@@ -271,6 +278,9 @@ export default function BookingWidget() {
   const handleBack = () => {
     // Handle back navigation based on current step and booking state
     switch (bookingState.step) {
+      case 'customer-type':
+        setBookingState(prev => ({ ...prev, step: 'location' }));
+        break;
       case 'login':
         setBookingState(prev => ({ ...prev, step: 'customer-type' }));
         break;
@@ -281,11 +291,8 @@ export default function BookingWidget() {
           setBookingState(prev => ({ ...prev, step: 'login' }));
         }
         break;
-      case 'location':
-        setBookingState(prev => ({ ...prev, step: 'product' }));
-        break;
       case 'datetime':
-        setBookingState(prev => ({ ...prev, step: 'location' }));
+        setBookingState(prev => ({ ...prev, step: 'product' }));
         break;
       case 'personal-info':
         setBookingState(prev => ({ ...prev, step: 'datetime' }));
@@ -298,14 +305,222 @@ export default function BookingWidget() {
         }
         break;
       case 'confirmation':
-        setBookingState(prev => ({ ...prev, step: 'customer-type' }));
+        setBookingState(prev => ({ ...prev, step: 'location' }));
         break;
       default:
         break;
     }
   };
 
-  // Step 1: Customer Type Selection
+  // Step 1: Location Selection (NEW FIRST STEP)
+  if (bookingState.step === 'location') {
+    // Group locations by state
+    const groupedLocations: Record<string, any[]> = {};
+    if (locationsData) {
+      Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
+        if (!groupedLocations[state]) {
+          groupedLocations[state] = [];
+        }
+        Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
+          groupedLocations[state].push(...(locations as any[]));
+        });
+      });
+    }
+
+    // Get all locations for the map
+    const allLocations: any[] = [];
+    if (locationsData) {
+      Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
+        Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
+          allLocations.push(...(locations as any[]));
+        });
+      });
+    }
+
+    const stateOrder = ['NJ', 'NY', 'CT', 'PA', 'MA', 'DC', 'VA'];
+    const stateNames: Record<string, string> = {
+      'NJ': 'New Jersey',
+      'NY': 'New York',
+      'CT': 'Connecticut',
+      'PA': 'Pennsylvania',
+      'MA': 'Massachusetts',
+      'DC': 'District Of Columbia',
+      'VA': 'Virginia'
+    };
+
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="w-full max-w-7xl mx-auto px-6 py-8">
+          <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select a studio location</h1>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Left side - Grouped locations with dropdowns */}
+            <div className="space-y-2">
+              {stateOrder.map((stateCode) => {
+                const locations = groupedLocations[stateCode] || [];
+                if (locations.length === 0) return null;
+                
+                const isExpanded = expandedState === stateCode;
+                
+                return (
+                  <div key={stateCode} className="border-b border-gray-200">
+                    <button
+                      onClick={() => setExpandedState(isExpanded ? null : stateCode)}
+                      className="w-full py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                      data-testid={`button-state-${stateCode}`}
+                    >
+                      <span className="text-lg font-medium">{stateNames[stateCode]}</span>
+                      {isExpanded ? (
+                        <ChevronUp className="w-5 h-5" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5" />
+                      )}
+                    </button>
+                    
+                    {isExpanded && (
+                      <div className="pb-4 space-y-2">
+                        {locations.map((location: any) => (
+                          <button
+                            key={location.id}
+                            onClick={() => {
+                              // Reset date/time state when location changes
+                              setSelectedDate(undefined);
+                              setSelectedTimeSlot(undefined);
+                              setBookingState(prev => ({
+                                ...prev,
+                                selectedLocation: {
+                                  id: location.id,
+                                  name: location.name,
+                                  address: location.address?.line1 
+                                    ? `${location.address.line1}, ${location.address?.city}, ${location.address?.state}`
+                                    : `${location.address?.city}, ${location.address?.state}`,
+                                  city: location.address?.city || '',
+                                  state: location.address?.state || '',
+                                },
+                                selectedDate: undefined,
+                                selectedTime: undefined,
+                                selectedProduct: undefined,
+                                step: 'customer-type'
+                              }));
+                            }}
+                            className="w-full p-4 ml-4 text-left border rounded-lg hover:border-gray-400 transition-colors group"
+                            data-testid={`button-location-${location.id}`}
+                          >
+                            <h3 className="font-semibold mb-1">{location.name}</h3>
+                            <p className="text-sm text-gray-600">
+                              {location.address?.line1}, {location.address?.city}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Right side - Map */}
+            <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
+              {allLocations.length > 0 && allLocations[0].coordinates ? (
+                <MapContainer
+                  key="location-map"
+                  center={[
+                    allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lat || loc.coordinates?.latitude) || 0), 0) / allLocations.length,
+                    allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lng || loc.coordinates?.longitude) || 0), 0) / allLocations.length
+                  ]}
+                  zoom={7}
+                  style={{ height: '100%', width: '100%' }}
+                  scrollWheelZoom={true}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  {allLocations.map((location: any, index: number) => {
+                    const lat = location.coordinates?.lat || location.coordinates?.latitude;
+                    const lng = location.coordinates?.lng || location.coordinates?.longitude;
+                    
+                    if (lat && lng) {
+                      return (
+                        <Marker
+                          key={location.id || index}
+                          position={[lat, lng]}
+                          icon={blackIcon}
+                        >
+                          <Popup closeButton={true} className="custom-popup">
+                            <div style={{ padding: '8px 4px', minWidth: '200px' }}>
+                              <h3 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 16px 0' }}>
+                                {location.name}
+                              </h3>
+                              <p style={{ margin: '0 0 4px 0', color: '#333', fontSize: '14px' }}>
+                                {location.address?.line1}
+                              </p>
+                              <p style={{ margin: '0 0 20px 0', color: '#333', fontSize: '14px' }}>
+                                {location.address?.city}, {location.address?.state} {location.address?.zip || ''}
+                              </p>
+                              <button
+                                onClick={() => {
+                                  // Reset date/time state when location changes
+                                  setSelectedDate(undefined);
+                                  setSelectedTimeSlot(undefined);
+                                  setBookingState(prev => ({
+                                    ...prev,
+                                    selectedLocation: {
+                                      id: location.id,
+                                      name: location.name,
+                                      address: location.address?.line1 
+                                        ? `${location.address.line1}, ${location.address?.city}, ${location.address?.state}`
+                                        : `${location.address?.city}, ${location.address?.state}`,
+                                      city: location.address?.city || '',
+                                      state: location.address?.state || '',
+                                    },
+                                    selectedDate: undefined,
+                                    selectedTime: undefined,
+                                    selectedProduct: undefined,
+                                    step: 'customer-type'
+                                  }));
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '14px',
+                                  backgroundColor: '#000',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  fontSize: '16px',
+                                  fontWeight: '600',
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.2s'
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
+                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#000'}
+                              >
+                                Select
+                              </button>
+                            </div>
+                          </Popup>
+                        </Marker>
+                      );
+                    }
+                    return null;
+                  })}
+                </MapContainer>
+              ) : (
+                <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
+                  <div className="text-center">
+                    <p className="text-lg font-semibold mb-2">📍 Loading locations...</p>
+                    <p className="text-sm">Glowbar Studios</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 2: Customer Type Selection
   if (bookingState.step === 'customer-type') {
     return (
       <div className="min-h-screen bg-white flex items-center">
@@ -437,7 +652,19 @@ export default function BookingWidget() {
     ];
 
     const handleProductSelect = (productId: string) => {
-      setBookingState(prev => ({ ...prev, step: 'location' }));
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        // Reset both bookingState and component-level date/time state
+        setSelectedDate(undefined);
+        setSelectedTimeSlot(undefined);
+        setBookingState(prev => ({ 
+          ...prev, 
+          selectedProduct: product,
+          selectedDate: undefined,
+          selectedTime: undefined,
+          step: 'datetime' 
+        }));
+      }
     };
 
     return (
@@ -481,162 +708,6 @@ export default function BookingWidget() {
     );
   }
 
-  // Step 4: Location Selection
-  if (bookingState.step === 'location') {
-    const allLocations: any[] = [];
-    
-    if (locationsData) {
-      Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
-        Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
-          allLocations.push(...(locations as any[]));
-        });
-      });
-    }
-
-    return (
-      <div className="min-h-screen bg-white">
-        <div className="w-full max-w-6xl mx-auto px-6 py-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-
-          <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Choose a location</h1>
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              {allLocations.length > 0 && allLocations.slice(0, 10).map((location: any, index: number) => (
-                <button
-                  key={location.id || index}
-                  onClick={() => {
-                    setEsthetician('any');
-                    setBookingState(prev => ({
-                      ...prev,
-                      selectedLocation: {
-                        id: location.id,
-                        name: location.name,
-                        city: location.address?.city || '',
-                        state: location.address?.state || '',
-                      },
-                      step: 'datetime'
-                    }));
-                  }}
-                  className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
-                  data-testid={`button-location-${location.id}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold">{location.name}</h3>
-                      <p className="text-gray-600 text-sm">
-                        {location.address?.line1}, {location.address?.city}, {location.address?.state}
-                      </p>
-                    </div>
-                    <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
-            {allLocations.length > 0 && allLocations[0].coordinates ? (
-              <MapContainer
-                key="location-map"
-                center={[
-                  allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lat || loc.coordinates?.latitude) || 0), 0) / allLocations.length,
-                  allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lng || loc.coordinates?.longitude) || 0), 0) / allLocations.length
-                ]}
-                zoom={10}
-                style={{ height: '100%', width: '100%' }}
-                scrollWheelZoom={false}
-                zoomControl={true}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                />
-                {allLocations.slice(0, 10).map((location: any, index: number) => {
-                  const lat = location.coordinates?.lat || location.coordinates?.latitude;
-                  const lng = location.coordinates?.lng || location.coordinates?.longitude;
-                  
-                  if (lat && lng) {
-                    return (
-                      <Marker
-                        key={location.id || index}
-                        position={[lat, lng]}
-                        icon={blackIcon}
-                      >
-                        <Popup
-                          closeButton={true}
-                          className="custom-popup"
-                        >
-                          <div style={{ padding: '8px 4px', minWidth: '200px' }}>
-                            <h3 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 16px 0' }}>
-                              {location.name}
-                            </h3>
-                            <p style={{ margin: '0 0 4px 0', color: '#333', fontSize: '14px' }}>
-                              {location.address?.line1}
-                            </p>
-                            <p style={{ margin: '0 0 20px 0', color: '#333', fontSize: '14px' }}>
-                              {location.address?.city}, {location.address?.state} {location.address?.zip || ''}
-                            </p>
-                            <button
-                              onClick={() => {
-                                setEsthetician('any');
-                                setBookingState(prev => ({
-                                  ...prev,
-                                  selectedLocation: {
-                                    id: location.id,
-                                    name: location.name,
-                                    city: location.address?.city || '',
-                                    state: location.address?.state || '',
-                                  },
-                                  step: 'datetime'
-                                }));
-                              }}
-                              style={{
-                                width: '100%',
-                                padding: '14px',
-                                backgroundColor: '#000',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '8px',
-                                fontSize: '16px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'background-color 0.2s'
-                              }}
-                              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
-                              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#000'}
-                            >
-                              Select
-                            </button>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    );
-                  }
-                  return null;
-                })}
-              </MapContainer>
-            ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
-                <div className="text-center">
-                  <p className="text-lg font-semibold mb-2">📍 {allLocations.length} Studios</p>
-                  <p className="text-sm">Glowbar Locations</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // DateTime Step
   if (bookingState.step === 'datetime') {
@@ -726,9 +797,9 @@ export default function BookingWidget() {
                     {timeSlots.map((slot) => (
                       <button
                         key={slot.id}
-                        onClick={() => setSelectedTimeSlot(slot.time)}
+                        onClick={() => setSelectedTimeSlot({id: slot.id, time: slot.time})}
                         className={`p-3 border rounded-lg text-sm transition-colors ${
-                          selectedTimeSlot === slot.time
+                          selectedTimeSlot?.id === slot.id
                             ? 'border-black bg-black text-white'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
@@ -753,7 +824,7 @@ export default function BookingWidget() {
                 setBookingState(prev => ({
                   ...prev,
                   selectedDate: selectedDate,
-                  selectedTime: { id: selectedTimeSlot || '', time: selectedTimeSlot || '' },
+                  selectedTime: selectedTimeSlot,
                   step: nextStep
                 }));
               }}
@@ -892,7 +963,7 @@ export default function BookingWidget() {
                 <CardContent className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-600">Service</p>
-                    <p className="font-semibold">Facial Treatment (50 minutes)</p>
+                    <p className="font-semibold">{bookingState.selectedProduct?.name || 'Facial Treatment'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Location</p>
@@ -959,18 +1030,37 @@ export default function BookingWidget() {
 
                   {/* Price Breakdown */}
                   <div className="border-t pt-4">
-                    <div className="flex justify-between mb-2">
-                      <span>Treatment</span>
-                      <span>$80.00</span>
-                    </div>
-                    <div className="flex justify-between mb-2">
-                      <span>Tax</span>
-                      <span>$7.20</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
-                      <span>Total</span>
-                      <span data-testid="text-total">$87.20</span>
-                    </div>
+                    {bookingState.isMember ? (
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span>Treatment</span>
+                          <span>${bookingState.selectedProduct?.price || 65}.00</span>
+                        </div>
+                        <div className="flex justify-between text-green-600">
+                          <span>Voucher Applied</span>
+                          <span>-${bookingState.selectedProduct?.price || 65}.00</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-lg border-t pt-2">
+                          <span>Total</span>
+                          <span data-testid="text-total">$0.00</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between mb-2">
+                          <span>Treatment</span>
+                          <span>${bookingState.selectedProduct?.price || 80}.00</span>
+                        </div>
+                        <div className="flex justify-between mb-2">
+                          <span>Tax</span>
+                          <span>${((bookingState.selectedProduct?.price || 80) * 0.09).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-bold text-lg border-t pt-2">
+                          <span>Total</span>
+                          <span data-testid="text-total">${((bookingState.selectedProduct?.price || 80) * 1.09).toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Terms */}
@@ -1044,13 +1134,15 @@ export default function BookingWidget() {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-gray-600">Service</p>
-                <p className="font-semibold">{bookingState.selectedService || 'Glowbar Signature Facial'}</p>
+                <p className="font-semibold">{bookingState.selectedProduct?.name || 'Glowbar Signature Facial'}</p>
               </div>
               {bookingState.selectedLocation && (
                 <div>
                   <p className="text-sm text-gray-600">Location</p>
                   <p className="font-semibold">{bookingState.selectedLocation.name}</p>
-                  <p className="text-sm text-gray-500">{bookingState.selectedLocation.address}</p>
+                  <p className="text-sm text-gray-500">
+                    {bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}
+                  </p>
                 </div>
               )}
               {bookingState.selectedDate && (
@@ -1073,7 +1165,7 @@ export default function BookingWidget() {
           <div className="space-y-3">
             <Button
               onClick={() => {
-                setBookingState({ step: 'customer-type' });
+                setBookingState({ step: 'location' });
                 setAcceptTerms(false);
               }}
               className="w-full bg-black text-white hover:bg-gray-800"
