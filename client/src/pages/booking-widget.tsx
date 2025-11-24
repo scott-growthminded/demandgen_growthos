@@ -13,7 +13,7 @@ import { ChevronLeft, ChevronDown, ChevronUp, CheckCircle, User } from "lucide-r
 import { format, addDays } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import glowbarLogoPath from "@assets/image_1763998718972.png";
+import glowbarLogoPath from "@assets/image_1763999046903.png";
 
 // Fix Leaflet default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
