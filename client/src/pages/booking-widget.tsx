@@ -320,17 +320,6 @@ export default function BookingWidget() {
   const ProgressBar = () => (
     <div className="border-b border-gray-200 bg-gray-50">
       <div className="px-6 py-3">
-        <div className="flex items-center justify-center gap-8 text-sm font-medium text-gray-600 mb-3">
-          <span>LOCATION</span>
-          <span className="text-gray-300">•</span>
-          <span>WHO'S COMING</span>
-          <span className="text-gray-300">•</span>
-          <span>SERVICES</span>
-          <span className="text-gray-300">•</span>
-          <span>SCHEDULING</span>
-          <span className="text-gray-300">•</span>
-          <span>CHECKOUT</span>
-        </div>
         <div className="w-full bg-gray-200 h-1 rounded-full overflow-hidden">
           <div 
             className="bg-orange-500 h-full rounded-full transition-all duration-300"
