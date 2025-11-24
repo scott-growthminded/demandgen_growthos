@@ -2302,6 +2302,12 @@ export default function BookingWidget() {
 
   // Step 7: Confirmation
   if (bookingState.step === 'confirmation') {
+    // Check if this is a purchase-only flow (no appointment)
+    const isMembership = bookingState.selectedProduct?.id.startsWith('membership-');
+    const isPackage = bookingState.selectedProduct?.id.startsWith('package-');
+    const isGiftCard = bookingState.selectedProduct?.id.startsWith('giftcard-');
+    const isPurchaseOnly = isMembership || isPackage || isGiftCard;
+
     return (
       <div className="min-h-screen bg-white flex flex-col">
         {/* Header */}
@@ -2315,8 +2321,8 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Selected Studio Display */}
-        {bookingState.selectedLocation && (
+        {/* Selected Studio Display - Only for bookings */}
+        {!isPurchaseOnly && bookingState.selectedLocation && (
           <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
             <button
               onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
@@ -2338,22 +2344,26 @@ export default function BookingWidget() {
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-12 h-12 text-green-600" />
               </div>
-              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Booking Confirmed!</h1>
+              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">
+                {isPurchaseOnly ? 'Purchase Confirmed!' : 'Booking Confirmed!'}
+              </h1>
             <p className="text-gray-600" data-testid="text-subtitle">
-              Your appointment has been successfully scheduled
+              {isPurchaseOnly 
+                ? 'Your order has been successfully processed' 
+                : 'Your appointment has been successfully scheduled'}
             </p>
           </div>
 
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Appointment Details</CardTitle>
+              <CardTitle>{isPurchaseOnly ? 'Order Details' : 'Appointment Details'}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600">Service</p>
-                <p className="font-semibold">{bookingState.selectedProduct?.name || 'Glowbar Signature Facial'}</p>
+                <p className="text-sm text-gray-600">{isPurchaseOnly ? 'Product' : 'Service'}</p>
+                <p className="font-semibold">{bookingState.selectedProduct?.name}</p>
               </div>
-              {bookingState.selectedLocation && (
+              {!isPurchaseOnly && bookingState.selectedLocation && (
                 <div>
                   <p className="text-sm text-gray-600">Location</p>
                   <p className="font-semibold">{bookingState.selectedLocation.name}</p>
@@ -2362,7 +2372,7 @@ export default function BookingWidget() {
                   </p>
                 </div>
               )}
-              {bookingState.selectedDate && (
+              {!isPurchaseOnly && bookingState.selectedDate && (
                 <div>
                   <p className="text-sm text-gray-600">Date & Time</p>
                   <p className="font-semibold">{format(bookingState.selectedDate, 'EEE, MMM d, yyyy')}</p>
@@ -2371,15 +2381,38 @@ export default function BookingWidget() {
               )}
               {bookingState.userName && (
                 <div>
-                  <p className="text-sm text-gray-600">Guest</p>
+                  <p className="text-sm text-gray-600">{isPurchaseOnly ? 'Customer' : 'Guest'}</p>
                   <p className="font-semibold">{bookingState.userName}</p>
                   <p className="text-sm text-gray-500">{bookingState.userEmail}</p>
                 </div>
               )}
+              <div>
+                <p className="text-sm text-gray-600">Order Total</p>
+                <p className="font-semibold">${bookingState.selectedProduct?.price.toFixed(2)}</p>
+              </div>
             </CardContent>
           </Card>
 
           <div className="space-y-3">
+            {isPurchaseOnly && (
+              <Button
+                onClick={() => {
+                  // Reset to product selection but keep user info
+                  setBookingState(prev => ({ 
+                    ...prev,
+                    step: 'product',
+                    selectedProduct: undefined,
+                    selectedDate: undefined,
+                    selectedTime: undefined,
+                    selectedEsthetician: undefined
+                  }));
+                }}
+                className="w-full bg-orange-500 text-white hover:bg-orange-600 text-lg py-6"
+                data-testid="button-book-appointment"
+              >
+                Book Your Appointment Now
+              </Button>
+            )}
             <Button
               onClick={() => {
                 setBookingState({ step: 'location' });
@@ -2388,7 +2421,7 @@ export default function BookingWidget() {
               className="w-full bg-black text-white hover:bg-gray-800"
               data-testid="button-new-booking"
             >
-              Book Another Appointment
+              {isPurchaseOnly ? 'Make Another Purchase' : 'Book Another Appointment'}
             </Button>
             <p className="text-sm text-gray-500 text-center">
               A confirmation email has been sent to {bookingState.userEmail || 'your email'}
