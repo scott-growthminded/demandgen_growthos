@@ -1099,21 +1099,21 @@ export default function BookingWidget() {
           </div>
         )}
 
-        <div className="flex-1 grid md:grid-cols-2">
-          {/* Content Section */}
-          <div className="overflow-y-auto">
-            <div className="w-full max-w-2xl mx-auto px-6 py-8">
-              <Button
-                variant="ghost"
-                onClick={handleBack}
-                className="mb-6"
-                data-testid="button-back"
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
+        {/* Main Content */}
+        <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-180px)]">
+          {/* Left side - Services - SCROLLABLE */}
+          <div className="w-1/2 overflow-y-auto space-y-2 pr-4">
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="mb-6"
+              data-testid="button-back"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
 
-              <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select A Service</h1>
+            <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select A Service</h1>
               
               <Accordion type="single" collapsible className="space-y-4">
               {/* Book a Treatment */}
@@ -1387,17 +1387,18 @@ export default function BookingWidget() {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-            </div>
           </div>
 
-          {/* Image Section */}
-          <div className="hidden md:block relative">
-            <img 
-              src={luxurySpaImage} 
-              alt="Luxury spa facial treatment" 
-              className="absolute inset-0 w-full h-full object-cover"
-              data-testid="img-service"
-            />
+          {/* Right side - Image - FIXED */}
+          <div className="w-1/2 sticky top-8 self-start">
+            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 shadow-lg">
+              <img 
+                src={luxurySpaImage} 
+                alt="Luxury spa facial treatment" 
+                className="w-full h-full object-cover"
+                data-testid="img-service"
+              />
+            </div>
           </div>
         </div>
 
