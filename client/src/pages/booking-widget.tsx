@@ -28,6 +28,7 @@ import { format, addDays } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import glowbarLogoPath from "@assets/image_1763999100752.png";
+import facialTreatmentImage from "@assets/stock_images/woman_receiving_faci_e972fbc7.jpg";
 
 // Fix Leaflet default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -683,50 +684,81 @@ export default function BookingWidget() {
         </div>
 
         <ProgressBar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-full max-w-md px-6 py-8">
+        
+        {/* Selected Studio Display */}
+        {bookingState.selectedLocation && (
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
             <button
-              onClick={handleBack}
-              className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
-              data-testid="button-back"
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
             >
-              <ChevronLeft className="w-5 h-5 mr-1" />
-              Back
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs text-blue-600 ml-2">Change</span>
             </button>
+          </div>
+        )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Enter Your Phone Number</CardTitle>
-                <CardDescription>
-                  We'll use this to verify your account
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="(555) 555-5555"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    data-testid="input-phone"
-                  />
-                  <p className="text-sm text-gray-500">
-                    For testing: Use all 1's for new customers, all 2's for returning non-members, or all 3's for members
-                  </p>
-                </div>
+        <div className="flex-1 grid md:grid-cols-2">
+          {/* Image Section */}
+          <div className="hidden md:block relative">
+            <img 
+              src={facialTreatmentImage} 
+              alt="Facial treatment at Glowbar" 
+              className="absolute inset-0 w-full h-full object-cover"
+              data-testid="img-treatment"
+            />
+          </div>
 
-                <Button
-                  onClick={handlePhoneSubmit}
-                  className="w-full bg-black text-white hover:bg-gray-800"
-                  disabled={!phoneNumber}
-                  data-testid="button-submit-phone"
-                >
-                  Continue
-                </Button>
-              </CardContent>
-            </Card>
+          {/* Form Section */}
+          <div className="flex items-center justify-center px-6 py-8">
+            <div className="w-full max-w-md">
+              <button
+                onClick={handleBack}
+                className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
+                data-testid="button-back"
+              >
+                <ChevronLeft className="w-5 h-5 mr-1" />
+                Back
+              </button>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-2xl">Enter Your Phone Number</CardTitle>
+                  <CardDescription>
+                    We'll use this to verify your account
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="(555) 555-5555"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      data-testid="input-phone"
+                    />
+                    <p className="text-sm text-gray-500">
+                      For testing: Use all 1's for new customers, all 2's for returning non-members, or all 3's for members
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={handlePhoneSubmit}
+                    className="w-full bg-black text-white hover:bg-gray-800"
+                    disabled={!phoneNumber}
+                    data-testid="button-submit-phone"
+                  >
+                    Continue
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
@@ -763,51 +795,82 @@ export default function BookingWidget() {
         </div>
 
         <ProgressBar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-full max-w-md px-6 py-8">
+        
+        {/* Selected Studio Display */}
+        {bookingState.selectedLocation && (
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
             <button
-              onClick={handleBack}
-              className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
-              data-testid="button-back"
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
             >
-              <ChevronLeft className="w-5 h-5 mr-1" />
-              Back
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs text-blue-600 ml-2">Change</span>
             </button>
+          </div>
+        )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Verify Your Phone Number</CardTitle>
-                <CardDescription>
-                  We've sent a code to {bookingState.userPhone}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="otp">Enter OTP Code</Label>
-                  <Input
-                    id="otp"
-                    type="text"
-                    placeholder="Enter code"
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value)}
-                    maxLength={6}
-                    data-testid="input-otp"
-                  />
-                  <p className="text-sm text-gray-500">
-                    For testing: Any code with 4 or more characters will be accepted
-                  </p>
-                </div>
+        <div className="flex-1 grid md:grid-cols-2">
+          {/* Image Section */}
+          <div className="hidden md:block relative">
+            <img 
+              src={facialTreatmentImage} 
+              alt="Facial treatment at Glowbar" 
+              className="absolute inset-0 w-full h-full object-cover"
+              data-testid="img-treatment"
+            />
+          </div>
 
-                <Button
-                  onClick={handleOtpSubmit}
-                  className="w-full bg-black text-white hover:bg-gray-800"
-                  disabled={!otpCode}
-                  data-testid="button-submit-otp"
-                >
-                  Verify & Continue
-                </Button>
-              </CardContent>
-            </Card>
+          {/* Form Section */}
+          <div className="flex items-center justify-center px-6 py-8">
+            <div className="w-full max-w-md">
+              <button
+                onClick={handleBack}
+                className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
+                data-testid="button-back"
+              >
+                <ChevronLeft className="w-5 h-5 mr-1" />
+                Back
+              </button>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-2xl">Verify Your Phone Number</CardTitle>
+                  <CardDescription>
+                    We've sent a code to {bookingState.userPhone}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="otp">Enter OTP Code</Label>
+                    <Input
+                      id="otp"
+                      type="text"
+                      placeholder="Enter code"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      maxLength={6}
+                      data-testid="input-otp"
+                    />
+                    <p className="text-sm text-gray-500">
+                      For testing: Any code with 4 or more characters will be accepted
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={handleOtpSubmit}
+                    className="w-full bg-black text-white hover:bg-gray-800"
+                    disabled={!otpCode}
+                    data-testid="button-submit-otp"
+                  >
+                    Verify & Continue
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
@@ -902,6 +965,24 @@ export default function BookingWidget() {
         </div>
 
         <ProgressBar />
+        
+        {/* Selected Studio Display */}
+        {bookingState.selectedLocation && (
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs text-blue-600 ml-2">Change</span>
+            </button>
+          </div>
+        )}
+
         <div className="flex-1 flex items-center">
           <div className="w-full max-w-lg mx-auto px-6 py-8">
             <Button
@@ -996,6 +1077,24 @@ export default function BookingWidget() {
         </div>
 
         <ProgressBar />
+        
+        {/* Selected Studio Display */}
+        {bookingState.selectedLocation && (
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs text-blue-600 ml-2">Change</span>
+            </button>
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto">
           <div className="w-full max-w-4xl mx-auto px-6 py-8">
             <Button
@@ -1007,16 +1106,6 @@ export default function BookingWidget() {
               <ChevronLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-
-            {/* Selected Studio Display */}
-            {bookingState.selectedLocation && (
-              <div className="mb-6 flex items-center gap-2 text-gray-700">
-                <MapPin className="w-5 h-5" />
-                <span className="font-medium">{bookingState.selectedLocation.name}</span>
-                <span className="text-gray-500">•</span>
-                <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
-              </div>
-            )}
 
             <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select A Service</h1>
             
@@ -1405,6 +1494,24 @@ export default function BookingWidget() {
         </div>
 
         <ProgressBar />
+        
+        {/* Selected Studio Display */}
+        {bookingState.selectedLocation && (
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs text-blue-600 ml-2">Change</span>
+            </button>
+          </div>
+        )}
+
         <div className="flex-1">
           <div className="max-w-2xl mx-auto px-6 py-8">
             <Button
@@ -1523,6 +1630,24 @@ export default function BookingWidget() {
         </div>
 
         <ProgressBar />
+        
+        {/* Selected Studio Display */}
+        {bookingState.selectedLocation && (
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs text-blue-600 ml-2">Change</span>
+            </button>
+          </div>
+        )}
+
         <div className="flex-1">
           <div className="max-w-2xl mx-auto px-6 py-8">
             <Button
@@ -1637,6 +1762,24 @@ export default function BookingWidget() {
         </div>
 
         <ProgressBar />
+        
+        {/* Selected Studio Display */}
+        {bookingState.selectedLocation && (
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs text-blue-600 ml-2">Change</span>
+            </button>
+          </div>
+        )}
+
         <div className="flex-1">
           <div className="max-w-4xl mx-auto px-6 py-8">
             <Button
@@ -1828,6 +1971,24 @@ export default function BookingWidget() {
         </div>
 
         <ProgressBar />
+        
+        {/* Selected Studio Display */}
+        {bookingState.selectedLocation && (
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs text-blue-600 ml-2">Change</span>
+            </button>
+          </div>
+        )}
+
         <div className="flex-1">
           <div className="max-w-2xl mx-auto px-6 py-8">
             <div className="text-center mb-8">
