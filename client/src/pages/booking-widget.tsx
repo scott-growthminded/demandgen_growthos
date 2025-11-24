@@ -9,7 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronDown, ChevronUp, CheckCircle, User } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp, CheckCircle, User, MapPin } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { format, addDays } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -939,29 +945,16 @@ export default function BookingWidget() {
 
   // Step 3: Product Selection (replaces old 'service' step)  
   if (bookingState.step === 'product') {
-    const isMember = bookingState.isMember;
-    
-    const products = isMember ? [
-      { id: 'member-treatment', name: 'Member Treatment', price: 65, description: 'Redeem with voucher' },
-    ] : [
-      { id: 'first-time-treatment', name: 'First Time Treatment', price: 80, description: '60-minute facial' },
-      { id: 'returning-treatment', name: 'Returning Treatment', price: 80, description: '60-minute facial' },
-    ];
-
-    const handleProductSelect = (productId: string) => {
-      const product = products.find(p => p.id === productId);
-      if (product) {
-        // Reset both bookingState and component-level date/time state
-        setSelectedDate(undefined);
-        setSelectedTimeSlot(undefined);
-        setBookingState(prev => ({ 
-          ...prev, 
-          selectedProduct: product,
-          selectedDate: undefined,
-          selectedTime: undefined,
-          step: 'datetime' 
-        }));
-      }
+    const handleProductSelect = (product: any) => {
+      setSelectedDate(undefined);
+      setSelectedTimeSlot(undefined);
+      setBookingState(prev => ({ 
+        ...prev, 
+        selectedProduct: product,
+        selectedDate: undefined,
+        selectedTime: undefined,
+        step: 'datetime' 
+      }));
     };
 
     return (
@@ -976,44 +969,305 @@ export default function BookingWidget() {
         </div>
 
         <ProgressBar />
-        <div className="flex-1">
+        <div className="flex-1 overflow-y-auto">
           <div className="w-full max-w-4xl mx-auto px-6 py-8">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-6"
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              className="mb-6"
+              data-testid="button-back"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
 
-          <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select product</h1>
-          
-          <div className="space-y-4">
-            {products.map((product) => (
-              <button
-                key={product.id}
-                onClick={() => handleProductSelect(product.id)}
-                className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
-                data-testid={`button-product-${product.id}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1">{product.name}</h3>
-                    <p className="text-gray-600 text-sm">{product.description}</p>
+            {/* Selected Studio Display */}
+            {bookingState.selectedLocation && (
+              <div className="mb-6 flex items-center gap-2 text-gray-700">
+                <MapPin className="w-5 h-5" />
+                <span className="font-medium">{bookingState.selectedLocation.name}</span>
+                <span className="text-gray-500">•</span>
+                <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              </div>
+            )}
+
+            <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select A Service</h1>
+            
+            <Accordion type="single" collapsible className="space-y-4">
+              {/* Book a Treatment */}
+              <AccordionItem value="treatment" className="border rounded-lg overflow-hidden">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50" data-testid="accordion-treatment">
+                  <span className="text-xl font-semibold">Book a Treatment</span>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-4">
+                  <div className="space-y-4">
+                    {/* First Time Treatment */}
+                    <Card className="overflow-hidden">
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold mb-2">(Non-Member) First Time Treatment <span className="text-gray-600">30min</span></h3>
+                            <p className="text-sm text-gray-700 mb-3">
+                              If you're a new client and haven't purchased a membership, book this treatment.<br />
+                              Please note, your card will *not* be charged now; it will be charged after your first appointment.
+                            </p>
+                            <p className="text-2xl font-bold mb-1">$80.00</p>
+                            <p className="text-sm text-orange-600">Black Friday Members pay $60 - become a member and save $20/month</p>
+                          </div>
+                          <Button
+                            onClick={() => handleProductSelect({ id: 'first-time-treatment', name: '(Non-Member) First Time Treatment', price: 80, description: '30min facial' })}
+                            className="ml-4 bg-black text-white hover:bg-gray-800"
+                            data-testid="button-select-first-time"
+                          >
+                            Select
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* First Time Treatment Under 17 */}
+                    <Card className="overflow-hidden">
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold mb-2">(Non-Member) First Time Treatment: 17 and under <span className="text-gray-600">30min</span></h3>
+                            <p className="text-sm text-gray-700 mb-3">
+                              All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person.<br />
+                              Please note, your card will *not* be charged now; it will be charged after your first appointment.
+                            </p>
+                            <p className="text-2xl font-bold mb-1">$80.00</p>
+                            <p className="text-sm text-orange-600">Black Friday Members pay $60 - become a member and save $20/month</p>
+                          </div>
+                          <Button
+                            onClick={() => handleProductSelect({ id: 'first-time-treatment-17', name: '(Non-Member) First Time Treatment: 17 and under', price: 80, description: '30min facial' })}
+                            className="ml-4 bg-black text-white hover:bg-gray-800"
+                            data-testid="button-select-first-time-17"
+                          >
+                            Select
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-xl font-bold">${product.price}</span>
-                    <span className="text-2xl group-hover:translate-x-1 transition-transform">→</span>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Buy a Membership */}
+              <AccordionItem value="membership" className="border rounded-lg overflow-hidden">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50" data-testid="accordion-membership">
+                  <span className="text-xl font-semibold">Buy a Membership</span>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-4">
+                  <div className="space-y-4">
+                    {/* Black Friday Membership $60 */}
+                    <Card className="overflow-hidden">
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold mb-2">2025 Black Friday Membership Deal ($60)</h3>
+                            <p className="text-sm text-gray-700 mb-3">You'll receive the following:</p>
+                            <ul className="text-sm text-gray-700 space-y-1 mb-3 list-disc list-inside">
+                              <li>1 facial vouchers per month redeemable at any Glowbar studio for 3 months</li>
+                              <li>15% off retail products (25% off products in-studio for all of November)</li>
+                              <li>Additional facials priced at your membership rate</li>
+                              <li>1 free guest pass per year</li>
+                              <li>Access to our loyalty program</li>
+                              <li>6 month minimum commitment</li>
+                            </ul>
+                            <p className="text-2xl font-bold">$60.00</p>
+                          </div>
+                          <Button
+                            onClick={() => handleProductSelect({ id: 'membership-60', name: '2025 Black Friday Membership Deal', price: 60, description: 'Monthly membership' })}
+                            className="ml-4 bg-black text-white hover:bg-gray-800"
+                            data-testid="button-select-membership-60"
+                          >
+                            Select
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Black Friday Membership $110 */}
+                    <Card className="overflow-hidden">
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold mb-2">Black Friday Glowbar Membership+ ($110)</h3>
+                            <p className="text-sm text-gray-700 mb-3">You'll receive the following:</p>
+                            <ul className="text-sm text-gray-700 space-y-1 mb-3 list-disc list-inside">
+                              <li>2 facial vouchers per month redeemable at any Glowbar studio for 3 months</li>
+                              <li>15% off retail products (25% off products in-studio for all of November)</li>
+                              <li>1 free guest pass per year</li>
+                              <li>Access to our loyalty program</li>
+                              <li>6 month minimum commitment</li>
+                            </ul>
+                            <p className="text-2xl font-bold">$110.00</p>
+                          </div>
+                          <Button
+                            onClick={() => handleProductSelect({ id: 'membership-110', name: 'Black Friday Glowbar Membership+', price: 110, description: 'Monthly membership' })}
+                            className="ml-4 bg-black text-white hover:bg-gray-800"
+                            data-testid="button-select-membership-110"
+                          >
+                            Select
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
-                </div>
-              </button>
-            ))}
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Purchase a Package */}
+              <AccordionItem value="package" className="border rounded-lg overflow-hidden">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50" data-testid="accordion-package">
+                  <span className="text-xl font-semibold">Purchase a Package</span>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-4">
+                  <div className="space-y-4">
+                    {/* 3 Facials */}
+                    <Card className="overflow-hidden">
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold mb-2">1. Three (3) Facials</h3>
+                            <p className="text-sm text-gray-700 mb-3">
+                              Ready for consistent facials without the membership commitment? Purchase a 3-pack and save 5% off the price of the non-member facial: $76 per facial vs. $80 per facial.
+                              <br /><br />
+                              All 3 vouchers will be available immediately, expire after 6 months, and can be used whenever you need a pro touch.
+                              <br /><br />
+                              Packages are non-transferrable.
+                            </p>
+                            <p className="text-2xl font-bold">$228.00</p>
+                          </div>
+                          <Button
+                            onClick={() => handleProductSelect({ id: 'package-3', name: 'Three (3) Facials Package', price: 228, description: '3 facial package' })}
+                            className="ml-4 bg-black text-white hover:bg-gray-800"
+                            data-testid="button-select-package-3"
+                          >
+                            Select
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* 6 Facials */}
+                    <Card className="overflow-hidden">
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold mb-2">2. Six (6) Facials</h3>
+                            <p className="text-sm text-gray-700 mb-3">
+                              Ready for consistent facials without the membership commitment? Purchase a 6-pack and save 10% off the price of the non-member facial: $72 per facial vs. $80 per facial.
+                              <br /><br />
+                              All 6 vouchers will be available immediately, expire after 9 months, and can be used whenever you need a pro touch.
+                              <br /><br />
+                              Packages are non-transferrable.
+                            </p>
+                            <p className="text-2xl font-bold">$432.00</p>
+                          </div>
+                          <Button
+                            onClick={() => handleProductSelect({ id: 'package-6', name: 'Six (6) Facials Package', price: 432, description: '6 facial package' })}
+                            className="ml-4 bg-black text-white hover:bg-gray-800"
+                            data-testid="button-select-package-6"
+                          >
+                            Select
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* 9 Facials */}
+                    <Card className="overflow-hidden">
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold mb-2">3. Nine (9) Facials</h3>
+                            <p className="text-sm text-gray-700 mb-3">
+                              Ready for consistent facials without the membership commitment? Purchase a 9-pack and save 15% off the price of the non-member facial: $68 per facial vs. $80 per facial.
+                              <br /><br />
+                              All 9 vouchers will be available immediately, expire after 12 months, and can be used whenever you need a pro touch.
+                              <br /><br />
+                              Packages are non-transferrable.
+                            </p>
+                            <p className="text-2xl font-bold">$612.00</p>
+                          </div>
+                          <Button
+                            onClick={() => handleProductSelect({ id: 'package-9', name: 'Nine (9) Facials Package', price: 612, description: '9 facial package' })}
+                            className="ml-4 bg-black text-white hover:bg-gray-800"
+                            data-testid="button-select-package-9"
+                          >
+                            Select
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* 12 Facials */}
+                    <Card className="overflow-hidden">
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold mb-2">4. Twelve (12) Facials</h3>
+                            <p className="text-sm text-gray-700 mb-3">
+                              Ready for consistent facials without the membership commitment? Purchase a 12-pack and save 20% off the price of the non-member facial: $65 per facial vs. $80 per facial.
+                              <br /><br />
+                              All 12 vouchers will be available immediately, expire after 15 months, and can be used whenever you need a pro touch.
+                              <br /><br />
+                              Packages are non-transferrable.
+                            </p>
+                            <p className="text-2xl font-bold">$780.00</p>
+                          </div>
+                          <Button
+                            onClick={() => handleProductSelect({ id: 'package-12', name: 'Twelve (12) Facials Package', price: 780, description: '12 facial package' })}
+                            className="ml-4 bg-black text-white hover:bg-gray-800"
+                            data-testid="button-select-package-12"
+                          >
+                            Select
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Purchase a Gift Card */}
+              <AccordionItem value="giftcard" className="border rounded-lg overflow-hidden">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50" data-testid="accordion-giftcard">
+                  <span className="text-xl font-semibold">Purchase a Gift Card</span>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-4">
+                  <div className="space-y-3">
+                    {[80, 100, 150, 200, 250].map((amount) => (
+                      <button
+                        key={amount}
+                        onClick={() => handleProductSelect({ id: `giftcard-${amount}`, name: `Gift Card $${amount}`, price: amount, description: 'Gift card' })}
+                        className="w-full p-4 border rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between"
+                        data-testid={`button-giftcard-${amount}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
+                          <span className="text-lg">${amount}.00</span>
+                        </div>
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => handleProductSelect({ id: 'giftcard-custom', name: 'Custom Gift Card', price: 100, description: 'Custom amount gift card' })}
+                      className="w-full p-4 border rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between"
+                      data-testid="button-giftcard-custom"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
+                        <span className="text-lg">Custom</span>
+                      </div>
+                    </button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </div>
       </div>
-    </div>
     );
   }
 
