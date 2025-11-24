@@ -1483,7 +1483,13 @@ export default function BookingWidget() {
       }));
     };
 
-    const timeSlots = generateTimeSlots();
+    const allTimeSlots = generateTimeSlots();
+    
+    // Filter time slots by selected esthetician
+    const timeSlots = esthetician === 'any' 
+      ? allTimeSlots 
+      : allTimeSlots.filter((slot: any) => slot.staffVariantId === esthetician || slot.staffId === esthetician);
+    
     const hasAvailability = timeSlots.length > 0;
 
     // Generate calendar days for the current month + next month
@@ -1763,7 +1769,7 @@ export default function BookingWidget() {
             </div>
 
             {/* Alternative Locations */}
-            {selectedDate && nearbyLocations.length > 0 && (
+            {selectedDate && nearbyLocations.length >= 2 && (
               <Card>
                 <CardHeader>
                   <CardTitle>More Available Times at Nearby Locations</CardTitle>
