@@ -29,6 +29,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import glowbarLogoPath from "@assets/image_1763999100752.png";
 import facialTreatmentImage from "@assets/stock_images/woman_receiving_faci_e972fbc7.jpg";
+import luxurySpaImage from "@assets/stock_images/woman_at_luxury_spa__a296b478.jpg";
 
 // Fix Leaflet default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -1095,21 +1096,33 @@ export default function BookingWidget() {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto">
-          <div className="w-full max-w-4xl mx-auto px-6 py-8">
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              className="mb-6"
-              data-testid="button-back"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
+        <div className="flex-1 grid lg:grid-cols-2">
+          {/* Image Section */}
+          <div className="hidden lg:block relative">
+            <img 
+              src={luxurySpaImage} 
+              alt="Luxury spa facial treatment" 
+              className="absolute inset-0 w-full h-full object-cover"
+              data-testid="img-service"
+            />
+          </div>
 
-            <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select A Service</h1>
-            
-            <Accordion type="single" collapsible className="space-y-4">
+          {/* Content Section */}
+          <div className="overflow-y-auto">
+            <div className="w-full max-w-2xl mx-auto px-6 py-8">
+              <Button
+                variant="ghost"
+                onClick={handleBack}
+                className="mb-6"
+                data-testid="button-back"
+              >
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+
+              <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select A Service</h1>
+              
+              <Accordion type="single" collapsible className="space-y-4">
               {/* Book a Treatment */}
               <AccordionItem value="treatment" className="border rounded-lg overflow-hidden">
                 <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50" data-testid="accordion-treatment">
