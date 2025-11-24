@@ -9,10 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronDown, ChevronUp, CheckCircle } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp, CheckCircle, User } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import glowbarLogoPath from "@assets/image_1763998718972.png";
 
 // Fix Leaflet default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -363,13 +364,37 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white">
-        <div className="w-full max-w-7xl mx-auto px-6 py-8">
-          <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select a studio location</h1>
-          
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Left side - Grouped locations with dropdowns */}
-            <div className="space-y-2">
+      <div className="min-h-screen bg-white flex flex-col">
+        {/* Header */}
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
+          <img src={glowbarLogoPath} alt="Glowbar" className="h-8" data-testid="img-logo" />
+          <Button variant="ghost" data-testid="button-my-account">
+            <User className="w-4 h-4 mr-2" />
+            My Account
+          </Button>
+        </div>
+
+        {/* Status Bar */}
+        <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+          <div className="flex items-center justify-between text-sm font-medium text-gray-600">
+            <span>LOCATION</span>
+            <span className="text-gray-300">•</span>
+            <span>WHO'S COMING</span>
+            <span className="text-gray-300">•</span>
+            <span>SERVICES</span>
+            <span className="text-gray-300">•</span>
+            <span>ADD-ONS</span>
+            <span className="text-gray-300">•</span>
+            <span>SCHEDULING</span>
+            <span className="text-gray-300">•</span>
+            <span>CHECKOUT</span>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex overflow-hidden px-6 py-8">
+          {/* Left side - Grouped locations with dropdowns - SCROLLABLE */}
+          <div className="w-1/2 overflow-y-auto pr-8 space-y-2">
               {stateOrder.map((stateCode) => {
                 const locations = groupedLocations[stateCode] || [];
                 if (locations.length === 0) return null;
@@ -433,8 +458,8 @@ export default function BookingWidget() {
               })}
             </div>
 
-            {/* Right side - Map */}
-            <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
+            {/* Right side - Map - FIXED */}
+            <div className="w-1/2 relative rounded-lg overflow-hidden bg-gray-100 sticky top-0">
               {allLocations.length > 0 && allLocations[0].coordinates ? (
                 <MapContainer
                   ref={mapRef}
