@@ -1486,13 +1486,34 @@ export default function BookingWidget() {
     const timeSlots = generateTimeSlots();
     const hasAvailability = timeSlots.length > 0;
 
-    const nextDays = Array.from({ length: 7 }, (_, i) => {
-      const date = addDays(new Date(), i);
-      return {
-        date: date,
-        display: format(date, 'EEE, MMM d')
-      };
-    });
+    // Generate calendar days for the current month + next month
+    const generateCalendarDays = () => {
+      const today = new Date();
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      
+      // Get first day of current month and last day of next month
+      const startDate = new Date(currentYear, currentMonth, 1);
+      const endDate = new Date(currentYear, currentMonth + 2, 0); // Last day of next month
+      
+      const days: Date[] = [];
+      let current = new Date(startDate);
+      
+      while (current <= endDate) {
+        days.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+      }
+      
+      return days.filter(day => day >= today); // Only show today and future dates
+    };
+
+    const calendarDays = generateCalendarDays();
+    
+    // Check if a date has discounted rates (example: weekdays)
+    const isDiscountedDate = (date: Date) => {
+      const dayOfWeek = date.getDay();
+      return dayOfWeek >= 1 && dayOfWeek <= 3; // Monday-Wednesday are discounted
+    };
 
     const isValid = selectedDate && selectedTimeSlot;
 
@@ -1526,8 +1547,8 @@ export default function BookingWidget() {
           </div>
         )}
 
-        <div className="flex-1">
-          <div className="max-w-2xl mx-auto px-6 py-8">
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-6 py-8">
             <Button
               variant="ghost"
               onClick={handleBack}
@@ -1538,90 +1559,279 @@ export default function BookingWidget() {
               Back
             </Button>
 
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Select Date & Time</h1>
-            <p className="text-gray-600" data-testid="text-subtitle">
-              Choose your appointment time at {bookingState.selectedLocation?.name || 'the selected location'}
-            </p>
-          </div>
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Select Date & Time</h1>
+              <p className="text-gray-600" data-testid="text-subtitle">
+                Choose your appointment time at {bookingState.selectedLocation?.name || 'the selected location'}
+              </p>
+            </div>
 
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Select Date</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-2">
-                {nextDays.map((day) => (
-                  <button
-                    key={format(day.date, 'yyyy-MM-dd')}
+            {/* Main Content: Appointments Left, Calendar Right */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              {/* Left Side: Available Appointments */}
+              <div className="space-y-6">
+                {/* Esthetician Filter */}
+                <Card>
+                  <CardContent className="p-6">
+                    <Label htmlFor="esthetician-filter" className="text-base font-semibold mb-3 block">
+                      Filter by Esthetician
+                    </Label>
+                    <Select value={esthetician} onValueChange={setEsthetician}>
+                      <SelectTrigger id="esthetician-filter" className="w-full" data-testid="select-esthetician">
+                        <SelectValue placeholder="Any esthetician" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="any">Any esthetician</SelectItem>
+                        {staffData?.staff?.map((staff) => (
+                          <SelectItem key={staff.id} value={staff.id}>
+                            {staff.displayName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </CardContent>
+                </Card>
+
+                {/* Available Times */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Available Times</CardTitle>
+                    {selectedDate && (
+                      <CardDescription>
+                        {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                        {isDiscountedDate(selectedDate) && (
+                          <span className="ml-2 text-orange-600 font-medium">• Discounted</span>
+                        )}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {!selectedDate ? (
+                      <p className="text-center text-gray-500 py-8">Select a date from the calendar</p>
+                    ) : availabilityLoading ? (
+                      <p className="text-center text-gray-500 py-8">Loading available times...</p>
+                    ) : hasAvailability ? (
+                      <div className="grid grid-cols-2 gap-3">
+                        {timeSlots.map((slot) => (
+                          <button
+                            key={slot.id}
+                            onClick={() => setSelectedTimeSlot(slot)}
+                            className={`p-4 border rounded-lg text-center transition-colors ${
+                              selectedTimeSlot?.id === slot.id
+                                ? 'border-black bg-black text-white'
+                                : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50'
+                            }`}
+                            data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
+                          >
+                            <div className="font-semibold">{slot.time}</div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-gray-500 py-8">No availability for this date</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Continue Button */}
+                {isValid && (
+                  <Button
                     onClick={() => {
-                      setSelectedDate(day.date);
-                      setSelectedTimeSlot(undefined); // Reset time when date changes
+                      const nextStep = bookingState.customerType === 'new' ? 'personal-info' : 'checkout';
+                      setBookingState(prev => ({
+                        ...prev,
+                        selectedDate: selectedDate,
+                        selectedTime: selectedTimeSlot,
+                        step: nextStep
+                      }));
                     }}
-                    className={`p-4 border rounded-lg text-left transition-colors ${
-                      selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(day.date, 'yyyy-MM-dd')
-                        ? 'border-black bg-black text-white'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    data-testid={`button-date-${format(day.date, 'yyyy-MM-dd')}`}
+                    className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                    data-testid="button-continue"
                   >
-                    {day.display}
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {selectedDate && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Select Time</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {availabilityLoading ? (
-                  <p className="text-center text-gray-500">Loading available times...</p>
-                ) : hasAvailability ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {timeSlots.map((slot) => (
-                      <button
-                        key={slot.id}
-                        onClick={() => setSelectedTimeSlot(slot)} // Store entire Boulevard slot
-                        className={`p-3 border rounded-lg text-sm transition-colors ${
-                          selectedTimeSlot?.id === slot.id
-                            ? 'border-black bg-black text-white'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
-                      >
-                        {slot.time}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-500">No availability for this date. Please select another date.</p>
+                    Continue to {bookingState.customerType === 'new' ? 'Personal Info' : 'Checkout'}
+                  </Button>
                 )}
-              </CardContent>
-            </Card>
-          )}
+              </div>
 
-          {isValid && (
-            <Button
-              onClick={() => {
-                // Determine next step based on customer type
-                const nextStep = bookingState.customerType === 'new' ? 'personal-info' : 'checkout';
-                setBookingState(prev => ({
-                  ...prev,
-                  selectedDate: selectedDate,
-                  selectedTime: selectedTimeSlot,
-                  step: nextStep
-                }));
-              }}
-              className="w-full bg-black text-white hover:bg-gray-800"
-              data-testid="button-continue"
-            >
-              Continue
-            </Button>
-          )}
+              {/* Right Side: Calendar */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Select a Date</CardTitle>
+                  <CardDescription className="flex items-center gap-4 mt-2">
+                    <span className="flex items-center gap-1">
+                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                      <span className="text-xs">Discounted</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-3 h-3 rounded-full bg-black"></div>
+                      <span className="text-xs">Selected</span>
+                    </span>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {/* Calendar View */}
+                    {(() => {
+                      const today = new Date();
+                      const months: { month: number; year: number; days: Date[] }[] = [];
+                      
+                      // Group days by month
+                      calendarDays.forEach(day => {
+                        const monthYear = `${day.getMonth()}-${day.getFullYear()}`;
+                        let monthGroup = months.find(m => m.month === day.getMonth() && m.year === day.getFullYear());
+                        if (!monthGroup) {
+                          monthGroup = { month: day.getMonth(), year: day.getFullYear(), days: [] };
+                          months.push(monthGroup);
+                        }
+                        monthGroup.days.push(day);
+                      });
+
+                      return months.map((monthData) => {
+                        const monthStart = new Date(monthData.year, monthData.month, 1);
+                        const monthName = format(monthStart, 'MMMM yyyy');
+                        const firstDayOfWeek = monthStart.getDay(); // 0 = Sunday
+                        
+                        // Create padding for days before the month starts
+                        const paddingDays = Array(firstDayOfWeek).fill(null);
+                        
+                        return (
+                          <div key={`${monthData.month}-${monthData.year}`}>
+                            <h3 className="text-lg font-semibold mb-3">{monthName}</h3>
+                            
+                            {/* Day labels */}
+                            <div className="grid grid-cols-7 gap-2 mb-2">
+                              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                <div key={day} className="text-center text-xs font-medium text-gray-500 py-1">
+                                  {day}
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {/* Calendar grid */}
+                            <div className="grid grid-cols-7 gap-2">
+                              {/* Padding cells */}
+                              {paddingDays.map((_, idx) => (
+                                <div key={`padding-${idx}`} className="aspect-square"></div>
+                              ))}
+                              
+                              {/* Actual days */}
+                              {Array.from({ length: new Date(monthData.year, monthData.month + 1, 0).getDate() }, (_, i) => {
+                                const day = new Date(monthData.year, monthData.month, i + 1);
+                                const isPast = day < today && format(day, 'yyyy-MM-dd') !== format(today, 'yyyy-MM-dd');
+                                const isSelected = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
+                                const isDiscounted = isDiscountedDate(day);
+                                
+                                if (isPast) {
+                                  return (
+                                    <div key={i} className="aspect-square flex items-center justify-center text-gray-300">
+                                      {i + 1}
+                                    </div>
+                                  );
+                                }
+                                
+                                return (
+                                  <button
+                                    key={i}
+                                    onClick={() => {
+                                      setSelectedDate(day);
+                                      setSelectedTimeSlot(undefined);
+                                    }}
+                                    className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-colors relative ${
+                                      isSelected
+                                        ? 'bg-black text-white'
+                                        : isDiscounted
+                                        ? 'bg-orange-100 text-orange-900 hover:bg-orange-200'
+                                        : 'hover:bg-gray-100'
+                                    }`}
+                                    data-testid={`calendar-day-${format(day, 'yyyy-MM-dd')}`}
+                                  >
+                                    {i + 1}
+                                    {isDiscounted && !isSelected && (
+                                      <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-orange-500"></div>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Alternative Locations */}
+            {selectedDate && nearbyLocations.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>More Available Times at Nearby Locations</CardTitle>
+                  <CardDescription>
+                    for {format(selectedDate, 'EEEE, MMMM d')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {nearbyLocations.slice(0, 2).map((location, idx) => {
+                    const availabilityQuery = idx === 0 ? nearbyAvailability1 : nearbyAvailability2;
+                    const nearbySlots = availabilityQuery.data?.availableSlots?.map((slot: any) => ({
+                      ...slot,
+                      time: format(new Date(slot.startTime), 'h:mm a')
+                    })) || [];
+                    
+                    return (
+                      <div key={location.id} className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-semibold">{location.name}</h4>
+                            <p className="text-sm text-gray-600">
+                              {location.address?.city}, {location.address?.state}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {availabilityQuery.isLoading ? (
+                          <p className="text-sm text-gray-500">Loading times...</p>
+                        ) : nearbySlots.length > 0 ? (
+                          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                            {nearbySlots.slice(0, 6).map((slot: any) => (
+                              <button
+                                key={slot.id}
+                                onClick={() => {
+                                  setBookingState(prev => ({
+                                    ...prev,
+                                    selectedLocation: {
+                                      id: location.id,
+                                      name: location.name,
+                                      city: location.address?.city || '',
+                                      state: location.address?.state || ''
+                                    },
+                                    selectedTime: slot,
+                                    selectedDate: selectedDate
+                                  }));
+                                  setSelectedTimeSlot(slot);
+                                }}
+                                className="p-2 border border-gray-200 rounded text-sm hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                                data-testid={`nearby-time-${location.id}-${slot.time.replace(/[:\s]/g, '-')}`}
+                              >
+                                {slot.time}
+                              </button>
+                            ))}
+                            {nearbySlots.length > 6 && (
+                              <span className="text-xs text-gray-500 flex items-center justify-center">
+                                +{nearbySlots.length - 6} more
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">No availability</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
