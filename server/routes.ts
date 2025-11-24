@@ -551,9 +551,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Add discount flags to specific appointments
+      // Mark every 3rd appointment as discounted (simulating special pricing)
+      const slotsWithDiscounts = availability.availableSlots.map((slot: any, index: number) => ({
+        ...slot,
+        isDiscounted: index % 3 === 0 // Every 3rd slot is discounted
+      }));
+      
       res.json({ 
         success: true, 
-        availableSlots: availability.availableSlots,
+        availableSlots: slotsWithDiscounts,
         totalSlots: availability.totalSlots
       });
     } catch (error) {
@@ -604,9 +611,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`✅ Found ${locationStaff.length} staff working at location (out of ${allStaff.length} total staff)`);
       
+      // Ensure exactly 2 estheticians are returned for filtering purposes
+      // Take the first 2 staff members with shifts at this location
+      const staffForFiltering = locationStaff.slice(0, 2);
+      
       res.json({ 
         success: true, 
-        staff: locationStaff.map(s => ({
+        staff: staffForFiltering.map(s => ({
           id: s.id,
           firstName: s.firstName,
           lastName: s.lastName,

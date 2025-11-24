@@ -1515,12 +1515,6 @@ export default function BookingWidget() {
     };
 
     const calendarDays = generateCalendarDays();
-    
-    // Check if a date has discounted rates (example: weekdays)
-    const isDiscountedDate = (date: Date) => {
-      const dayOfWeek = date.getDay();
-      return dayOfWeek >= 1 && dayOfWeek <= 3; // Monday-Wednesday are discounted
-    };
 
     const isValid = selectedDate && selectedTimeSlot;
 
@@ -1610,10 +1604,6 @@ export default function BookingWidget() {
                   </div>
                   <CardDescription className="flex items-center gap-4 mt-2">
                     <span className="flex items-center gap-1">
-                      <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                      <span className="text-xs">Discounted</span>
-                    </span>
-                    <span className="flex items-center gap-1">
                       <div className="w-3 h-3 rounded-full bg-black"></div>
                       <span className="text-xs">Selected</span>
                     </span>
@@ -1653,7 +1643,6 @@ export default function BookingWidget() {
                             const day = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth(), i + 1);
                             const isPast = day < today && format(day, 'yyyy-MM-dd') !== format(today, 'yyyy-MM-dd');
                             const isSelected = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
-                            const isDiscounted = isDiscountedDate(day);
                             
                             if (isPast) {
                               return (
@@ -1670,19 +1659,14 @@ export default function BookingWidget() {
                                   setSelectedDate(day);
                                   setSelectedTimeSlot(undefined);
                                 }}
-                                className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-colors relative ${
+                                className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
                                   isSelected
                                     ? 'bg-black text-white'
-                                    : isDiscounted
-                                    ? 'bg-orange-100 text-orange-900 hover:bg-orange-200'
                                     : 'hover:bg-gray-100'
                                 }`}
                                 data-testid={`calendar-day-${format(day, 'yyyy-MM-dd')}`}
                               >
                                 {i + 1}
-                                {isDiscounted && !isSelected && (
-                                  <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-orange-500"></div>
-                                )}
                               </button>
                             );
                           })}
@@ -1724,9 +1708,6 @@ export default function BookingWidget() {
                     {selectedDate && (
                       <CardDescription>
                         {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-                        {isDiscountedDate(selectedDate) && (
-                          <span className="ml-2 text-orange-600 font-medium">• Discounted</span>
-                        )}
                       </CardDescription>
                     )}
                   </CardHeader>
@@ -1741,7 +1722,7 @@ export default function BookingWidget() {
                           <button
                             key={slot.id}
                             onClick={() => setSelectedTimeSlot(slot)}
-                            className={`p-4 border rounded-lg text-center transition-colors ${
+                            className={`p-4 border rounded-lg text-center transition-colors relative ${
                               selectedTimeSlot?.id === slot.id
                                 ? 'border-black bg-black text-white'
                                 : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50'
@@ -1749,6 +1730,13 @@ export default function BookingWidget() {
                             data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
                           >
                             <div className="font-semibold">{slot.time}</div>
+                            {slot.isDiscounted && (
+                              <div className="mt-1">
+                                <span className={`text-xs font-medium ${selectedTimeSlot?.id === slot.id ? 'text-orange-300' : 'text-orange-600'}`}>
+                                  Discounted
+                                </span>
+                              </div>
+                            )}
                           </button>
                         ))}
                       </div>
@@ -1810,7 +1798,7 @@ export default function BookingWidget() {
                         {availabilityQuery.isLoading ? (
                           <p className="text-sm text-gray-500">Loading times...</p>
                         ) : nearbySlots.length > 0 ? (
-                          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                             {nearbySlots.slice(0, 6).map((slot: any) => (
                               <button
                                 key={slot.id}
@@ -1828,10 +1816,13 @@ export default function BookingWidget() {
                                   }));
                                   setSelectedTimeSlot(slot);
                                 }}
-                                className="p-2 border border-gray-200 rounded text-sm hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                                className="p-2 border border-gray-200 rounded text-sm hover:border-gray-400 hover:bg-gray-50 transition-colors flex flex-col items-center"
                                 data-testid={`nearby-time-${location.id}-${slot.time.replace(/[:\s]/g, '-')}`}
                               >
-                                {slot.time}
+                                <span className="font-medium">{slot.time}</span>
+                                {slot.isDiscounted && (
+                                  <span className="text-xs text-orange-600">Disc.</span>
+                                )}
                               </button>
                             ))}
                             {nearbySlots.length > 6 && (
