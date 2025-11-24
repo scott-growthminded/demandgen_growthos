@@ -1651,15 +1651,16 @@ export default function BookingWidget() {
 
     const allTimeSlots = generateTimeSlots();
     
+    // Get unique staff IDs with availability for "Esthetician One/Two" mapping
+    const uniqueStaffIds = Array.from(new Set(
+      allTimeSlots.map((slot: any) => slot.staffVariantId || slot.staffId).filter(Boolean)
+    ));
+    
     // Filter time slots by selected esthetician
     let timeSlots = allTimeSlots;
     if (esthetician !== 'any') {
       if (esthetician === 'esthetician-one' || esthetician === 'esthetician-two') {
-        // For hardcoded estheticians, find the first two unique staff members with availability
-        const uniqueStaffIds = Array.from(new Set(
-          allTimeSlots.map((slot: any) => slot.staffVariantId || slot.staffId).filter(Boolean)
-        ));
-        
+        // For hardcoded estheticians, map to the first two unique staff members with availability
         let targetStaffId = null;
         if (esthetician === 'esthetician-one' && uniqueStaffIds[0]) {
           targetStaffId = uniqueStaffIds[0];
@@ -1882,8 +1883,12 @@ export default function BookingWidget() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="any">Any esthetician</SelectItem>
-                        <SelectItem value="esthetician-one">Esthetician One</SelectItem>
-                        <SelectItem value="esthetician-two">Esthetician Two</SelectItem>
+                        {uniqueStaffIds.length >= 1 && (
+                          <SelectItem value="esthetician-one">Esthetician One</SelectItem>
+                        )}
+                        {uniqueStaffIds.length >= 2 && (
+                          <SelectItem value="esthetician-two">Esthetician Two</SelectItem>
+                        )}
                         {staffData?.staff?.map((staff) => (
                           <SelectItem key={staff.id} value={staff.id}>
                             {staff.displayName}
