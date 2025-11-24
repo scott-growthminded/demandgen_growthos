@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -109,6 +109,7 @@ export default function BookingWidget() {
     step: 'location',
   });
   const [expandedState, setExpandedState] = useState<string | null>(null);
+  const mapRef = useRef<any>(null);
   
   // Questionnaire state
   const [accutane, setAccutane] = useState(false);
@@ -320,6 +321,26 @@ export default function BookingWidget() {
       });
     }
 
+    // Zoom to expanded state's locations
+    useEffect(() => {
+      if (expandedState && mapRef.current) {
+        const stateLocations = groupedLocations[expandedState] || [];
+        if (stateLocations.length > 0) {
+          const coordinates = stateLocations
+            .map((loc: any) => [
+              loc.coordinates?.lat || loc.coordinates?.latitude,
+              loc.coordinates?.lng || loc.coordinates?.longitude
+            ])
+            .filter((coord: any) => coord[0] && coord[1]);
+
+          if (coordinates.length > 0) {
+            const bounds = L.latLngBounds(coordinates);
+            mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+          }
+        }
+      }
+    }, [expandedState]);
+
     // Get all locations for the map
     const allLocations: any[] = [];
     if (locationsData) {
@@ -416,13 +437,14 @@ export default function BookingWidget() {
             <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
               {allLocations.length > 0 && allLocations[0].coordinates ? (
                 <MapContainer
+                  ref={mapRef}
                   key="location-map"
                   center={[
                     allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lat || loc.coordinates?.latitude) || 0), 0) / allLocations.length,
                     allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lng || loc.coordinates?.longitude) || 0), 0) / allLocations.length
                   ]}
                   zoom={7}
-                  style={{ height: '100%', width: '100%' }}
+                  style={{ height: '100%', width: '100%', filter: 'grayscale(100%)' }}
                   scrollWheelZoom={true}
                 >
                   <TileLayer
