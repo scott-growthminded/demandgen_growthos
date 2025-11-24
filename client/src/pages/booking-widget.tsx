@@ -1130,13 +1130,13 @@ export default function BookingWidget() {
 
             <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select A Service</h1>
               
-              <Accordion type="single" collapsible className="space-y-4">
+              <Accordion type="single" collapsible className="space-y-2">
               {/* Book a Treatment */}
-              <AccordionItem value="treatment" className="border rounded-lg overflow-hidden">
-                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50" data-testid="accordion-treatment">
-                  <span className="text-xl font-semibold">Book a Treatment</span>
+              <AccordionItem value="treatment" className="border-b border-gray-200">
+                <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-treatment">
+                  <span className="text-lg font-medium">Book a Treatment</span>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-4">
+                <AccordionContent className="pb-4 ml-4">
                   <div className="space-y-4">
                     {/* First Time Treatment */}
                     <Card className="overflow-hidden">
@@ -1190,11 +1190,11 @@ export default function BookingWidget() {
               </AccordionItem>
 
               {/* Buy a Membership */}
-              <AccordionItem value="membership" className="border rounded-lg overflow-hidden">
-                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50" data-testid="accordion-membership">
-                  <span className="text-xl font-semibold">Buy a Membership</span>
+              <AccordionItem value="membership" className="border-b border-gray-200">
+                <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-membership">
+                  <span className="text-lg font-medium">Buy a Membership</span>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-4">
+                <AccordionContent className="pb-4 ml-4">
                   <div className="space-y-4">
                     {/* Black Friday Membership $60 */}
                     <Card className="overflow-hidden">
@@ -1255,11 +1255,11 @@ export default function BookingWidget() {
               </AccordionItem>
 
               {/* Purchase a Package */}
-              <AccordionItem value="package" className="border rounded-lg overflow-hidden">
-                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50" data-testid="accordion-package">
-                  <span className="text-xl font-semibold">Purchase a Package</span>
+              <AccordionItem value="package" className="border-b border-gray-200">
+                <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-package">
+                  <span className="text-lg font-medium">Purchase a Package</span>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-4">
+                <AccordionContent className="pb-4 ml-4">
                   <div className="space-y-4">
                     {/* 3 Facials */}
                     <Card className="overflow-hidden">
@@ -1369,11 +1369,11 @@ export default function BookingWidget() {
               </AccordionItem>
 
               {/* Purchase a Gift Card */}
-              <AccordionItem value="giftcard" className="border rounded-lg overflow-hidden">
-                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50" data-testid="accordion-giftcard">
-                  <span className="text-xl font-semibold">Purchase a Gift Card</span>
+              <AccordionItem value="giftcard" className="border-b border-gray-200">
+                <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-giftcard">
+                  <span className="text-lg font-medium">Purchase a Gift Card</span>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-4">
+                <AccordionContent className="pb-4 ml-4">
                   <div className="space-y-3">
                     {[80, 100, 150, 200, 250].map((amount) => (
                       <button
