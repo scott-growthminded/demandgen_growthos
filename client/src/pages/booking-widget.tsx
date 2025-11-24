@@ -652,6 +652,15 @@ export default function BookingWidget() {
 
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {/* Header */}
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
+          <img src={glowbarLogoPath} alt="Glowbar" className="h-8" data-testid="img-logo" />
+          <Button variant="ghost" data-testid="button-my-account">
+            <User className="w-4 h-4 mr-2" />
+            My Account
+          </Button>
+        </div>
+
         <ProgressBar />
         <div className="flex-1 flex items-center justify-center">
           <div className="w-full max-w-md px-6 py-8">
@@ -723,6 +732,15 @@ export default function BookingWidget() {
 
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {/* Header */}
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
+          <img src={glowbarLogoPath} alt="Glowbar" className="h-8" data-testid="img-logo" />
+          <Button variant="ghost" data-testid="button-my-account">
+            <User className="w-4 h-4 mr-2" />
+            My Account
+          </Button>
+        </div>
+
         <ProgressBar />
         <div className="flex-1 flex items-center justify-center">
           <div className="w-full max-w-md px-6 py-8">
@@ -779,6 +797,15 @@ export default function BookingWidget() {
   if (bookingState.step === 'customer-type') {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {/* Header */}
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
+          <img src={glowbarLogoPath} alt="Glowbar" className="h-8" data-testid="img-logo" />
+          <Button variant="ghost" data-testid="button-my-account">
+            <User className="w-4 h-4 mr-2" />
+            My Account
+          </Button>
+        </div>
+
         <ProgressBar />
         <div className="flex-1 flex items-center">
           <div className="w-full max-w-6xl mx-auto px-6 py-8 grid grid-cols-2 gap-12">
@@ -844,6 +871,15 @@ export default function BookingWidget() {
 
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {/* Header */}
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
+          <img src={glowbarLogoPath} alt="Glowbar" className="h-8" data-testid="img-logo" />
+          <Button variant="ghost" data-testid="button-my-account">
+            <User className="w-4 h-4 mr-2" />
+            My Account
+          </Button>
+        </div>
+
         <ProgressBar />
         <div className="flex-1 flex items-center">
           <div className="w-full max-w-lg mx-auto px-6 py-8">
@@ -930,6 +966,15 @@ export default function BookingWidget() {
 
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {/* Header */}
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
+          <img src={glowbarLogoPath} alt="Glowbar" className="h-8" data-testid="img-logo" />
+          <Button variant="ghost" data-testid="button-my-account">
+            <User className="w-4 h-4 mr-2" />
+            My Account
+          </Button>
+        </div>
+
         <ProgressBar />
         <div className="flex-1">
           <div className="w-full max-w-4xl mx-auto px-6 py-8">
@@ -1001,6 +1046,15 @@ export default function BookingWidget() {
 
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {/* Header */}
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
+          <img src={glowbarLogoPath} alt="Glowbar" className="h-8" data-testid="img-logo" />
+          <Button variant="ghost" data-testid="button-my-account">
+            <User className="w-4 h-4 mr-2" />
+            My Account
+          </Button>
+        </div>
+
         <ProgressBar />
         <div className="flex-1">
           <div className="max-w-2xl mx-auto px-6 py-8">
@@ -1110,6 +1164,15 @@ export default function BookingWidget() {
 
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {/* Header */}
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
+          <img src={glowbarLogoPath} alt="Glowbar" className="h-8" data-testid="img-logo" />
+          <Button variant="ghost" data-testid="button-my-account">
+            <User className="w-4 h-4 mr-2" />
+            My Account
+          </Button>
+        </div>
+
         <ProgressBar />
         <div className="flex-1">
           <div className="max-w-2xl mx-auto px-6 py-8">
@@ -1215,6 +1278,15 @@ export default function BookingWidget() {
 
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {/* Header */}
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
+          <img src={glowbarLogoPath} alt="Glowbar" className="h-8" data-testid="img-logo" />
+          <Button variant="ghost" data-testid="button-my-account">
+            <User className="w-4 h-4 mr-2" />
+            My Account
+          </Button>
+        </div>
+
         <ProgressBar />
         <div className="flex-1">
           <div className="max-w-4xl mx-auto px-6 py-8">
@@ -1397,6 +1469,15 @@ export default function BookingWidget() {
   if (bookingState.step === 'confirmation') {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {/* Header */}
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
+          <img src={glowbarLogoPath} alt="Glowbar" className="h-8" data-testid="img-logo" />
+          <Button variant="ghost" data-testid="button-my-account">
+            <User className="w-4 h-4 mr-2" />
+            My Account
+          </Button>
+        </div>
+
         <ProgressBar />
         <div className="flex-1">
           <div className="max-w-2xl mx-auto px-6 py-8">
