@@ -1100,16 +1100,6 @@ export default function BookingWidget() {
         )}
 
         <div className="flex-1 grid md:grid-cols-2">
-          {/* Image Section */}
-          <div className="hidden md:block relative">
-            <img 
-              src={luxurySpaImage} 
-              alt="Luxury spa facial treatment" 
-              className="absolute inset-0 w-full h-full object-cover"
-              data-testid="img-service"
-            />
-          </div>
-
           {/* Content Section */}
           <div className="overflow-y-auto">
             <div className="w-full max-w-2xl mx-auto px-6 py-8">
@@ -1398,6 +1388,16 @@ export default function BookingWidget() {
               </AccordionItem>
             </Accordion>
             </div>
+          </div>
+
+          {/* Image Section */}
+          <div className="hidden md:block relative">
+            <img 
+              src={luxurySpaImage} 
+              alt="Luxury spa facial treatment" 
+              className="absolute inset-0 w-full h-full object-cover"
+              data-testid="img-service"
+            />
           </div>
         </div>
 
