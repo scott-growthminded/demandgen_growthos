@@ -432,9 +432,9 @@ export default function BookingWidget() {
         <ProgressBar />
 
         {/* Main Content */}
-        <div className="flex-1 flex overflow-hidden gap-8 px-6 py-8">
+        <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-180px)]">
           {/* Left side - Grouped locations with dropdowns - SCROLLABLE */}
-          <div className="w-1/2 overflow-y-auto space-y-2">
+          <div className="w-1/2 overflow-y-auto space-y-2 pr-4">
             {stateOrder.map((stateCode) => {
               const locations = groupedLocations[stateCode] || [];
               if (locations.length === 0) return null;
@@ -502,19 +502,20 @@ export default function BookingWidget() {
           </div>
 
           {/* Right side - Map - FIXED */}
-          <div className="w-1/2 relative rounded-lg overflow-hidden bg-gray-100 sticky top-8">
-            {allLocations.length > 0 && allLocations[0].coordinates ? (
-              <MapContainer
-                ref={mapRef}
-                key="location-map"
-                center={[
-                  allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lat || loc.coordinates?.latitude) || 0), 0) / allLocations.length,
-                  allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lng || loc.coordinates?.longitude) || 0), 0) / allLocations.length
-                ]}
-                zoom={7}
-                style={{ height: '100%', width: '100%', filter: 'grayscale(100%)' }}
-                scrollWheelZoom={true}
-              >
+          <div className="w-1/2 sticky top-8 self-start">
+            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 shadow-lg">
+              {allLocations.length > 0 && allLocations[0].coordinates ? (
+                <MapContainer
+                  ref={mapRef}
+                  key="location-map"
+                  center={[
+                    allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lat || loc.coordinates?.latitude) || 0), 0) / allLocations.length,
+                    allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lng || loc.coordinates?.longitude) || 0), 0) / allLocations.length
+                  ]}
+                  zoom={7}
+                  style={{ height: '100%', width: '100%', filter: 'grayscale(100%)' }}
+                  scrollWheelZoom={true}
+                >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -587,15 +588,16 @@ export default function BookingWidget() {
                   }
                   return null;
                 })}
-              </MapContainer>
-            ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
-                <div className="text-center">
-                  <p className="text-lg font-semibold mb-2">📍 Loading locations...</p>
-                  <p className="text-sm">Glowbar Studios</p>
+                </MapContainer>
+              ) : (
+                <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
+                  <div className="text-center">
+                    <p className="text-lg font-semibold mb-2">📍 Loading locations...</p>
+                    <p className="text-sm">Glowbar Studios</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
