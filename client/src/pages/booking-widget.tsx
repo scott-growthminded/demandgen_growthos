@@ -1654,17 +1654,32 @@ export default function BookingWidget() {
     // Filter time slots by selected esthetician
     let timeSlots = allTimeSlots;
     if (esthetician !== 'any') {
-      // Map hardcoded esthetician selections to actual staff IDs
-      let targetStaffId = esthetician;
-      if (esthetician === 'esthetician-one' && staffData?.staff?.[0]) {
-        targetStaffId = staffData.staff[0].id;
-      } else if (esthetician === 'esthetician-two' && staffData?.staff?.[1]) {
-        targetStaffId = staffData.staff[1].id;
+      if (esthetician === 'esthetician-one' || esthetician === 'esthetician-two') {
+        // For hardcoded estheticians, find the first two unique staff members with availability
+        const uniqueStaffIds = Array.from(new Set(
+          allTimeSlots.map((slot: any) => slot.staffVariantId || slot.staffId).filter(Boolean)
+        ));
+        
+        let targetStaffId = null;
+        if (esthetician === 'esthetician-one' && uniqueStaffIds[0]) {
+          targetStaffId = uniqueStaffIds[0];
+        } else if (esthetician === 'esthetician-two' && uniqueStaffIds[1]) {
+          targetStaffId = uniqueStaffIds[1];
+        }
+        
+        if (targetStaffId) {
+          timeSlots = allTimeSlots.filter((slot: any) => 
+            slot.staffVariantId === targetStaffId || slot.staffId === targetStaffId
+          );
+        } else {
+          timeSlots = [];
+        }
+      } else {
+        // For real staff selections
+        timeSlots = allTimeSlots.filter((slot: any) => 
+          slot.staffVariantId === esthetician || slot.staffId === esthetician
+        );
       }
-      
-      timeSlots = allTimeSlots.filter((slot: any) => 
-        slot.staffVariantId === targetStaffId || slot.staffId === targetStaffId
-      );
     }
     
     const hasAvailability = timeSlots.length > 0;
