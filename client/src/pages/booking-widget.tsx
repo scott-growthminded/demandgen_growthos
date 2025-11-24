@@ -1100,8 +1100,8 @@ export default function BookingWidget() {
           {/* Image Section */}
           <div className="hidden md:block relative">
             <img 
-              src={facialTreatmentImage} 
-              alt="Facial treatment at Glowbar" 
+              src={luxurySpaImage} 
+              alt="Luxury spa facial treatment" 
               className="absolute inset-0 w-full h-full object-cover"
               data-testid="img-service"
             />
