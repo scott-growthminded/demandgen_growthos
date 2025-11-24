@@ -80,20 +80,13 @@ interface BookingState {
   userPhone?: string;
   questionnaireComplete?: boolean;
   selectedDate?: Date;
-  selectedTime?: {
-    id: string;
-    time: string;
-  };
+  selectedTime?: any; // Store full Boulevard slot object
   selectedEsthetician?: string;
 }
 
 interface AvailabilityResponse {
   success: boolean;
-  availableSlots: Array<{
-    startTime: string;
-    id: string;
-    score: number;
-  }>;
+  availableSlots: Array<any>; // Full Boulevard slot objects with all fields
   totalSlots: number;
 }
 
@@ -124,7 +117,7 @@ export default function BookingWidget() {
   
   // Date/Time state
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{id: string; time: string} | undefined>(undefined);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<any>(undefined); // Store full Boulevard slot object
   const [esthetician, setEsthetician] = useState('any');
   const [expandedNearbyLocations, setExpandedNearbyLocations] = useState<Set<string>>(new Set());
   const [selectedNearbyLocation, setSelectedNearbyLocation] = useState<{locationId: string; locationName: string; time: string} | null>(null);
@@ -718,9 +711,8 @@ export default function BookingWidget() {
       }
       
       return availabilityData.availableSlots.map((slot: any) => ({
-        id: slot.id,
-        time: format(new Date(slot.startTime), 'h:mm a'),
-        startTime: slot.startTime
+        ...slot, // Keep all Boulevard fields
+        time: format(new Date(slot.startTime), 'h:mm a') // Add formatted time for display
       }));
     };
 
@@ -797,7 +789,7 @@ export default function BookingWidget() {
                     {timeSlots.map((slot) => (
                       <button
                         key={slot.id}
-                        onClick={() => setSelectedTimeSlot({id: slot.id, time: slot.time})}
+                        onClick={() => setSelectedTimeSlot(slot)} // Store entire Boulevard slot
                         className={`p-3 border rounded-lg text-sm transition-colors ${
                           selectedTimeSlot?.id === slot.id
                             ? 'border-black bg-black text-white'
@@ -934,7 +926,25 @@ export default function BookingWidget() {
     );
   }
 
+  // Checkout guard: redirect if required data is missing (using useEffect to avoid render-time mutation)
+  useEffect(() => {
+    if (bookingState.step === 'checkout') {
+      if (!bookingState.selectedProduct || !bookingState.selectedLocation || !bookingState.selectedTime) {
+        setBookingState(prev => ({ ...prev, step: 'location' }));
+      }
+    }
+  }, [bookingState.step, bookingState.selectedProduct, bookingState.selectedLocation, bookingState.selectedTime]);
+
   if (bookingState.step === 'checkout') {
+    // Early return while redirecting
+    if (!bookingState.selectedProduct || !bookingState.selectedLocation || !bookingState.selectedTime) {
+      return null;
+    }
+
+    const productPrice = bookingState.selectedProduct.price;
+    const tax = productPrice * 0.09;
+    const total = bookingState.isMember ? 0 : productPrice + tax;
+
     return (
       <div className="min-h-screen bg-white">
         <div className="max-w-4xl mx-auto px-6 py-8">
@@ -1034,11 +1044,11 @@ export default function BookingWidget() {
                       <div className="space-y-2">
                         <div className="flex justify-between">
                           <span>Treatment</span>
-                          <span>${bookingState.selectedProduct?.price || 65}.00</span>
+                          <span>${productPrice.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-green-600">
                           <span>Voucher Applied</span>
-                          <span>-${bookingState.selectedProduct?.price || 65}.00</span>
+                          <span>-${productPrice.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-lg border-t pt-2">
                           <span>Total</span>
@@ -1049,15 +1059,15 @@ export default function BookingWidget() {
                       <>
                         <div className="flex justify-between mb-2">
                           <span>Treatment</span>
-                          <span>${bookingState.selectedProduct?.price || 80}.00</span>
+                          <span>${productPrice.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between mb-2">
                           <span>Tax</span>
-                          <span>${((bookingState.selectedProduct?.price || 80) * 0.09).toFixed(2)}</span>
+                          <span>${tax.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-lg border-t pt-2">
                           <span>Total</span>
-                          <span data-testid="text-total">${((bookingState.selectedProduct?.price || 80) * 1.09).toFixed(2)}</span>
+                          <span data-testid="text-total">${total.toFixed(2)}</span>
                         </div>
                       </>
                     )}

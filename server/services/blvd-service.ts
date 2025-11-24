@@ -1757,11 +1757,7 @@ export class BlvdService {
       const times = await this.getCartBookableTimes(cartId, date);
       
       const result = {
-        availableSlots: times.map(t => ({
-          startTime: t.startTime,
-          id: t.id,
-          score: t.score
-        })),
+        availableSlots: times, // Return complete Boulevard slot objects
         totalSlots: times.length
       };
 
