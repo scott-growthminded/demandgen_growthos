@@ -1760,9 +1760,9 @@ export default function BookingWidget() {
             </div>
 
             {/* Main Content: Calendar Left, Appointments Right */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 items-start">
               {/* Left Side: Calendar */}
-              <Card>
+              <Card className="lg:sticky lg:top-8">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Select a Date</CardTitle>
@@ -1909,7 +1909,7 @@ export default function BookingWidget() {
                       </CardDescription>
                     )}
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="max-h-[500px] overflow-y-auto">
                     {!selectedDate ? (
                       <p className="text-center text-gray-500 py-8">Select a date from the calendar</p>
                     ) : availabilityLoading ? (
