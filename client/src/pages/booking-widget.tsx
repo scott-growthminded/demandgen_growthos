@@ -1046,11 +1046,26 @@ export default function BookingWidget() {
   // Step 3: Product Selection (replaces old 'service' step)  
   if (bookingState.step === 'product') {
     const handleProductSelect = (product: any) => {
-      setPendingProduct(product);
-      setConfirmAccutane(false);
-      setConfirmInjections(false);
-      setConfirmWaxing(false);
-      setIsConfirmationDialogOpen(true);
+      // Check if this is a membership, package, or gift card - skip confirmation and go to checkout
+      const isMembership = product.id.startsWith('membership-');
+      const isPackage = product.id.startsWith('package-');
+      const isGiftCard = product.id.startsWith('giftcard-');
+      
+      if (isMembership || isPackage || isGiftCard) {
+        // Go directly to checkout for memberships, packages, and gift cards
+        setBookingState(prev => ({ 
+          ...prev, 
+          selectedProduct: product,
+          step: bookingState.customerType === 'new' ? 'personal-info' : 'checkout'
+        }));
+      } else {
+        // For treatments, show the confirmation dialog
+        setPendingProduct(product);
+        setConfirmAccutane(false);
+        setConfirmInjections(false);
+        setConfirmWaxing(false);
+        setIsConfirmationDialogOpen(true);
+      }
     };
 
     const handleConfirmationContinue = () => {
