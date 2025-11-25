@@ -1774,10 +1774,20 @@ export default function BookingWidget() {
 
     const allTimeSlots = generateTimeSlots();
     
-    // Filter time slots by selected esthetician
+    // Check if booking with credits or voucher (should hide discounted slots)
+    const isUsingCreditsOrVoucher = bookingState.selectedProduct?.id === 'member-treatment' || 
+                                     bookingState.selectedProduct?.id === 'returning-treatment-credits';
+    
+    // Filter time slots by selected esthetician and credits/voucher status
     let timeSlots = allTimeSlots;
+    
+    // If using credits or voucher, filter out discounted slots
+    if (isUsingCreditsOrVoucher) {
+      timeSlots = timeSlots.filter((slot: any) => !slot.isDiscounted);
+    }
+    
     if (esthetician !== 'any') {
-      timeSlots = allTimeSlots.filter((slot: any) => 
+      timeSlots = timeSlots.filter((slot: any) => 
         slot.staffVariantId === esthetician || slot.staffId === esthetician
       );
     }
