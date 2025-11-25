@@ -1167,38 +1167,30 @@ export default function BookingWidget() {
                 </AccordionTrigger>
                 <AccordionContent className="pb-4 ml-4">
                   <div className="space-y-4">
-                    {/* First Time Treatment */}
+                    {/* Treatment - changes based on user flow */}
                     <Card className="overflow-hidden">
                       <CardContent className="p-4">
-                        <h3 className="text-base font-semibold mb-2">(Non-Member) First Time Treatment <span className="text-gray-600">30min</span></h3>
+                        <h3 className="text-base font-semibold mb-2">
+                          {bookingState.userFlow === 'non-member' 
+                            ? '(Non-Member) Returning Treatment' 
+                            : '(Non-Member) First Time Treatment'} <span className="text-gray-600">30min</span>
+                        </h3>
                         <p className="text-xs text-gray-700 mb-2">
-                          If you're a new client and haven't purchased a membership, book this treatment. Your card will *not* be charged now; it will be charged after your first appointment.
+                          {bookingState.userFlow === 'non-member'
+                            ? "Welcome back! Book your next facial treatment. Your card will *not* be charged now; it will be charged after your appointment."
+                            : "If you're a new client and haven't purchased a membership, book this treatment. Your card will *not* be charged now; it will be charged after your first appointment."}
                         </p>
                         <p className="text-xl font-bold mb-1">$80.00</p>
                         <p className="text-xs text-orange-600 mb-3">Black Friday Members pay $60 - become a member and save $20/month</p>
                         <Button
-                          onClick={() => handleProductSelect({ id: 'first-time-treatment', name: '(Non-Member) First Time Treatment', price: 80, description: '30min facial' })}
+                          onClick={() => handleProductSelect({ 
+                            id: bookingState.userFlow === 'non-member' ? 'returning-treatment' : 'first-time-treatment', 
+                            name: bookingState.userFlow === 'non-member' ? '(Non-Member) Returning Treatment' : '(Non-Member) First Time Treatment', 
+                            price: 80, 
+                            description: '30min facial' 
+                          })}
                           className="w-full h-12 bg-black text-white hover:bg-gray-800"
-                          data-testid="button-select-first-time"
-                        >
-                          Select
-                        </Button>
-                      </CardContent>
-                    </Card>
-
-                    {/* First Time Treatment Under 17 */}
-                    <Card className="overflow-hidden">
-                      <CardContent className="p-4">
-                        <h3 className="text-base font-semibold mb-2">(Non-Member) First Time Treatment: 17 and under <span className="text-gray-600">30min</span></h3>
-                        <p className="text-xs text-gray-700 mb-2">
-                          All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person. Your card will *not* be charged now; it will be charged after your first appointment.
-                        </p>
-                        <p className="text-xl font-bold mb-1">$80.00</p>
-                        <p className="text-xs text-orange-600 mb-3">Black Friday Members pay $60 - become a member and save $20/month</p>
-                        <Button
-                          onClick={() => handleProductSelect({ id: 'first-time-treatment-17', name: '(Non-Member) First Time Treatment: 17 and under', price: 80, description: '30min facial' })}
-                          className="w-full h-12 bg-black text-white hover:bg-gray-800"
-                          data-testid="button-select-first-time-17"
+                          data-testid="button-select-treatment"
                         >
                           Select
                         </Button>
