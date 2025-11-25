@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronDown, ChevronUp, CheckCircle, User, MapPin, Tag } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp, CheckCircle, User, MapPin, Tag, Search, Navigation } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -51,6 +51,19 @@ const blackIcon = new L.Icon({
   iconSize: [28, 42],
   iconAnchor: [14, 42],
   popupAnchor: [0, -42],
+});
+
+// Create custom orange marker icon for user's location
+const userLocationIcon = new L.Icon({
+  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+      <circle cx="12" cy="12" r="10" fill="#FF502D" stroke="#fff" stroke-width="2"/>
+      <circle cx="12" cy="12" r="4" fill="#fff"/>
+    </svg>
+  `),
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -16],
 });
 
 type BookingStep = 
@@ -187,6 +200,12 @@ export default function BookingWidget() {
   const [giftRecipientEmail, setGiftRecipientEmail] = useState('');
   const [giftMessage, setGiftMessage] = useState('');
   
+  // Location finder state
+  const [addressSearch, setAddressSearch] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [userCoordinates, setUserCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [showNearbyResults, setShowNearbyResults] = useState(false);
+  
   // Pre-fill phone number from verification when reaching personal info
   useEffect(() => {
     if (phoneNumber && !authPhone) {
@@ -247,6 +266,94 @@ export default function BookingWidget() {
   });
   
   const nearbyAvailabilityData = [nearbyAvailability1, nearbyAvailability2, nearbyAvailability3];
+
+  // Haversine formula to calculate distance between two points
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Geocode address using Nominatim (OpenStreetMap)
+  const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=us&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'GlowbarBookingWidget/1.0'
+          }
+        }
+      );
+      const data = await response.json();
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon)
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      return null;
+    }
+  };
+
+  // Handle address search
+  const handleAddressSearch = async () => {
+    if (!addressSearch.trim()) return;
+    
+    setIsSearching(true);
+    const coords = await geocodeAddress(addressSearch);
+    setIsSearching(false);
+    
+    if (coords) {
+      setUserCoordinates(coords);
+      setShowNearbyResults(true);
+      setExpandedState(null); // Collapse state list when showing nearby results
+      
+      // Zoom map to user's location
+      if (mapRef.current) {
+        mapRef.current.setView([coords.lat, coords.lng], 10);
+      }
+    } else {
+      toast({
+        title: "Address not found",
+        description: "Please try a different address or city name.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Get locations sorted by distance from user
+  const getLocationsSortedByDistance = () => {
+    if (!userCoordinates || !locationsData) return [];
+    
+    const allLocations: any[] = [];
+    Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
+      Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
+        allLocations.push(...(locations as any[]));
+      });
+    });
+    
+    return allLocations
+      .map(location => {
+        const lat = location.coordinates?.lat || location.coordinates?.latitude;
+        const lng = location.coordinates?.lng || location.coordinates?.longitude;
+        const distance = lat && lng 
+          ? calculateDistance(userCoordinates.lat, userCoordinates.lng, lat, lng)
+          : Infinity;
+        return { ...location, distance };
+      })
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 10); // Show top 10 nearest locations
+  };
 
   // Helper to format time slots for nearby locations
   const formatNearbyTimeSlots = (availData: AvailabilityResponse | undefined) => {
@@ -483,72 +590,198 @@ export default function BookingWidget() {
 
         {/* Main Content */}
         <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-180px)]">
-          {/* Left side - Grouped locations with dropdowns - SCROLLABLE */}
-          <div className="w-1/2 overflow-y-auto space-y-2 pr-4">
-            {stateOrder.map((stateCode) => {
-              const locations = groupedLocations[stateCode] || [];
-              if (locations.length === 0) return null;
-              
-              const isExpanded = expandedState === stateCode;
-              
-              return (
-                <div key={stateCode} className="border-b border-gray-200">
-                  <button
-                    onClick={() => setExpandedState(isExpanded ? null : stateCode)}
-                    className="w-full py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
-                    data-testid={`button-state-${stateCode}`}
-                  >
-                    <span className="text-lg font-medium">{stateNames[stateCode]}</span>
-                    {isExpanded ? (
-                      <ChevronUp className="w-5 h-5" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5" />
-                    )}
-                  </button>
-                  
-                  {isExpanded && (
-                    <div className="pb-4 space-y-3 ml-4">
-                      {locations.map((location: any) => (
-                        <Card key={location.id} className="overflow-hidden">
-                          <CardContent className="p-4">
-                            <h3 className="font-semibold mb-1">{location.name}</h3>
-                            <p className="text-sm text-gray-600 mb-3">
-                              {location.address?.line1}, {location.address?.city}, {location.address?.state}
-                            </p>
-                            <Button
-                              onClick={() => {
-                                setSelectedDate(undefined);
-                                setSelectedTimeSlot(undefined);
-                                setBookingState(prev => ({
-                                  ...prev,
-                                  selectedLocation: {
-                                    id: location.id,
-                                    name: location.name,
-                                    address: location.address?.line1 
-                                      ? `${location.address.line1}, ${location.address?.city}, ${location.address?.state}`
-                                      : `${location.address?.city}, ${location.address?.state}`,
-                                    city: location.address?.city || '',
-                                    state: location.address?.state || '',
-                                  },
-                                  selectedDate: undefined,
-                                  selectedTime: undefined,
-                                  selectedProduct: undefined,
-                                  step: 'phone-verification'
-                                }));
-                              }}
-                              className="w-full bg-black text-white hover:bg-gray-800"
-                              data-testid={`button-select-studio-${location.id}`}
-                            >
-                              SELECT STUDIO
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
+          {/* Left side - Location finder and grouped locations - SCROLLABLE */}
+          <div className="w-1/2 overflow-y-auto space-y-4 pr-4">
+            {/* Location Finder Search */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <Label htmlFor="address-search" className="text-base font-semibold mb-2 block">
+                Find Studios Near You
+              </Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="address-search"
+                    value={addressSearch}
+                    onChange={(e) => setAddressSearch(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddressSearch()}
+                    placeholder="Enter your address, city, or zip code"
+                    className="pl-10"
+                    data-testid="input-address-search"
+                  />
                 </div>
-              );
-            })}
+                <Button
+                  onClick={handleAddressSearch}
+                  disabled={isSearching || !addressSearch.trim()}
+                  className="bg-black text-white hover:bg-gray-800"
+                  data-testid="button-search-address"
+                >
+                  {isSearching ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    </span>
+                  ) : (
+                    <Navigation className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+              {showNearbyResults && userCoordinates && (
+                <button
+                  onClick={() => {
+                    setShowNearbyResults(false);
+                    setUserCoordinates(null);
+                    setAddressSearch('');
+                  }}
+                  className="text-sm text-gray-500 hover:text-gray-700 mt-2 underline"
+                  data-testid="button-clear-search"
+                >
+                  Clear search and browse by state
+                </button>
+              )}
+            </div>
+
+            {/* Nearby Results (when search is active) */}
+            {showNearbyResults && userCoordinates ? (
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <MapPin className="w-5 h-5" style={{ color: '#FF502D' }} />
+                  Studios Near You
+                </h3>
+                {getLocationsSortedByDistance().map((location: any) => (
+                  <Card key={location.id} className="overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-semibold">{location.name}</h3>
+                        <span className="text-sm font-medium px-2 py-1 bg-gray-100 rounded" style={{ color: '#FF502D' }}>
+                          {location.distance < 1 
+                            ? `${(location.distance * 5280).toFixed(0)} ft` 
+                            : `${location.distance.toFixed(1)} mi`}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {location.address?.line1}, {location.address?.city}, {location.address?.state}
+                      </p>
+                      <Button
+                        onClick={() => {
+                          setSelectedDate(undefined);
+                          setSelectedTimeSlot(undefined);
+                          setBookingState(prev => ({
+                            ...prev,
+                            selectedLocation: {
+                              id: location.id,
+                              name: location.name,
+                              address: location.address?.line1 
+                                ? `${location.address.line1}, ${location.address?.city}, ${location.address?.state}`
+                                : `${location.address?.city}, ${location.address?.state}`,
+                              city: location.address?.city || '',
+                              state: location.address?.state || '',
+                            },
+                            selectedDate: undefined,
+                            selectedTime: undefined,
+                            selectedProduct: undefined,
+                            step: 'phone-verification'
+                          }));
+                        }}
+                        className="w-full bg-black text-white hover:bg-gray-800"
+                        data-testid={`button-select-studio-nearby-${location.id}`}
+                      >
+                        SELECT STUDIO
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              /* State-based list */
+              <div className="space-y-2">
+                {stateOrder.map((stateCode) => {
+                  const locations = groupedLocations[stateCode] || [];
+                  if (locations.length === 0) return null;
+                  
+                  const isExpanded = expandedState === stateCode;
+                  
+                  return (
+                    <div key={stateCode} className="border-b border-gray-200">
+                      <button
+                        onClick={() => setExpandedState(isExpanded ? null : stateCode)}
+                        className="w-full py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                        data-testid={`button-state-${stateCode}`}
+                      >
+                        <span className="text-lg font-medium">{stateNames[stateCode]}</span>
+                        {isExpanded ? (
+                          <ChevronUp className="w-5 h-5" />
+                        ) : (
+                          <ChevronDown className="w-5 h-5" />
+                        )}
+                      </button>
+                      
+                      {isExpanded && (
+                        <div className="pb-4 space-y-3 ml-4">
+                          {locations.map((location: any) => {
+                            // Calculate distance if user has searched
+                            let distanceDisplay = null;
+                            if (userCoordinates) {
+                              const lat = location.coordinates?.lat || location.coordinates?.latitude;
+                              const lng = location.coordinates?.lng || location.coordinates?.longitude;
+                              if (lat && lng) {
+                                const dist = calculateDistance(userCoordinates.lat, userCoordinates.lng, lat, lng);
+                                distanceDisplay = dist < 1 
+                                  ? `${(dist * 5280).toFixed(0)} ft` 
+                                  : `${dist.toFixed(1)} mi`;
+                              }
+                            }
+                            
+                            return (
+                              <Card key={location.id} className="overflow-hidden">
+                                <CardContent className="p-4">
+                                  <div className="flex justify-between items-start mb-1">
+                                    <h3 className="font-semibold">{location.name}</h3>
+                                    {distanceDisplay && (
+                                      <span className="text-sm font-medium px-2 py-1 bg-gray-100 rounded" style={{ color: '#FF502D' }}>
+                                        {distanceDisplay}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-600 mb-3">
+                                    {location.address?.line1}, {location.address?.city}, {location.address?.state}
+                                  </p>
+                                  <Button
+                                    onClick={() => {
+                                      setSelectedDate(undefined);
+                                      setSelectedTimeSlot(undefined);
+                                      setBookingState(prev => ({
+                                        ...prev,
+                                        selectedLocation: {
+                                          id: location.id,
+                                          name: location.name,
+                                          address: location.address?.line1 
+                                            ? `${location.address.line1}, ${location.address?.city}, ${location.address?.state}`
+                                            : `${location.address?.city}, ${location.address?.state}`,
+                                          city: location.address?.city || '',
+                                          state: location.address?.state || '',
+                                        },
+                                        selectedDate: undefined,
+                                        selectedTime: undefined,
+                                        selectedProduct: undefined,
+                                        step: 'phone-verification'
+                                      }));
+                                    }}
+                                    className="w-full bg-black text-white hover:bg-gray-800"
+                                    data-testid={`button-select-studio-${location.id}`}
+                                  >
+                                    SELECT STUDIO
+                                  </Button>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Right side - Map - FIXED */}
@@ -570,9 +803,31 @@ export default function BookingWidget() {
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+                {/* User location marker */}
+                {userCoordinates && (
+                  <Marker
+                    position={[userCoordinates.lat, userCoordinates.lng]}
+                    icon={userLocationIcon}
+                  >
+                    <Popup>
+                      <div style={{ padding: '4px', textAlign: 'center' }}>
+                        <p style={{ margin: 0, fontWeight: 'bold', color: '#FF502D' }}>Your Location</p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                )}
                 {allLocations.map((location: any, index: number) => {
                   const lat = location.coordinates?.lat || location.coordinates?.latitude;
                   const lng = location.coordinates?.lng || location.coordinates?.longitude;
+                  
+                  // Calculate distance if user has searched
+                  let distanceText = '';
+                  if (userCoordinates && lat && lng) {
+                    const dist = calculateDistance(userCoordinates.lat, userCoordinates.lng, lat, lng);
+                    distanceText = dist < 1 
+                      ? `${(dist * 5280).toFixed(0)} ft away` 
+                      : `${dist.toFixed(1)} mi away`;
+                  }
                   
                   if (lat && lng) {
                     return (
@@ -586,6 +841,11 @@ export default function BookingWidget() {
                             <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 10px 0' }}>
                               {location.name}
                             </h3>
+                            {distanceText && (
+                              <p style={{ margin: '0 0 8px 0', color: '#FF502D', fontSize: '13px', fontWeight: '600' }}>
+                                {distanceText}
+                              </p>
+                            )}
                             <p style={{ margin: '0 0 2px 0', color: '#333', fontSize: '12px' }}>
                               {location.address?.line1}
                             </p>
