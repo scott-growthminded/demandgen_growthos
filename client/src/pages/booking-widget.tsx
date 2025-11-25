@@ -1160,7 +1160,14 @@ export default function BookingWidget() {
             </Button>
 
             {(bookingState.userFlow === 'non-member' || bookingState.userFlow === 'member') && (
-              <p className="text-xl text-gray-600 mb-2" data-testid="text-welcome">Welcome Back, Test User!</p>
+              <div className="mb-2">
+                <p className="text-xl text-gray-600" data-testid="text-welcome">Welcome Back, Test User!</p>
+                {bookingState.userFlow === 'member' && (
+                  <p className="text-sm text-gray-600" data-testid="text-membership-status">
+                    Your membership is <span style={{ color: '#FF502D', fontWeight: '600' }}>Active</span>
+                  </p>
+                )}
+              </div>
             )}
             <h1 className="text-4xl font-bold mb-4" data-testid="text-title">Select A Service</h1>
             
@@ -1209,84 +1216,132 @@ export default function BookingWidget() {
                     {/* Treatment - changes based on user flow */}
                     <Card className="overflow-hidden">
                       <CardContent className="p-4">
-                        <h3 className="text-base font-semibold mb-2">
-                          {bookingState.userFlow === 'non-member' 
-                            ? '(Non-Member) Returning Treatment' 
-                            : '(Non-Member) First Time Treatment'} <span className="text-gray-600">30min</span>
-                        </h3>
-                        <p className="text-xs text-gray-700 mb-2">
-                          {bookingState.userFlow === 'non-member'
-                            ? "Welcome back! Book your next facial treatment. Your card will *not* be charged now; it will be charged after your appointment."
-                            : "If you're a new client and haven't purchased a membership, book this treatment. Your card will *not* be charged now; it will be charged after your first appointment."}
-                        </p>
-                        <p className="text-xl font-bold mb-1">$80.00</p>
-                        <button 
-                          onClick={() => {
-                            const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
-                            if (membershipAccordion) {
-                              membershipAccordion.click();
-                              membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
-                          }}
-                          className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
-                          style={{ color: '#FF502D' }}
-                          data-testid="link-become-member"
-                        >
-                          Black Friday Members pay $60 - become a member and save $20/month
-                        </button>
-                        <Button
-                          onClick={() => handleProductSelect({ 
-                            id: bookingState.userFlow === 'non-member' ? 'returning-treatment' : 'first-time-treatment', 
-                            name: bookingState.userFlow === 'non-member' ? '(Non-Member) Returning Treatment' : '(Non-Member) First Time Treatment', 
-                            price: 80, 
-                            description: '30min facial' 
-                          })}
-                          className="w-full h-12 bg-black text-white hover:bg-gray-800"
-                          data-testid="button-select-treatment"
-                        >
-                          Select
-                        </Button>
+                        {bookingState.userFlow === 'member' ? (
+                          <>
+                            <h3 className="text-base font-semibold mb-2">
+                              (Member) First Time & Returning Treatment <span className="text-gray-600">30min</span>
+                            </h3>
+                            <p className="text-xs text-gray-700 mb-2">
+                              If you have purchased a membership online or in-studio, book this treatment.
+                            </p>
+                            <p className="text-xs text-gray-700 mb-2">
+                              Please note, your card will *not* be charged now and your monthly voucher will be applied to your appointment upon checkout. We can't wait to see your face.
+                            </p>
+                            <button 
+                              onClick={() => {
+                                const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
+                                if (membershipAccordion) {
+                                  membershipAccordion.click();
+                                  membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                              }}
+                              className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
+                              style={{ color: '#FF502D' }}
+                              data-testid="link-redeem-voucher"
+                            >
+                              Redeem with your voucher
+                            </button>
+                            <Button
+                              onClick={() => handleProductSelect({ 
+                                id: 'member-treatment', 
+                                name: '(Member) First Time & Returning Treatment', 
+                                price: 0, 
+                                description: '30min facial - voucher applied' 
+                              })}
+                              className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                              data-testid="button-select-treatment"
+                            >
+                              Select
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <h3 className="text-base font-semibold mb-2">
+                              {bookingState.userFlow === 'non-member' 
+                                ? '(Non-Member) Returning Treatment' 
+                                : '(Non-Member) First Time Treatment'} <span className="text-gray-600">30min</span>
+                            </h3>
+                            <p className="text-xs text-gray-700 mb-2">
+                              {bookingState.userFlow === 'non-member'
+                                ? "Welcome back! Book your next facial treatment. Your card will *not* be charged now; it will be charged after your appointment."
+                                : "If you're a new client and haven't purchased a membership, book this treatment. Your card will *not* be charged now; it will be charged after your first appointment."}
+                            </p>
+                            <p className="text-xl font-bold mb-1">$80.00</p>
+                            <button 
+                              onClick={() => {
+                                const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
+                                if (membershipAccordion) {
+                                  membershipAccordion.click();
+                                  membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                              }}
+                              className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
+                              style={{ color: '#FF502D' }}
+                              data-testid="link-become-member"
+                            >
+                              Black Friday Members pay $60 - become a member and save $20/month
+                            </button>
+                            <Button
+                              onClick={() => handleProductSelect({ 
+                                id: bookingState.userFlow === 'non-member' ? 'returning-treatment' : 'first-time-treatment', 
+                                name: bookingState.userFlow === 'non-member' ? '(Non-Member) Returning Treatment' : '(Non-Member) First Time Treatment', 
+                                price: 80, 
+                                description: '30min facial' 
+                              })}
+                              className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                              data-testid="button-select-treatment"
+                            >
+                              Select
+                            </Button>
+                          </>
+                        )}
                       </CardContent>
                     </Card>
                   </div>
                 </AccordionContent>
               </AccordionItem>
 
-              {/* Buy a Membership */}
+              {/* Buy a Membership / Upgrade Membership */}
               <AccordionItem value="membership" className="border-b border-gray-200">
                 <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-membership">
-                  <span className="text-lg font-medium">Buy a Membership</span>
+                  <span className="text-lg font-medium">
+                    {bookingState.userFlow === 'member' ? 'Upgrade your membership' : 'Buy a Membership'}
+                  </span>
                 </AccordionTrigger>
                 <AccordionContent className="pb-4 ml-4">
                   <div className="space-y-4">
-                    {/* Black Friday Membership $60 */}
-                    <Card className="overflow-hidden">
-                      <CardContent className="p-4">
-                        <h3 className="text-base font-semibold mb-2">2025 Black Friday Membership Deal ($60)</h3>
-                        <p className="text-xs text-gray-700 mb-2">You'll receive the following:</p>
-                        <ul className="text-xs text-gray-700 space-y-0.5 mb-2 list-disc list-inside">
-                          <li>1 facial vouchers per month redeemable at any Glowbar studio for 3 months</li>
-                          <li>15% off retail products (25% off products in-studio for all of November)</li>
-                          <li>Additional facials priced at your membership rate</li>
-                          <li>1 free guest pass per year</li>
-                          <li>Access to our loyalty program</li>
-                          <li>6 month minimum commitment</li>
-                        </ul>
-                        <p className="text-xl font-bold mb-3">$60.00</p>
-                        <Button
-                          onClick={() => handleProductSelect({ id: 'membership-60', name: '2025 Black Friday Membership Deal', price: 60, description: 'Monthly membership' })}
-                          className="w-full h-12 bg-black text-white hover:bg-gray-800"
-                          data-testid="button-select-membership-60"
-                        >
-                          Select
-                        </Button>
-                      </CardContent>
-                    </Card>
+                    {/* Black Friday Membership $60 - only for non-members */}
+                    {bookingState.userFlow !== 'member' && (
+                      <Card className="overflow-hidden">
+                        <CardContent className="p-4">
+                          <h3 className="text-base font-semibold mb-2">2025 Black Friday Membership Deal ($60)</h3>
+                          <p className="text-xs text-gray-700 mb-2">You'll receive the following:</p>
+                          <ul className="text-xs text-gray-700 space-y-0.5 mb-2 list-disc list-inside">
+                            <li>1 facial vouchers per month redeemable at any Glowbar studio for 3 months</li>
+                            <li>15% off retail products (25% off products in-studio for all of November)</li>
+                            <li>Additional facials priced at your membership rate</li>
+                            <li>1 free guest pass per year</li>
+                            <li>Access to our loyalty program</li>
+                            <li>6 month minimum commitment</li>
+                          </ul>
+                          <p className="text-xl font-bold mb-3">$60.00</p>
+                          <Button
+                            onClick={() => handleProductSelect({ id: 'membership-60', name: '2025 Black Friday Membership Deal', price: 60, description: 'Monthly membership' })}
+                            className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                            data-testid="button-select-membership-60"
+                          >
+                            Select
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
 
-                    {/* Black Friday Membership $110 */}
+                    {/* Black Friday Membership+ $110 - shown for all, as upgrade option for members */}
                     <Card className="overflow-hidden">
                       <CardContent className="p-4">
-                        <h3 className="text-base font-semibold mb-2">Black Friday Glowbar Membership+ ($110)</h3>
+                        <h3 className="text-base font-semibold mb-2">
+                          {bookingState.userFlow === 'member' ? 'Glowbar Membership+' : 'Black Friday Glowbar Membership+ ($110)'}
+                        </h3>
                         <p className="text-xs text-gray-700 mb-2">You'll receive the following:</p>
                         <ul className="text-xs text-gray-700 space-y-0.5 mb-2 list-disc list-inside">
                           <li>2 facial vouchers per month redeemable at any Glowbar studio for 3 months</li>
@@ -1297,7 +1352,7 @@ export default function BookingWidget() {
                         </ul>
                         <p className="text-xl font-bold mb-3">$110.00</p>
                         <Button
-                          onClick={() => handleProductSelect({ id: 'membership-110', name: 'Black Friday Glowbar Membership+', price: 110, description: 'Monthly membership' })}
+                          onClick={() => handleProductSelect({ id: 'membership-110', name: bookingState.userFlow === 'member' ? 'Glowbar Membership+' : 'Black Friday Glowbar Membership+', price: 110, description: 'Monthly membership' })}
                           className="w-full h-12 bg-black text-white hover:bg-gray-800"
                           data-testid="button-select-membership-110"
                         >
