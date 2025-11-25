@@ -1919,6 +1919,10 @@ export default function BookingWidget() {
                     const paddingDays = Array(firstDayOfWeek).fill(null);
                     const daysInMonth = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + 1, 0).getDate();
                     
+                    // Calculate trailing days from next month to fill the last week
+                    const totalCellsUsed = firstDayOfWeek + daysInMonth;
+                    const trailingDays = totalCellsUsed % 7 === 0 ? 0 : 7 - (totalCellsUsed % 7);
+                    
                     return (
                       <div>
                         <h3 className="text-lg font-semibold mb-3">{monthName}</h3>
@@ -1966,6 +1970,30 @@ export default function BookingWidget() {
                                     : 'hover:bg-gray-100'
                                 }`}
                                 data-testid={`calendar-day-${format(day, 'yyyy-MM-dd')}`}
+                              >
+                                {i + 1}
+                              </button>
+                            );
+                          })}
+                          
+                          {/* Trailing days from next month */}
+                          {Array.from({ length: trailingDays }, (_, i) => {
+                            const nextMonthDay = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + 1, i + 1);
+                            const isSelected = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(nextMonthDay, 'yyyy-MM-dd');
+                            
+                            return (
+                              <button
+                                key={`next-${i}`}
+                                onClick={() => {
+                                  setSelectedDate(nextMonthDay);
+                                  setSelectedTimeSlot(undefined);
+                                }}
+                                className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                                  isSelected
+                                    ? 'bg-black text-white'
+                                    : 'text-gray-400 hover:bg-gray-100'
+                                }`}
+                                data-testid={`calendar-day-${format(nextMonthDay, 'yyyy-MM-dd')}`}
                               >
                                 {i + 1}
                               </button>
