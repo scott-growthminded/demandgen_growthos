@@ -61,6 +61,7 @@ type BookingStep =
   | 'location'
   | 'datetime'
   | 'personal-info'
+  | 'gift-recipient'
   | 'checkout'
   | 'confirmation';
 
@@ -1168,49 +1169,39 @@ export default function BookingWidget() {
                   <div className="space-y-4">
                     {/* First Time Treatment */}
                     <Card className="overflow-hidden">
-                      <CardContent className="p-6">
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="flex-1">
-                            <h3 className="text-lg font-semibold mb-2">(Non-Member) First Time Treatment <span className="text-gray-600">30min</span></h3>
-                            <p className="text-sm text-gray-700 mb-3">
-                              If you're a new client and haven't purchased a membership, book this treatment.<br />
-                              Please note, your card will *not* be charged now; it will be charged after your first appointment.
-                            </p>
-                            <p className="text-2xl font-bold mb-1">$80.00</p>
-                            <p className="text-sm text-orange-600">Black Friday Members pay $60 - become a member and save $20/month</p>
-                          </div>
-                          <Button
-                            onClick={() => handleProductSelect({ id: 'first-time-treatment', name: '(Non-Member) First Time Treatment', price: 80, description: '30min facial' })}
-                            className="ml-4 bg-black text-white hover:bg-gray-800"
-                            data-testid="button-select-first-time"
-                          >
-                            Select
-                          </Button>
-                        </div>
+                      <CardContent className="p-4">
+                        <h3 className="text-base font-semibold mb-2">(Non-Member) First Time Treatment <span className="text-gray-600">30min</span></h3>
+                        <p className="text-xs text-gray-700 mb-2">
+                          If you're a new client and haven't purchased a membership, book this treatment. Your card will *not* be charged now; it will be charged after your first appointment.
+                        </p>
+                        <p className="text-xl font-bold mb-1">$80.00</p>
+                        <p className="text-xs text-orange-600 mb-3">Black Friday Members pay $60 - become a member and save $20/month</p>
+                        <Button
+                          onClick={() => handleProductSelect({ id: 'first-time-treatment', name: '(Non-Member) First Time Treatment', price: 80, description: '30min facial' })}
+                          className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                          data-testid="button-select-first-time"
+                        >
+                          Select
+                        </Button>
                       </CardContent>
                     </Card>
 
                     {/* First Time Treatment Under 17 */}
                     <Card className="overflow-hidden">
-                      <CardContent className="p-6">
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="flex-1">
-                            <h3 className="text-lg font-semibold mb-2">(Non-Member) First Time Treatment: 17 and under <span className="text-gray-600">30min</span></h3>
-                            <p className="text-sm text-gray-700 mb-3">
-                              All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person.<br />
-                              Please note, your card will *not* be charged now; it will be charged after your first appointment.
-                            </p>
-                            <p className="text-2xl font-bold mb-1">$80.00</p>
-                            <p className="text-sm text-orange-600">Black Friday Members pay $60 - become a member and save $20/month</p>
-                          </div>
-                          <Button
-                            onClick={() => handleProductSelect({ id: 'first-time-treatment-17', name: '(Non-Member) First Time Treatment: 17 and under', price: 80, description: '30min facial' })}
-                            className="ml-4 bg-black text-white hover:bg-gray-800"
-                            data-testid="button-select-first-time-17"
-                          >
-                            Select
-                          </Button>
-                        </div>
+                      <CardContent className="p-4">
+                        <h3 className="text-base font-semibold mb-2">(Non-Member) First Time Treatment: 17 and under <span className="text-gray-600">30min</span></h3>
+                        <p className="text-xs text-gray-700 mb-2">
+                          All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person. Your card will *not* be charged now; it will be charged after your first appointment.
+                        </p>
+                        <p className="text-xl font-bold mb-1">$80.00</p>
+                        <p className="text-xs text-orange-600 mb-3">Black Friday Members pay $60 - become a member and save $20/month</p>
+                        <Button
+                          onClick={() => handleProductSelect({ id: 'first-time-treatment-17', name: '(Non-Member) First Time Treatment: 17 and under', price: 80, description: '30min facial' })}
+                          className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                          data-testid="button-select-first-time-17"
+                        >
+                          Select
+                        </Button>
                       </CardContent>
                     </Card>
                   </div>
@@ -1623,36 +1614,12 @@ export default function BookingWidget() {
 
     const allTimeSlots = generateTimeSlots();
     
-    // Get unique staff IDs with availability for "Esthetician One/Two" mapping
-    const uniqueStaffIds = Array.from(new Set(
-      allTimeSlots.map((slot: any) => slot.staffVariantId || slot.staffId).filter(Boolean)
-    ));
-    
     // Filter time slots by selected esthetician
     let timeSlots = allTimeSlots;
     if (esthetician !== 'any') {
-      if (esthetician === 'esthetician-one' || esthetician === 'esthetician-two') {
-        // For hardcoded estheticians, map to the first two unique staff members with availability
-        let targetStaffId = null;
-        if (esthetician === 'esthetician-one' && uniqueStaffIds[0]) {
-          targetStaffId = uniqueStaffIds[0];
-        } else if (esthetician === 'esthetician-two' && uniqueStaffIds[1]) {
-          targetStaffId = uniqueStaffIds[1];
-        }
-        
-        if (targetStaffId) {
-          timeSlots = allTimeSlots.filter((slot: any) => 
-            slot.staffVariantId === targetStaffId || slot.staffId === targetStaffId
-          );
-        } else {
-          timeSlots = [];
-        }
-      } else {
-        // For real staff selections
-        timeSlots = allTimeSlots.filter((slot: any) => 
-          slot.staffVariantId === esthetician || slot.staffId === esthetician
-        );
-      }
+      timeSlots = allTimeSlots.filter((slot: any) => 
+        slot.staffVariantId === esthetician || slot.staffId === esthetician
+      );
     }
     
     const hasAvailability = timeSlots.length > 0;
@@ -1855,12 +1822,6 @@ export default function BookingWidget() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="any">Any esthetician</SelectItem>
-                        {uniqueStaffIds.length >= 1 && (
-                          <SelectItem value="esthetician-one">Esthetician One</SelectItem>
-                        )}
-                        {uniqueStaffIds.length >= 2 && (
-                          <SelectItem value="esthetician-two">Esthetician Two</SelectItem>
-                        )}
                         {staffData?.staff?.map((staff) => (
                           <SelectItem key={staff.id} value={staff.id}>
                             {staff.displayName}
@@ -2145,7 +2106,7 @@ export default function BookingWidget() {
           {/* Right Side: Image */}
           <div className="w-1/2 relative">
             <img 
-              src={spaImagePath} 
+              src={luxurySpaImage} 
               alt="Luxury spa" 
               className="w-full h-full object-cover"
               data-testid="img-personal-info"
