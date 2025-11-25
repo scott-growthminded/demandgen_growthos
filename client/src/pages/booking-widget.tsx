@@ -1220,7 +1220,20 @@ export default function BookingWidget() {
                             : "If you're a new client and haven't purchased a membership, book this treatment. Your card will *not* be charged now; it will be charged after your first appointment."}
                         </p>
                         <p className="text-xl font-bold mb-1">$80.00</p>
-                        <p className="text-xs mb-3" style={{ color: '#FF502D' }}>Black Friday Members pay $60 - become a member and save $20/month</p>
+                        <button 
+                          onClick={() => {
+                            const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
+                            if (membershipAccordion) {
+                              membershipAccordion.click();
+                              membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                          }}
+                          className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
+                          style={{ color: '#FF502D' }}
+                          data-testid="link-become-member"
+                        >
+                          Black Friday Members pay $60 - become a member and save $20/month
+                        </button>
                         <Button
                           onClick={() => handleProductSelect({ 
                             id: bookingState.userFlow === 'non-member' ? 'returning-treatment' : 'first-time-treatment', 
