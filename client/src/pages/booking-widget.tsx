@@ -1167,30 +1167,33 @@ export default function BookingWidget() {
             {/* Membership Promo Banner - only for leads and non-members */}
             {(bookingState.userFlow === 'lead' || bookingState.userFlow === 'non-member') && (
               <div 
-                className="relative rounded-lg overflow-hidden mb-6 flex items-center"
-                style={{ backgroundColor: '#f5ebe0' }}
+                className="relative rounded-lg overflow-hidden mb-6"
                 data-testid="banner-membership-promo"
               >
-                <div className="w-1/3 h-24">
-                  <img src={homeHeroImage} alt="Glowbar member" className="w-full h-full object-cover object-top" />
-                </div>
-                <div className="flex-1 px-4 py-3 text-center">
-                  <p className="font-bold text-base mb-0.5" style={{ color: '#FF502D' }}>LIMITED TIME!</p>
-                  <p className="text-gray-800 text-xs mb-2">Sign up for the Glowbar Membership today and save $20/month</p>
-                  <Button
-                    onClick={() => {
-                      const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
-                      if (membershipAccordion) {
-                        membershipAccordion.click();
-                        membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }
-                    }}
-                    className="text-white px-5 py-1.5 rounded-full text-sm"
-                    style={{ backgroundColor: '#FF502D' }}
-                    data-testid="button-become-member"
-                  >
-                    Become a member
-                  </Button>
+                <img 
+                  src={homeHeroImage} 
+                  alt="Glowbar member" 
+                  className="w-full h-28 object-cover object-top"
+                />
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                  <div className="text-center px-4">
+                    <p className="font-bold text-base mb-0.5 text-white">LIMITED TIME!</p>
+                    <p className="text-white text-xs mb-2">Sign up for the Glowbar Membership today and save $20/month</p>
+                    <Button
+                      onClick={() => {
+                        const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
+                        if (membershipAccordion) {
+                          membershipAccordion.click();
+                          membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                      }}
+                      className="text-white px-5 py-1.5 rounded-full text-sm"
+                      style={{ backgroundColor: '#FF502D' }}
+                      data-testid="button-become-member"
+                    >
+                      Become a member
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
