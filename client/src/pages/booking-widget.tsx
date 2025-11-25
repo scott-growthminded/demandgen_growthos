@@ -1454,57 +1454,57 @@ export default function BookingWidget() {
 
         {/* Confirmation Dialog */}
         <Dialog open={isConfirmationDialogOpen} onOpenChange={setIsConfirmationDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]" data-testid="dialog-confirmation">
+          <DialogContent className="sm:max-w-[450px]" data-testid="dialog-confirmation">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">Please check the following boxes to confirm you have not:</DialogTitle>
+              <DialogTitle className="text-lg font-bold">Please check the following boxes to confirm you have not:</DialogTitle>
             </DialogHeader>
-            <div className="space-y-6 py-4">
-              <div className="flex items-start gap-3">
+            <div className="space-y-4 py-2">
+              <div className="flex items-start gap-2">
                 <Checkbox
                   id="confirm-accutane"
                   checked={confirmAccutane}
                   onCheckedChange={(checked) => setConfirmAccutane(checked as boolean)}
-                  className="mt-1 h-6 w-6"
+                  className="mt-0.5 h-5 w-5"
                   style={{ '--checkbox-checked-bg': '#FF502D', '--checkbox-checked-border': '#FF502D' } as any}
                   data-testid="checkbox-accutane"
                 />
                 <label
                   htmlFor="confirm-accutane"
-                  className="text-lg leading-relaxed cursor-pointer"
+                  className="text-sm leading-relaxed cursor-pointer"
                 >
                   Taken Accutane in the last six (6) months
                 </label>
               </div>
 
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 <Checkbox
                   id="confirm-injections"
                   checked={confirmInjections}
                   onCheckedChange={(checked) => setConfirmInjections(checked as boolean)}
-                  className="mt-1 h-6 w-6"
+                  className="mt-0.5 h-5 w-5"
                   style={{ '--checkbox-checked-bg': '#FF502D', '--checkbox-checked-border': '#FF502D' } as any}
                   data-testid="checkbox-injections"
                 />
                 <label
                   htmlFor="confirm-injections"
-                  className="text-lg leading-relaxed cursor-pointer"
+                  className="text-sm leading-relaxed cursor-pointer"
                 >
                   Received injections (Botox, fillers, etc.) or laser/electrolysis hair removal in the last two (2) weeks
                 </label>
               </div>
 
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 <Checkbox
                   id="confirm-waxing"
                   checked={confirmWaxing}
                   onCheckedChange={(checked) => setConfirmWaxing(checked as boolean)}
-                  className="mt-1 h-6 w-6"
+                  className="mt-0.5 h-5 w-5"
                   style={{ '--checkbox-checked-bg': '#FF502D', '--checkbox-checked-border': '#FF502D' } as any}
                   data-testid="checkbox-waxing"
                 />
                 <label
                   htmlFor="confirm-waxing"
-                  className="text-lg leading-relaxed cursor-pointer"
+                  className="text-sm leading-relaxed cursor-pointer"
                 >
                   Received waxing or threading facial hair removal in the last three (3) days
                 </label>
@@ -1514,7 +1514,7 @@ export default function BookingWidget() {
               <Button
                 onClick={handleConfirmationContinue}
                 disabled={!confirmAccutane || !confirmInjections || !confirmWaxing}
-                className="w-full h-12 bg-black text-white hover:bg-gray-800 disabled:opacity-50"
+                className="w-full h-10 bg-black text-white hover:bg-gray-800 disabled:opacity-50"
                 data-testid="button-confirm-continue"
               >
                 Continue
