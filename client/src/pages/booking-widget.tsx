@@ -1169,7 +1169,7 @@ export default function BookingWidget() {
                 )}
               </div>
             )}
-            <h1 className="text-4xl font-bold mb-4" data-testid="text-title">Select A Service</h1>
+            <h1 className="text-2xl font-bold mb-4" data-testid="text-title">Select A Service</h1>
             
             {/* Membership Promo Banner - only for leads and non-members */}
             {(bookingState.userFlow === 'lead' || bookingState.userFlow === 'non-member') && (
