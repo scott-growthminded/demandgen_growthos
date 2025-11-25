@@ -2513,7 +2513,7 @@ export default function BookingWidget() {
           </Card>
 
           <div className="space-y-3">
-            {isPurchaseOnly && (
+            {(isMembership || isPackage) && (
               <Button
                 onClick={() => {
                   // Reset to product selection but keep user info
