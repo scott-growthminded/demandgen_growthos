@@ -582,14 +582,14 @@ export default function BookingWidget() {
                         icon={blackIcon}
                       >
                         <Popup closeButton={true} className="custom-popup">
-                          <div style={{ padding: '8px 4px', minWidth: '200px' }}>
-                            <h3 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 16px 0' }}>
+                          <div style={{ padding: '6px 4px', minWidth: '180px' }}>
+                            <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 10px 0' }}>
                               {location.name}
                             </h3>
-                            <p style={{ margin: '0 0 4px 0', color: '#333', fontSize: '14px' }}>
+                            <p style={{ margin: '0 0 2px 0', color: '#333', fontSize: '12px' }}>
                               {location.address?.line1}
                             </p>
-                            <p style={{ margin: '0 0 20px 0', color: '#333', fontSize: '14px' }}>
+                            <p style={{ margin: '0 0 12px 0', color: '#333', fontSize: '12px' }}>
                               {location.address?.city}, {location.address?.state} {location.address?.zip || ''}
                             </p>
                             <button
@@ -615,12 +615,12 @@ export default function BookingWidget() {
                               }}
                               style={{
                                 width: '100%',
-                                padding: '14px',
+                                padding: '10px',
                                 backgroundColor: '#000',
                                 color: '#fff',
                                 border: 'none',
-                                borderRadius: '8px',
-                                fontSize: '16px',
+                                borderRadius: '6px',
+                                fontSize: '13px',
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 transition: 'background-color 0.2s'
