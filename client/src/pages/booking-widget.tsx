@@ -2185,6 +2185,26 @@ export default function BookingWidget() {
                   />
                 </div>
 
+                {/* Email opt-in for leads */}
+                {bookingState.userFlow === 'lead' && (
+                  <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                    <Checkbox
+                      id="email-optin"
+                      checked={emailOptIn}
+                      onCheckedChange={(checked) => setEmailOptIn(checked as boolean)}
+                      className="mt-0.5 h-5 w-5"
+                      style={{ '--checkbox-checked-bg': '#FF502D', '--checkbox-checked-border': '#FF502D' } as any}
+                      data-testid="checkbox-email-optin"
+                    />
+                    <label
+                      htmlFor="email-optin"
+                      className="text-sm text-gray-600 leading-relaxed cursor-pointer"
+                    >
+                      By sharing your email address you're signing up to receive news and special offers from Glowbar. You may unsubscribe at any time (but we hope you won't).
+                    </label>
+                  </div>
+                )}
+
                 <Button
                   onClick={() => {
                     setBookingState(prev => ({
