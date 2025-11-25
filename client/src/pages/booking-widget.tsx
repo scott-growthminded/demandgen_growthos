@@ -1162,6 +1162,11 @@ export default function BookingWidget() {
             {(bookingState.userFlow === 'non-member' || bookingState.userFlow === 'member') && (
               <div className="mb-2">
                 <p className="text-xl text-gray-600" data-testid="text-welcome">Welcome Back, Test User!</p>
+                {bookingState.userFlow === 'non-member' && (
+                  <p className="text-sm text-gray-600" data-testid="text-credits-status">
+                    You have <span style={{ fontWeight: '600' }}>5 credits</span>.
+                  </p>
+                )}
                 {bookingState.userFlow === 'member' && (
                   <p className="text-sm text-gray-600" data-testid="text-membership-status">
                     Your membership is <span style={{ color: '#FF502D', fontWeight: '600' }}>Active</span>
@@ -1254,17 +1259,68 @@ export default function BookingWidget() {
                               Select
                             </Button>
                           </>
+                        ) : bookingState.userFlow === 'non-member' ? (
+                          <>
+                            <h3 className="text-base font-semibold mb-2">
+                              (Non-Member) Returning Treatment <span className="text-gray-600">30min</span>
+                            </h3>
+                            <p className="text-xs text-gray-700 mb-2">
+                              Welcome back! Book your next facial treatment. Your card will *not* be charged now; it will be charged after your appointment.
+                            </p>
+                            <p className="text-xl font-bold mb-1">$80.00</p>
+                            <button 
+                              onClick={() => {
+                                const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
+                                if (membershipAccordion) {
+                                  membershipAccordion.click();
+                                  membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                              }}
+                              className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
+                              style={{ color: '#FF502D' }}
+                              data-testid="link-become-member"
+                            >
+                              Black Friday Members pay $60 - become a member and save $20/month
+                            </button>
+                            <div className="space-y-3">
+                              <Button
+                                onClick={() => handleProductSelect({ 
+                                  id: 'returning-treatment', 
+                                  name: '(Non-Member) Returning Treatment', 
+                                  price: 80, 
+                                  description: '30min facial' 
+                                })}
+                                className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                                data-testid="button-book-treatment-paid"
+                              >
+                                Book Your Treatment ($80)
+                              </Button>
+                              <div>
+                                <Button
+                                  onClick={() => handleProductSelect({ 
+                                    id: 'returning-treatment-credits', 
+                                    name: '(Non-Member) Returning Treatment - Credits', 
+                                    price: 0, 
+                                    description: '30min facial - using credits' 
+                                  })}
+                                  className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                                  data-testid="button-book-treatment-credits"
+                                >
+                                  Book Your Treatment with Your Credits
+                                </Button>
+                                <p className="text-xs text-gray-600 mt-1 text-center" data-testid="text-remaining-credits">
+                                  Your Remaining Credits: 5
+                                </p>
+                              </div>
+                            </div>
+                          </>
                         ) : (
                           <>
                             <h3 className="text-base font-semibold mb-2">
-                              {bookingState.userFlow === 'non-member' 
-                                ? '(Non-Member) Returning Treatment' 
-                                : '(Non-Member) First Time Treatment'} <span className="text-gray-600">30min</span>
+                              (Non-Member) First Time Treatment <span className="text-gray-600">30min</span>
                             </h3>
                             <p className="text-xs text-gray-700 mb-2">
-                              {bookingState.userFlow === 'non-member'
-                                ? "Welcome back! Book your next facial treatment. Your card will *not* be charged now; it will be charged after your appointment."
-                                : "If you're a new client and haven't purchased a membership, book this treatment. Your card will *not* be charged now; it will be charged after your first appointment."}
+                              If you're a new client and haven't purchased a membership, book this treatment. Your card will *not* be charged now; it will be charged after your first appointment.
                             </p>
                             <p className="text-xl font-bold mb-1">$80.00</p>
                             <button 
@@ -1283,8 +1339,8 @@ export default function BookingWidget() {
                             </button>
                             <Button
                               onClick={() => handleProductSelect({ 
-                                id: bookingState.userFlow === 'non-member' ? 'returning-treatment' : 'first-time-treatment', 
-                                name: bookingState.userFlow === 'non-member' ? '(Non-Member) Returning Treatment' : '(Non-Member) First Time Treatment', 
+                                id: 'first-time-treatment', 
+                                name: '(Non-Member) First Time Treatment', 
                                 price: 80, 
                                 description: '30min facial' 
                               })}
