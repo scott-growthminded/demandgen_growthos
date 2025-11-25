@@ -1160,7 +1160,34 @@ export default function BookingWidget() {
             {(bookingState.userFlow === 'non-member' || bookingState.userFlow === 'member') && (
               <p className="text-xl text-gray-600 mb-2" data-testid="text-welcome">Welcome Back, Test User!</p>
             )}
-            <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select A Service</h1>
+            <h1 className="text-4xl font-bold mb-4" data-testid="text-title">Select A Service</h1>
+            
+            {/* Membership Promo Banner - only for leads and non-members */}
+            {(bookingState.userFlow === 'lead' || bookingState.userFlow === 'non-member') && (
+              <div 
+                className="relative rounded-lg overflow-hidden mb-6 bg-cover bg-center"
+                style={{ backgroundImage: `url(${luxurySpaImage})` }}
+                data-testid="banner-membership-promo"
+              >
+                <div className="bg-black/30 px-6 py-5 text-center">
+                  <p className="text-white font-bold text-lg mb-1">LIMITED TIME!</p>
+                  <p className="text-white text-sm mb-3">Sign up for the Glowbar Membership today and save $20/month</p>
+                  <Button
+                    onClick={() => {
+                      const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
+                      if (membershipAccordion) {
+                        membershipAccordion.click();
+                        membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full"
+                    data-testid="button-become-member"
+                  >
+                    Become a member
+                  </Button>
+                </div>
+              </div>
+            )}
               
               <Accordion type="single" collapsible className="space-y-2">
               {/* Book a Treatment */}
