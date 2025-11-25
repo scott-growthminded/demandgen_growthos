@@ -2109,10 +2109,15 @@ export default function BookingWidget() {
                 <CardContent className="space-y-4">
                   {nearbyLocations.slice(0, 2).map((location, idx) => {
                     const availabilityQuery = idx === 0 ? nearbyAvailability1 : nearbyAvailability2;
-                    const nearbySlots = availabilityQuery.data?.availableSlots?.map((slot: any) => ({
+                    let nearbySlots = availabilityQuery.data?.availableSlots?.map((slot: any) => ({
                       ...slot,
                       time: format(new Date(slot.startTime), 'h:mm a')
                     })) || [];
+                    
+                    // Filter out discounted slots if using credits or voucher
+                    if (isUsingCreditsOrVoucher) {
+                      nearbySlots = nearbySlots.filter((slot: any) => !slot.isDiscounted);
+                    }
                     
                     return (
                       <div key={location.id} className="border rounded-lg p-4">
