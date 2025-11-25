@@ -30,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import glowbarLogoPath from "@assets/image_1763999100752.png";
 import facialTreatmentImage from "@assets/stock_images/woman_receiving_faci_e972fbc7.jpg";
 import luxurySpaImage from "@assets/stock_images/woman_at_luxury_spa__a296b478.jpg";
+import homeHeroImage from "@assets/home_hero_flip_1764064272021.png";
 
 // Fix Leaflet default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -328,8 +329,9 @@ export default function BookingWidget() {
       <div className="px-6 py-3">
         <div className="w-full bg-gray-200 h-1 rounded-full overflow-hidden">
           <div 
-            className="bg-orange-500 h-full rounded-full transition-all duration-300"
+            className="h-full rounded-full transition-all duration-300"
             style={{ 
+              backgroundColor: '#FF502D',
               width: bookingState.step === 'location' ? '0%' 
                    : bookingState.step === 'phone-verification' || bookingState.step === 'otp' || bookingState.step === 'customer-type' || bookingState.step === 'login' ? '20%'
                    : bookingState.step === 'product' ? '40%'
@@ -1165,13 +1167,16 @@ export default function BookingWidget() {
             {/* Membership Promo Banner - only for leads and non-members */}
             {(bookingState.userFlow === 'lead' || bookingState.userFlow === 'non-member') && (
               <div 
-                className="relative rounded-lg overflow-hidden mb-6 bg-cover bg-center"
-                style={{ backgroundImage: `url(${luxurySpaImage})` }}
+                className="relative rounded-lg overflow-hidden mb-6 flex items-center"
+                style={{ backgroundColor: '#f5ebe0' }}
                 data-testid="banner-membership-promo"
               >
-                <div className="bg-black/30 px-6 py-5 text-center">
-                  <p className="text-white font-bold text-lg mb-1">LIMITED TIME!</p>
-                  <p className="text-white text-sm mb-3">Sign up for the Glowbar Membership today and save $20/month</p>
+                <div className="w-1/3 h-24">
+                  <img src={homeHeroImage} alt="Glowbar member" className="w-full h-full object-cover object-top" />
+                </div>
+                <div className="flex-1 px-4 py-3 text-center">
+                  <p className="font-bold text-base mb-0.5" style={{ color: '#FF502D' }}>LIMITED TIME!</p>
+                  <p className="text-gray-800 text-xs mb-2">Sign up for the Glowbar Membership today and save $20/month</p>
                   <Button
                     onClick={() => {
                       const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
@@ -1180,7 +1185,8 @@ export default function BookingWidget() {
                         membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
                       }
                     }}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full"
+                    className="text-white px-5 py-1.5 rounded-full text-sm"
+                    style={{ backgroundColor: '#FF502D' }}
                     data-testid="button-become-member"
                   >
                     Become a member
@@ -1211,7 +1217,7 @@ export default function BookingWidget() {
                             : "If you're a new client and haven't purchased a membership, book this treatment. Your card will *not* be charged now; it will be charged after your first appointment."}
                         </p>
                         <p className="text-xl font-bold mb-1">$80.00</p>
-                        <p className="text-xs text-orange-600 mb-3">Black Friday Members pay $60 - become a member and save $20/month</p>
+                        <p className="text-xs mb-3" style={{ color: '#FF502D' }}>Black Friday Members pay $60 - become a member and save $20/month</p>
                         <Button
                           onClick={() => handleProductSelect({ 
                             id: bookingState.userFlow === 'non-member' ? 'returning-treatment' : 'first-time-treatment', 
@@ -1442,7 +1448,8 @@ export default function BookingWidget() {
                   id="confirm-accutane"
                   checked={confirmAccutane}
                   onCheckedChange={(checked) => setConfirmAccutane(checked as boolean)}
-                  className="mt-1 h-6 w-6 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                  className="mt-1 h-6 w-6"
+                  style={{ '--checkbox-checked-bg': '#FF502D', '--checkbox-checked-border': '#FF502D' } as any}
                   data-testid="checkbox-accutane"
                 />
                 <label
@@ -1458,7 +1465,8 @@ export default function BookingWidget() {
                   id="confirm-injections"
                   checked={confirmInjections}
                   onCheckedChange={(checked) => setConfirmInjections(checked as boolean)}
-                  className="mt-1 h-6 w-6 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                  className="mt-1 h-6 w-6"
+                  style={{ '--checkbox-checked-bg': '#FF502D', '--checkbox-checked-border': '#FF502D' } as any}
                   data-testid="checkbox-injections"
                 />
                 <label
@@ -1474,7 +1482,8 @@ export default function BookingWidget() {
                   id="confirm-waxing"
                   checked={confirmWaxing}
                   onCheckedChange={(checked) => setConfirmWaxing(checked as boolean)}
-                  className="mt-1 h-6 w-6 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                  className="mt-1 h-6 w-6"
+                  style={{ '--checkbox-checked-bg': '#FF502D', '--checkbox-checked-border': '#FF502D' } as any}
                   data-testid="checkbox-waxing"
                 />
                 <label
@@ -1575,7 +1584,8 @@ export default function BookingWidget() {
                     onChange={(e) => setGiftMessage(e.target.value)}
                     placeholder="Write a personal message..."
                     rows={4}
-                    className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                    style={{ '--tw-ring-color': '#FF502D' } as any}
                     data-testid="input-gift-message"
                   />
                   <p className="text-sm text-gray-500 mt-1">
@@ -1606,7 +1616,8 @@ export default function BookingWidget() {
                       }));
                     }}
                     disabled={!isValid}
-                    className="w-full bg-orange-500 text-white hover:bg-orange-600"
+                    className="w-full text-white hover:opacity-90"
+                    style={{ backgroundColor: '#FF502D' }}
                     data-testid="button-continue"
                   >
                     Continue to {bookingState.customerType === 'new' ? 'Your Info' : 'Checkout'}
@@ -1885,8 +1896,8 @@ export default function BookingWidget() {
                             <div className="font-semibold">{slot.time}</div>
                             {slot.isDiscounted && (
                               <div className="mt-1 flex items-center gap-1 justify-center">
-                                <Tag className={`w-3 h-3 ${selectedTimeSlot?.id === slot.id ? 'text-orange-300' : 'text-orange-600'}`} />
-                                <span className={`text-xs font-medium ${selectedTimeSlot?.id === slot.id ? 'text-orange-300' : 'text-orange-600'}`}>
+                                <Tag className="w-3 h-3" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFB5A3' : '#FF502D' }} />
+                                <span className="text-xs font-medium" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFB5A3' : '#FF502D' }}>
                                   $10 OFF
                                 </span>
                               </div>
@@ -1976,8 +1987,8 @@ export default function BookingWidget() {
                                 <span className="font-medium">{slot.time}</span>
                                 {slot.isDiscounted && (
                                   <div className="flex items-center gap-1">
-                                    <Tag className="w-2.5 h-2.5 text-orange-600" />
-                                    <span className="text-xs text-orange-600">$10 OFF</span>
+                                    <Tag className="w-2.5 h-2.5" style={{ color: '#FF502D' }} />
+                                    <span className="text-xs" style={{ color: '#FF502D' }}>$10 OFF</span>
                                   </div>
                                 )}
                               </button>
@@ -2260,7 +2271,7 @@ export default function BookingWidget() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-gray-700">
-                      Free cancellation or modification before {bookingState.selectedDate && format(addDays(bookingState.selectedDate, -1), 'EEEE MM/dd/yyyy')} at {bookingState.selectedTime?.time}. After that, changes to the appointment will result in a charge of $30 plus any applicable taxes and fees. <a href="#" className="text-orange-600 underline">Learn More</a>.
+                      Free cancellation or modification before {bookingState.selectedDate && format(addDays(bookingState.selectedDate, -1), 'EEEE MM/dd/yyyy')} at {bookingState.selectedTime?.time}. After that, changes to the appointment will result in a charge of $30 plus any applicable taxes and fees. <a href="#" className="underline" style={{ color: '#FF502D' }}>Learn More</a>.
                     </p>
                   </CardContent>
                 </Card>
@@ -2285,7 +2296,7 @@ export default function BookingWidget() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-700">
-                    By {isPurchaseOnly ? 'completing this purchase' : 'booking this appointment'} you are agreeing to Glowbar's <a href="#" className="text-orange-600 underline">Terms of Service</a>
+                    By {isPurchaseOnly ? 'completing this purchase' : 'booking this appointment'} you are agreeing to Glowbar's <a href="#" className="underline" style={{ color: '#FF502D' }}>Terms of Service</a>
                   </p>
                 </CardContent>
               </Card>
@@ -2426,7 +2437,8 @@ export default function BookingWidget() {
                       setBookingState(prev => ({ ...prev, step: 'confirmation' }));
                     }}
                     disabled={!cardName || !cardNumber || !cardExpiry || !cardCvc}
-                    className="w-full bg-orange-500 text-white hover:bg-orange-600 text-lg py-6"
+                    className="w-full text-white hover:opacity-90 text-lg py-6"
+                    style={{ backgroundColor: '#FF502D' }}
                     data-testid="button-book-now"
                   >
                     {isPurchaseOnly ? 'COMPLETE PURCHASE' : 'BOOK NOW'}
@@ -2548,7 +2560,8 @@ export default function BookingWidget() {
                     selectedEsthetician: undefined
                   }));
                 }}
-                className="w-full bg-orange-500 text-white hover:bg-orange-600 text-lg py-6"
+                className="w-full text-white hover:opacity-90 text-lg py-6"
+                style={{ backgroundColor: '#FF502D' }}
                 data-testid="button-book-appointment"
               >
                 Book Your Appointment Now
