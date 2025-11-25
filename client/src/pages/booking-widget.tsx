@@ -1157,6 +1157,9 @@ export default function BookingWidget() {
               Back
             </Button>
 
+            {(bookingState.userFlow === 'non-member' || bookingState.userFlow === 'member') && (
+              <p className="text-xl text-gray-600 mb-2" data-testid="text-welcome">Welcome Back, Test User!</p>
+            )}
             <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Select A Service</h1>
               
               <Accordion type="single" collapsible className="space-y-2">
