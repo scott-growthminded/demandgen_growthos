@@ -593,7 +593,7 @@ export default function BookingWidget() {
           {/* Left side - Location finder and grouped locations - SCROLLABLE */}
           <div className="w-1/2 overflow-y-auto space-y-4 pr-4">
             {/* Location Finder Search */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+            <div className="bg-gray-50 rounded-3xl p-4 mb-4">
               <Label htmlFor="address-search" className="text-base font-semibold mb-2 block">
                 Find Studios Near You
               </Label>
@@ -787,7 +787,7 @@ export default function BookingWidget() {
 
           {/* Right side - Map - FIXED */}
           <div className="w-1/2 sticky top-8 self-start">
-            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 shadow-lg">
+            <div className="aspect-square rounded-3xl overflow-hidden bg-gray-100 shadow-lg">
               {allLocations.length > 0 && allLocations[0].coordinates ? (
                 <MapContainer
                   ref={mapRef}
@@ -1216,7 +1216,7 @@ export default function BookingWidget() {
             </div>
           </div>
 
-            <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
+            <div className="relative rounded-3xl overflow-hidden bg-gray-100 h-[600px]">
               <img 
                 src="https://glowbar.com/cdn/shop/files/glowbar_estheticians_certified_985ba0ae-536e-48ac-832d-d86b6a70c1c6.jpg?v=1675461347&width=1500" 
                 alt="Glowbar certified estheticians"
@@ -1813,7 +1813,7 @@ export default function BookingWidget() {
 
           {/* Right side - Image - FIXED */}
           <div className="w-1/2 sticky top-8 self-start">
-            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 shadow-lg">
+            <div className="aspect-square rounded-3xl overflow-hidden bg-gray-100 shadow-lg">
               <img 
                 src={luxurySpaImage} 
                 alt="Luxury spa facial treatment" 
@@ -1972,7 +1972,7 @@ export default function BookingWidget() {
                     onChange={(e) => setGiftMessage(e.target.value)}
                     placeholder="Write a personal message..."
                     rows={4}
-                    className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
+                    className="mt-2 w-full rounded-2xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
                     style={{ '--tw-ring-color': '#FF502D' } as any}
                     data-testid="input-gift-message"
                   />
@@ -1982,7 +1982,7 @@ export default function BookingWidget() {
                 </div>
 
                 <div className="pt-4">
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div className="bg-gray-50 rounded-3xl p-4 mb-4">
                     <h3 className="font-semibold mb-2">Gift Card Summary</h3>
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
