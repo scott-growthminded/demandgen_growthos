@@ -613,7 +613,7 @@ export default function BookingWidget() {
                 <Button
                   onClick={handleAddressSearch}
                   disabled={isSearching || !addressSearch.trim()}
-                  className="bg-black text-white hover:bg-gray-800"
+                  className="text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                   data-testid="button-search-address"
                 >
                   {isSearching ? (
@@ -682,7 +682,8 @@ export default function BookingWidget() {
                             step: 'phone-verification'
                           }));
                         }}
-                        className="w-full bg-black text-white hover:bg-gray-800"
+                        className="w-full text-white hover:opacity-90"
+                        style={{ backgroundColor: '#FF502D' }}
                         data-testid={`button-select-studio-nearby-${location.id}`}
                       >
                         SELECT STUDIO
@@ -766,7 +767,7 @@ export default function BookingWidget() {
                                         step: 'phone-verification'
                                       }));
                                     }}
-                                    className="w-full bg-black text-white hover:bg-gray-800"
+                                    className="w-full text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                                     data-testid={`button-select-studio-${location.id}`}
                                   >
                                     SELECT STUDIO
@@ -1038,7 +1039,7 @@ export default function BookingWidget() {
 
                   <Button
                     onClick={handlePhoneSubmit}
-                    className="w-full bg-black text-white hover:bg-gray-800"
+                    className="w-full text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                     disabled={!phoneNumber}
                     data-testid="button-submit-phone"
                   >
@@ -1150,7 +1151,7 @@ export default function BookingWidget() {
 
                   <Button
                     onClick={handleOtpSubmit}
-                    className="w-full bg-black text-white hover:bg-gray-800"
+                    className="w-full text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                     disabled={!otpCode}
                     data-testid="button-submit-otp"
                   >
@@ -3022,7 +3023,7 @@ export default function BookingWidget() {
                 setBookingState({ step: 'location' });
                 setAcceptTerms(false);
               }}
-              className="w-full bg-black text-white hover:bg-gray-800"
+              className="w-full text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
               data-testid="button-new-booking"
             >
               {isPurchaseOnly ? 'Make Another Purchase' : 'Book Another Appointment'}
