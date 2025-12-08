@@ -1514,7 +1514,7 @@ export default function BookingWidget() {
                                 price: 0, 
                                 description: '30min facial - voucher applied' 
                               })}
-                              className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                              className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                               data-testid="button-select-treatment"
                             >
                               Select
@@ -1551,7 +1551,7 @@ export default function BookingWidget() {
                                   price: 80, 
                                   description: '30min facial' 
                                 })}
-                                className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                                className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                                 data-testid="button-book-treatment-paid"
                               >
                                 Book Your Treatment ($80)
@@ -1564,7 +1564,7 @@ export default function BookingWidget() {
                                     price: 0, 
                                     description: '30min facial - using credits' 
                                   })}
-                                  className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                                  className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                                   data-testid="button-book-treatment-credits"
                                 >
                                   Book Your Treatment with Your Credits
@@ -1605,7 +1605,7 @@ export default function BookingWidget() {
                                 price: 80, 
                                 description: '30min facial' 
                               })}
-                              className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                              className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                               data-testid="button-select-treatment"
                             >
                               Select
@@ -1644,7 +1644,7 @@ export default function BookingWidget() {
                           <p className="text-xl font-bold mb-3">$60.00</p>
                           <Button
                             onClick={() => handleProductSelect({ id: 'membership-60', name: '2025 Black Friday Membership Deal', price: 60, description: 'Monthly membership' })}
-                            className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                            className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                             data-testid="button-select-membership-60"
                           >
                             Select
@@ -1670,7 +1670,7 @@ export default function BookingWidget() {
                         <p className="text-xl font-bold mb-3">$110.00</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'membership-110', name: bookingState.userFlow === 'member' ? 'Glowbar Membership+' : 'Black Friday Glowbar Membership+', price: 110, description: 'Monthly membership' })}
-                          className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                          className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-membership-110"
                         >
                           Select
@@ -1701,7 +1701,7 @@ export default function BookingWidget() {
                         <p className="text-xl font-bold mb-3">$228.00</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'package-3', name: 'Three (3) Facials Package', price: 228, description: '3 facial package' })}
-                          className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                          className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-package-3"
                         >
                           Select
@@ -1722,7 +1722,7 @@ export default function BookingWidget() {
                         <p className="text-xl font-bold mb-3">$432.00</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'package-6', name: 'Six (6) Facials Package', price: 432, description: '6 facial package' })}
-                          className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                          className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-package-6"
                         >
                           Select
@@ -1743,7 +1743,7 @@ export default function BookingWidget() {
                         <p className="text-xl font-bold mb-3">$612.00</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'package-9', name: 'Nine (9) Facials Package', price: 612, description: '9 facial package' })}
-                          className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                          className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-package-9"
                         >
                           Select
@@ -1764,7 +1764,7 @@ export default function BookingWidget() {
                         <p className="text-xl font-bold mb-3">$780.00</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'package-12', name: 'Twelve (12) Facials Package', price: 780, description: '12 facial package' })}
-                          className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                          className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-package-12"
                         >
                           Select
@@ -1886,7 +1886,7 @@ export default function BookingWidget() {
               <Button
                 onClick={handleConfirmationContinue}
                 disabled={!confirmAccutane || !confirmInjections || !confirmWaxing}
-                className="w-full h-10 bg-black text-white hover:bg-gray-800 disabled:opacity-50"
+                className="w-full h-10 text-white hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: "#FF502D" }}
                 data-testid="button-confirm-continue"
               >
                 Continue
@@ -2349,7 +2349,7 @@ export default function BookingWidget() {
                         step: nextStep
                       }));
                     }}
-                    className="w-full h-12 bg-black text-white hover:bg-gray-800"
+                    className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                     data-testid="button-continue"
                   >
                     Continue to {bookingState.customerType === 'new' ? 'Personal Info' : 'Checkout'}
