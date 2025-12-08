@@ -141,7 +141,7 @@ export default function BlvdApiTest() {
         {availabilityResults && (
           <div className="mt-8 space-y-6">
             {/* Summary Stats */}
-            <div className="bg-card rounded-2xl border shadow-sm">
+            <div className="bg-card rounded-lg border shadow-sm">
               <div className="p-6 border-b">
                 <h3 className="text-lg font-semibold mb-2">Location Overview</h3>
                 <p className="text-sm text-muted-foreground">
@@ -210,7 +210,7 @@ export default function BlvdApiTest() {
               
               
               return (
-                <div className="bg-card rounded-2xl border shadow-sm" data-testid="detail-panel">
+                <div className="bg-card rounded-lg border shadow-sm" data-testid="detail-panel">
                   <div className="p-6 border-b">
                     <h3 className="text-lg font-semibold mb-2" data-testid="detail-location-name">{selectedLocation.locationName}</h3>
                     <p className="text-sm text-muted-foreground">
@@ -274,7 +274,7 @@ export default function BlvdApiTest() {
 
             {/* Instruction Text */}
             {!selectedLocationId && (
-              <div className="bg-card rounded-2xl border shadow-sm p-6 text-center" data-testid="instruction-panel">
+              <div className="bg-card rounded-lg border shadow-sm p-6 text-center" data-testid="instruction-panel">
                 <p className="text-muted-foreground">Click on a studio row above to view detailed time slot information</p>
               </div>
             )}
