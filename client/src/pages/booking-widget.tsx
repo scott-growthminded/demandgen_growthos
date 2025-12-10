@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronDown, ChevronUp, CheckCircle, User, MapPin, Tag, Search, Navigation } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp, ChevronRight, CheckCircle, User, MapPin, Tag, Search, Navigation, Clock, X } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -2028,8 +2028,9 @@ export default function BookingWidget() {
       }
       
       return availabilityData.availableSlots.map((slot: any) => ({
-        ...slot, // Keep all Boulevard fields
-        time: format(new Date(slot.startTime), 'h:mm a') // Add formatted time for display
+        ...slot,
+        time: format(new Date(slot.startTime), 'h:mm a'),
+        hour: new Date(slot.startTime).getHours()
       }));
     };
 
@@ -2055,33 +2056,20 @@ export default function BookingWidget() {
     
     const hasAvailability = timeSlots.length > 0;
 
-    // Generate calendar days for the current month + next month
-    const generateCalendarDays = () => {
-      const today = new Date();
-      const currentMonth = today.getMonth();
-      const currentYear = today.getFullYear();
-      
-      // Get first day of current month and last day of next month
-      const startDate = new Date(currentYear, currentMonth, 1);
-      const endDate = new Date(currentYear, currentMonth + 2, 0); // Last day of next month
-      
-      const days: Date[] = [];
-      let current = new Date(startDate);
-      
-      while (current <= endDate) {
-        days.push(new Date(current));
-        current.setDate(current.getDate() + 1);
-      }
-      
-      return days.filter(day => day >= today); // Only show today and future dates
-    };
-
-    const calendarDays = generateCalendarDays();
+    // Group time slots by time of day
+    const morningSlots = timeSlots.filter((slot: any) => slot.hour < 12);
+    const afternoonSlots = timeSlots.filter((slot: any) => slot.hour >= 12 && slot.hour < 17);
+    const eveningSlots = timeSlots.filter((slot: any) => slot.hour >= 17);
 
     const isValid = selectedDate && selectedTimeSlot;
 
+    // Get selected esthetician name
+    const selectedEstheticianName = esthetician === 'any' 
+      ? 'Any Esthetician' 
+      : staffData?.staff?.find((s) => s.id === esthetician)?.displayName || 'Selected Esthetician';
+
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -2093,25 +2081,57 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Selected Studio Display */}
-        {bookingState.selectedLocation && (
-          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
-            <button
-              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
-              data-testid="button-change-studio"
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="font-medium">{bookingState.selectedLocation.name}</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
-              <span className="text-xs text-blue-600 ml-2">Change</span>
-            </button>
+        {/* Hero Location & Esthetician Header */}
+        <div className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-5xl mx-auto px-6 py-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              {/* Location Info */}
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation?.name || 'Select Location'}</h2>
+                  <p className="text-gray-600">{bookingState.selectedLocation?.city}, {bookingState.selectedLocation?.state}</p>
+                  <button
+                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+                    className="text-sm font-medium mt-1 hover:underline"
+                    style={{ color: '#FF502D' }}
+                    data-testid="button-change-studio"
+                  >
+                    Change Location
+                  </button>
+                </div>
+              </div>
+
+              {/* Esthetician Filter - Prominent */}
+              <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                  <User className="w-5 h-5" style={{ color: '#FF502D' }} />
+                </div>
+                <div className="flex-1 min-w-[200px]">
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Esthetician</p>
+                  <Select value={esthetician} onValueChange={setEsthetician}>
+                    <SelectTrigger className="border-0 bg-transparent p-0 h-auto text-base font-semibold focus:ring-0" data-testid="select-esthetician">
+                      <SelectValue placeholder="Any esthetician" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Any Esthetician</SelectItem>
+                      {staffData?.staff?.map((staff) => (
+                        <SelectItem key={staff.id} value={staff.id}>
+                          {staff.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="max-w-5xl mx-auto px-6 py-8">
             <Button
               variant="ghost"
               onClick={handleBack}
@@ -2122,56 +2142,12 @@ export default function BookingWidget() {
               Back
             </Button>
 
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Select Date & Time</h1>
-              <p className="text-gray-600" data-testid="text-subtitle">
-                Choose your appointment time at {bookingState.selectedLocation?.name || 'the selected location'}
-              </p>
-            </div>
-
-            {/* Main Content: Calendar Left, Appointments Right */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 items-start">
-              {/* Left Side: Calendar */}
-              <Card className="lg:sticky lg:top-8">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Select a Date</CardTitle>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const newMonth = new Date(currentCalendarMonth);
-                          newMonth.setMonth(newMonth.getMonth() - 1);
-                          setCurrentCalendarMonth(newMonth);
-                        }}
-                        disabled={currentCalendarMonth.getMonth() === new Date().getMonth() && currentCalendarMonth.getFullYear() === new Date().getFullYear()}
-                        data-testid="button-prev-month"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const newMonth = new Date(currentCalendarMonth);
-                          newMonth.setMonth(newMonth.getMonth() + 1);
-                          setCurrentCalendarMonth(newMonth);
-                        }}
-                        data-testid="button-next-month"
-                      >
-                        <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
-                      </Button>
-                    </div>
-                  </div>
-                  <CardDescription className="flex items-center gap-4 mt-2">
-                    <span className="flex items-center gap-1">
-                      <div className="w-3 h-3 rounded-full bg-black"></div>
-                      <span className="text-xs">Selected</span>
-                    </span>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              {/* Left: Modern Calendar */}
+              <div className="lg:col-span-5">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-8">
                   {(() => {
                     const today = new Date();
                     const monthStart = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth(), 1);
@@ -2179,26 +2155,50 @@ export default function BookingWidget() {
                     const firstDayOfWeek = monthStart.getDay();
                     const paddingDays = Array(firstDayOfWeek).fill(null);
                     const daysInMonth = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + 1, 0).getDate();
-                    
-                    // Calculate trailing days from next month to fill the last week
                     const totalCellsUsed = firstDayOfWeek + daysInMonth;
                     const trailingDays = totalCellsUsed % 7 === 0 ? 0 : 7 - (totalCellsUsed % 7);
                     
                     return (
                       <div>
-                        <h3 className="text-lg font-semibold mb-3">{monthName}</h3>
+                        {/* Month Navigation */}
+                        <div className="flex items-center justify-between mb-6">
+                          <button
+                            onClick={() => {
+                              const newMonth = new Date(currentCalendarMonth);
+                              newMonth.setMonth(newMonth.getMonth() - 1);
+                              setCurrentCalendarMonth(newMonth);
+                            }}
+                            disabled={currentCalendarMonth.getMonth() === new Date().getMonth() && currentCalendarMonth.getFullYear() === new Date().getFullYear()}
+                            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            data-testid="button-prev-month"
+                          >
+                            <ChevronLeft className="w-5 h-5" />
+                          </button>
+                          <h3 className="text-xl font-bold text-gray-900">{monthName}</h3>
+                          <button
+                            onClick={() => {
+                              const newMonth = new Date(currentCalendarMonth);
+                              newMonth.setMonth(newMonth.getMonth() + 1);
+                              setCurrentCalendarMonth(newMonth);
+                            }}
+                            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+                            data-testid="button-next-month"
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
+                        </div>
                         
                         {/* Day labels */}
-                        <div className="grid grid-cols-7 gap-2 mb-2">
-                          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                            <div key={day} className="text-center text-xs font-medium text-gray-500 py-1">
+                        <div className="grid grid-cols-7 gap-1 mb-2">
+                          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
+                            <div key={idx} className="text-center text-xs font-semibold text-gray-400 py-2">
                               {day}
                             </div>
                           ))}
                         </div>
                         
                         {/* Calendar grid */}
-                        <div className="grid grid-cols-7 gap-2">
+                        <div className="grid grid-cols-7 gap-1">
                           {/* Padding cells */}
                           {paddingDays.map((_, idx) => (
                             <div key={`padding-${idx}`} className="aspect-square"></div>
@@ -2209,10 +2209,11 @@ export default function BookingWidget() {
                             const day = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth(), i + 1);
                             const isPast = day < today && format(day, 'yyyy-MM-dd') !== format(today, 'yyyy-MM-dd');
                             const isSelected = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
+                            const isToday = format(day, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
                             
                             if (isPast) {
                               return (
-                                <div key={i} className="aspect-square flex items-center justify-center text-gray-300">
+                                <div key={i} className="aspect-square flex items-center justify-center text-gray-300 text-sm">
                                   {i + 1}
                                 </div>
                               );
@@ -2225,11 +2226,14 @@ export default function BookingWidget() {
                                   setSelectedDate(day);
                                   setSelectedTimeSlot(undefined);
                                 }}
-                                className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                                className={`aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all ${
                                   isSelected
-                                    ? 'bg-black text-white'
+                                    ? 'text-white shadow-lg scale-110'
+                                    : isToday
+                                    ? 'ring-2 ring-offset-2 hover:bg-gray-100'
                                     : 'hover:bg-gray-100'
                                 }`}
+                                style={isSelected ? { backgroundColor: '#FF502D' } : isToday ? { '--tw-ring-color': '#FF502D' } as any : {}}
                                 data-testid={`calendar-day-${format(day, 'yyyy-MM-dd')}`}
                               >
                                 {i + 1}
@@ -2249,11 +2253,12 @@ export default function BookingWidget() {
                                   setSelectedDate(nextMonthDay);
                                   setSelectedTimeSlot(undefined);
                                 }}
-                                className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                                className={`aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all ${
                                   isSelected
-                                    ? 'bg-black text-white'
-                                    : 'text-gray-400 hover:bg-gray-100'
+                                    ? 'text-white shadow-lg scale-110'
+                                    : 'text-gray-300 hover:bg-gray-100 hover:text-gray-500'
                                 }`}
+                                style={isSelected ? { backgroundColor: '#FF502D' } : {}}
                                 data-testid={`calendar-day-${format(nextMonthDay, 'yyyy-MM-dd')}`}
                               >
                                 {i + 1}
@@ -2261,81 +2266,162 @@ export default function BookingWidget() {
                             );
                           })}
                         </div>
+
+                        {/* Legend */}
+                        <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-gray-100">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#FF502D' }}></div>
+                            <span className="text-xs text-gray-500">Selected</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#FF502D' }}></div>
+                            <span className="text-xs text-gray-500">Today</span>
+                          </div>
+                        </div>
                       </div>
                     );
                   })()}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              {/* Right Side: Available Appointments */}
-              <div className="space-y-6">
-                {/* Esthetician Filter */}
-                <Card>
-                  <CardContent className="p-6">
-                    <Label htmlFor="esthetician-filter" className="text-base font-semibold mb-3 block">
-                      Filter by Esthetician
-                    </Label>
-                    <Select value={esthetician} onValueChange={setEsthetician}>
-                      <SelectTrigger id="esthetician-filter" className="w-full" data-testid="select-esthetician">
-                        <SelectValue placeholder="Any esthetician" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="any">Any esthetician</SelectItem>
-                        {staffData?.staff?.map((staff) => (
-                          <SelectItem key={staff.id} value={staff.id}>
-                            {staff.displayName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </CardContent>
-                </Card>
+              {/* Right: Time Slots */}
+              <div className="lg:col-span-7 space-y-6">
+                {/* Selected Date Display */}
+                {selectedDate && (
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">
+                      {format(selectedDate, 'EEEE, MMMM d')}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {hasAvailability ? `${timeSlots.length} time slots available` : 'No availability'}
+                    </p>
+                  </div>
+                )}
 
-                {/* Available Times */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Available Times</CardTitle>
-                    {selectedDate && (
-                      <CardDescription>
-                        {format(selectedDate, 'EEEE, MMMM d, yyyy')}
-                      </CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent className="max-h-[500px] overflow-y-auto">
-                    {!selectedDate ? (
-                      <p className="text-center text-gray-500 py-8">Select a date from the calendar</p>
-                    ) : availabilityLoading ? (
-                      <p className="text-center text-gray-500 py-8">Loading available times...</p>
-                    ) : hasAvailability ? (
-                      <div className="grid grid-cols-2 gap-3">
-                        {timeSlots.map((slot) => (
-                          <button
-                            key={slot.id}
-                            onClick={() => setSelectedTimeSlot(slot)}
-                            className={`p-4 border rounded-lg text-center transition-colors relative ${
-                              selectedTimeSlot?.id === slot.id
-                                ? 'border-black bg-black text-white'
-                                : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50'
-                            }`}
-                            data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
-                          >
-                            <div className="font-semibold">{slot.time}</div>
-                            {slot.isDiscounted && (
-                              <div className="mt-1 flex items-center gap-1 justify-center">
-                                <Tag className="w-3 h-3" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFB5A3' : '#FF502D' }} />
-                                <span className="text-xs font-medium" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFB5A3' : '#FF502D' }}>
-                                  $10 OFF
+                {/* Time Slots by Period */}
+                {!selectedDate ? (
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                      <Clock className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a Date</h3>
+                    <p className="text-gray-500">Choose a date from the calendar to see available times</p>
+                  </div>
+                ) : availabilityLoading ? (
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+                    <div className="animate-spin w-8 h-8 border-3 border-gray-200 rounded-full mx-auto mb-4" style={{ borderTopColor: '#FF502D' }}></div>
+                    <p className="text-gray-500">Loading available times...</p>
+                  </div>
+                ) : hasAvailability ? (
+                  <div className="space-y-4">
+                    {/* Morning Slots */}
+                    {morningSlots.length > 0 && (
+                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <span className="text-lg">🌅</span>
+                          <h4 className="font-semibold text-gray-900">Morning</h4>
+                          <span className="text-xs text-gray-400 ml-1">Before 12 PM</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {morningSlots.map((slot: any) => (
+                            <button
+                              key={slot.id}
+                              onClick={() => setSelectedTimeSlot(slot)}
+                              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                                selectedTimeSlot?.id === slot.id
+                                  ? 'text-white shadow-lg scale-105'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                              style={selectedTimeSlot?.id === slot.id ? { backgroundColor: '#FF502D' } : {}}
+                              data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
+                            >
+                              {slot.time}
+                              {slot.isDiscounted && (
+                                <span className="ml-1.5 text-xs" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFD4CC' : '#FF502D' }}>
+                                  -$10
                                 </span>
-                              </div>
-                            )}
-                          </button>
-                        ))}
+                              )}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    ) : (
-                      <p className="text-center text-gray-500 py-8">No availability for this date</p>
                     )}
-                  </CardContent>
-                </Card>
+
+                    {/* Afternoon Slots */}
+                    {afternoonSlots.length > 0 && (
+                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <span className="text-lg">☀️</span>
+                          <h4 className="font-semibold text-gray-900">Afternoon</h4>
+                          <span className="text-xs text-gray-400 ml-1">12 PM - 5 PM</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {afternoonSlots.map((slot: any) => (
+                            <button
+                              key={slot.id}
+                              onClick={() => setSelectedTimeSlot(slot)}
+                              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                                selectedTimeSlot?.id === slot.id
+                                  ? 'text-white shadow-lg scale-105'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                              style={selectedTimeSlot?.id === slot.id ? { backgroundColor: '#FF502D' } : {}}
+                              data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
+                            >
+                              {slot.time}
+                              {slot.isDiscounted && (
+                                <span className="ml-1.5 text-xs" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFD4CC' : '#FF502D' }}>
+                                  -$10
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Evening Slots */}
+                    {eveningSlots.length > 0 && (
+                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                          <span className="text-lg">🌙</span>
+                          <h4 className="font-semibold text-gray-900">Evening</h4>
+                          <span className="text-xs text-gray-400 ml-1">After 5 PM</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {eveningSlots.map((slot: any) => (
+                            <button
+                              key={slot.id}
+                              onClick={() => setSelectedTimeSlot(slot)}
+                              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                                selectedTimeSlot?.id === slot.id
+                                  ? 'text-white shadow-lg scale-105'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                              style={selectedTimeSlot?.id === slot.id ? { backgroundColor: '#FF502D' } : {}}
+                              data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
+                            >
+                              {slot.time}
+                              {slot.isDiscounted && (
+                                <span className="ml-1.5 text-xs" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFD4CC' : '#FF502D' }}>
+                                  -$10
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+                    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                      <X className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Availability</h3>
+                    <p className="text-gray-500">Try selecting a different date or changing your esthetician preference</p>
+                  </div>
+                )}
 
                 {/* Continue Button */}
                 {isValid && (
@@ -2349,96 +2435,91 @@ export default function BookingWidget() {
                         step: nextStep
                       }));
                     }}
-                    className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                    className="w-full h-14 text-base font-semibold rounded-xl text-white hover:opacity-90 shadow-lg" 
+                    style={{ backgroundColor: "#FF502D" }}
                     data-testid="button-continue"
                   >
                     Continue to {bookingState.customerType === 'new' ? 'Personal Info' : 'Checkout'}
                   </Button>
                 )}
-              </div>
-            </div>
 
-            {/* Alternative Locations */}
-            {selectedDate && nearbyLocations.length >= 2 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>More Available Times at Nearby Locations</CardTitle>
-                  <CardDescription>
-                    for {format(selectedDate, 'EEEE, MMMM d')}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {nearbyLocations.slice(0, 2).map((location, idx) => {
-                    const availabilityQuery = idx === 0 ? nearbyAvailability1 : nearbyAvailability2;
-                    let nearbySlots = availabilityQuery.data?.availableSlots?.map((slot: any) => ({
-                      ...slot,
-                      time: format(new Date(slot.startTime), 'h:mm a')
-                    })) || [];
+                {/* Nearby Locations */}
+                {selectedDate && nearbyLocations.length >= 2 && (
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h4 className="font-bold text-gray-900 mb-1">More Times at Nearby Studios</h4>
+                    <p className="text-sm text-gray-500 mb-4">for {format(selectedDate, 'EEEE, MMMM d')}</p>
                     
-                    // Filter out discounted slots if using credits or voucher
-                    if (isUsingCreditsOrVoucher) {
-                      nearbySlots = nearbySlots.filter((slot: any) => !slot.isDiscounted);
-                    }
-                    
-                    return (
-                      <div key={location.id} className="border rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="font-semibold">{location.name}</h4>
-                            <p className="text-sm text-gray-600">
-                              {location.address?.city}, {location.address?.state}
-                            </p>
-                          </div>
-                        </div>
+                    <div className="space-y-4">
+                      {nearbyLocations.slice(0, 2).map((location, idx) => {
+                        const availabilityQuery = idx === 0 ? nearbyAvailability1 : nearbyAvailability2;
+                        let nearbySlots = availabilityQuery.data?.availableSlots?.map((slot: any) => ({
+                          ...slot,
+                          time: format(new Date(slot.startTime), 'h:mm a')
+                        })) || [];
                         
-                        {availabilityQuery.isLoading ? (
-                          <p className="text-sm text-gray-500">Loading times...</p>
-                        ) : nearbySlots.length > 0 ? (
-                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                            {nearbySlots.slice(0, 6).map((slot: any) => (
-                              <button
-                                key={slot.id}
-                                onClick={() => {
-                                  setBookingState(prev => ({
-                                    ...prev,
-                                    selectedLocation: {
-                                      id: location.id,
-                                      name: location.name,
-                                      city: location.address?.city || '',
-                                      state: location.address?.state || ''
-                                    },
-                                    selectedTime: slot,
-                                    selectedDate: selectedDate
-                                  }));
-                                  setSelectedTimeSlot(slot);
-                                }}
-                                className="p-2 border border-gray-200 rounded text-sm hover:border-gray-400 hover:bg-gray-50 transition-colors flex flex-col items-center"
-                                data-testid={`nearby-time-${location.id}-${slot.time.replace(/[:\s]/g, '-')}`}
-                              >
-                                <span className="font-medium">{slot.time}</span>
-                                {slot.isDiscounted && (
-                                  <div className="flex items-center gap-1">
-                                    <Tag className="w-2.5 h-2.5" style={{ color: '#FF502D' }} />
-                                    <span className="text-xs" style={{ color: '#FF502D' }}>$10 OFF</span>
-                                  </div>
+                        if (isUsingCreditsOrVoucher) {
+                          nearbySlots = nearbySlots.filter((slot: any) => !slot.isDiscounted);
+                        }
+                        
+                        return (
+                          <div key={location.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                                <MapPin className="w-4 h-4" style={{ color: '#FF502D' }} />
+                              </div>
+                              <div>
+                                <h5 className="font-semibold text-gray-900 text-sm">{location.name}</h5>
+                                <p className="text-xs text-gray-500">{location.address?.city}, {location.address?.state}</p>
+                              </div>
+                            </div>
+                            
+                            {availabilityQuery.isLoading ? (
+                              <p className="text-sm text-gray-500">Loading times...</p>
+                            ) : nearbySlots.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {nearbySlots.slice(0, 5).map((slot: any) => (
+                                  <button
+                                    key={slot.id}
+                                    onClick={() => {
+                                      setBookingState(prev => ({
+                                        ...prev,
+                                        selectedLocation: {
+                                          id: location.id,
+                                          name: location.name,
+                                          city: location.address?.city || '',
+                                          state: location.address?.state || ''
+                                        },
+                                        selectedTime: slot,
+                                        selectedDate: selectedDate
+                                      }));
+                                      setSelectedTimeSlot(slot);
+                                    }}
+                                    className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-700 hover:border-gray-400 transition-colors"
+                                    data-testid={`nearby-time-${location.id}-${slot.time.replace(/[:\s]/g, '-')}`}
+                                  >
+                                    {slot.time}
+                                    {slot.isDiscounted && (
+                                      <span className="ml-1" style={{ color: '#FF502D' }}>-$10</span>
+                                    )}
+                                  </button>
+                                ))}
+                                {nearbySlots.length > 5 && (
+                                  <span className="px-3 py-1.5 text-xs text-gray-400">
+                                    +{nearbySlots.length - 5} more
+                                  </span>
                                 )}
-                              </button>
-                            ))}
-                            {nearbySlots.length > 6 && (
-                              <span className="text-xs text-gray-500 flex items-center justify-center">
-                                +{nearbySlots.length - 6} more
-                              </span>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-400">No availability</p>
                             )}
                           </div>
-                        ) : (
-                          <p className="text-sm text-gray-500">No availability</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            )}
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
