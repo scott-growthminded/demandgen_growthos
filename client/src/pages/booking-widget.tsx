@@ -2104,28 +2104,6 @@ export default function BookingWidget() {
                 </div>
               </div>
 
-              {/* Esthetician Filter - Prominent */}
-              <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-4 border border-gray-200">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                  <User className="w-5 h-5" style={{ color: '#FF502D' }} />
-                </div>
-                <div className="flex-1 min-w-[200px]">
-                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Esthetician</p>
-                  <Select value={esthetician} onValueChange={setEsthetician}>
-                    <SelectTrigger className="border-0 bg-transparent p-0 h-auto text-base font-semibold focus:ring-0" data-testid="select-esthetician">
-                      <SelectValue placeholder="Any esthetician" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="any">Any Esthetician</SelectItem>
-                      {staffData?.staff?.map((staff) => (
-                        <SelectItem key={staff.id} value={staff.id}>
-                          {staff.displayName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -2286,15 +2264,40 @@ export default function BookingWidget() {
 
               {/* Right: Time Slots */}
               <div className="lg:col-span-7 space-y-6">
-                {/* Selected Date Display */}
+                {/* Selected Date Display with Esthetician Filter */}
                 {selectedDate && (
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">
-                      {format(selectedDate, 'EEEE, MMMM d')}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {hasAvailability ? `${timeSlots.length} time slots available` : 'No availability'}
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">
+                          {format(selectedDate, 'EEEE, MMMM d')}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {hasAvailability ? `${timeSlots.length} time slots available` : 'No availability'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                          <User className="w-4 h-4" style={{ color: '#FF502D' }} />
+                        </div>
+                        <div className="min-w-[160px]">
+                          <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-0.5">Esthetician</p>
+                          <Select value={esthetician} onValueChange={setEsthetician}>
+                            <SelectTrigger className="border-0 bg-transparent p-0 h-auto text-sm font-semibold focus:ring-0" data-testid="select-esthetician">
+                              <SelectValue placeholder="Any esthetician" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="any">Any Esthetician</SelectItem>
+                              {staffData?.staff?.map((staff) => (
+                                <SelectItem key={staff.id} value={staff.id}>
+                                  {staff.displayName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -2318,9 +2321,8 @@ export default function BookingWidget() {
                     {morningSlots.length > 0 && (
                       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                         <div className="flex items-center gap-2 mb-4">
-                          <span className="text-lg">🌅</span>
                           <h4 className="font-semibold text-gray-900">Morning</h4>
-                          <span className="text-xs text-gray-400 ml-1">Before 12 PM</span>
+                          <span className="text-xs text-gray-400">Before 12 PM</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {morningSlots.map((slot: any) => (
@@ -2351,9 +2353,8 @@ export default function BookingWidget() {
                     {afternoonSlots.length > 0 && (
                       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                         <div className="flex items-center gap-2 mb-4">
-                          <span className="text-lg">☀️</span>
                           <h4 className="font-semibold text-gray-900">Afternoon</h4>
-                          <span className="text-xs text-gray-400 ml-1">12 PM - 5 PM</span>
+                          <span className="text-xs text-gray-400">12 PM - 5 PM</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {afternoonSlots.map((slot: any) => (
@@ -2384,9 +2385,8 @@ export default function BookingWidget() {
                     {eveningSlots.length > 0 && (
                       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                         <div className="flex items-center gap-2 mb-4">
-                          <span className="text-lg">🌙</span>
                           <h4 className="font-semibold text-gray-900">Evening</h4>
-                          <span className="text-xs text-gray-400 ml-1">After 5 PM</span>
+                          <span className="text-xs text-gray-400">After 5 PM</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {eveningSlots.map((slot: any) => (
