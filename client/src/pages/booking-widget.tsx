@@ -2443,83 +2443,84 @@ export default function BookingWidget() {
                   </Button>
                 )}
 
-                {/* Nearby Locations */}
-                {selectedDate && nearbyLocations.length >= 2 && (
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <h4 className="font-bold text-gray-900 mb-1">More Times at Nearby Studios</h4>
-                    <p className="text-sm text-gray-500 mb-4">for {format(selectedDate, 'EEEE, MMMM d')}</p>
-                    
-                    <div className="space-y-4">
-                      {nearbyLocations.slice(0, 2).map((location, idx) => {
-                        const availabilityQuery = idx === 0 ? nearbyAvailability1 : nearbyAvailability2;
-                        let nearbySlots = availabilityQuery.data?.availableSlots?.map((slot: any) => ({
-                          ...slot,
-                          time: format(new Date(slot.startTime), 'h:mm a')
-                        })) || [];
-                        
-                        if (isUsingCreditsOrVoucher) {
-                          nearbySlots = nearbySlots.filter((slot: any) => !slot.isDiscounted);
-                        }
-                        
-                        return (
-                          <div key={location.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                                <MapPin className="w-4 h-4" style={{ color: '#FF502D' }} />
-                              </div>
-                              <div>
-                                <h5 className="font-semibold text-gray-900 text-sm">{location.name}</h5>
-                                <p className="text-xs text-gray-500">{location.address?.city}, {location.address?.state}</p>
-                              </div>
-                            </div>
-                            
-                            {availabilityQuery.isLoading ? (
-                              <p className="text-sm text-gray-500">Loading times...</p>
-                            ) : nearbySlots.length > 0 ? (
-                              <div className="flex flex-wrap gap-2">
-                                {nearbySlots.slice(0, 5).map((slot: any) => (
-                                  <button
-                                    key={slot.id}
-                                    onClick={() => {
-                                      setBookingState(prev => ({
-                                        ...prev,
-                                        selectedLocation: {
-                                          id: location.id,
-                                          name: location.name,
-                                          city: location.address?.city || '',
-                                          state: location.address?.state || ''
-                                        },
-                                        selectedTime: slot,
-                                        selectedDate: selectedDate
-                                      }));
-                                      setSelectedTimeSlot(slot);
-                                    }}
-                                    className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-700 hover:border-gray-400 transition-colors"
-                                    data-testid={`nearby-time-${location.id}-${slot.time.replace(/[:\s]/g, '-')}`}
-                                  >
-                                    {slot.time}
-                                    {slot.isDiscounted && (
-                                      <span className="ml-1" style={{ color: '#FF502D' }}>-$10</span>
-                                    )}
-                                  </button>
-                                ))}
-                                {nearbySlots.length > 5 && (
-                                  <span className="px-3 py-1.5 text-xs text-gray-400">
-                                    +{nearbySlots.length - 5} more
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-gray-400">No availability</p>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
+
+            {/* Nearby Locations - Full Width */}
+            {selectedDate && nearbyLocations.length >= 2 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6">
+                <h4 className="font-bold text-gray-900 mb-1">More Times at Nearby Studios</h4>
+                <p className="text-sm text-gray-500 mb-4">for {format(selectedDate, 'EEEE, MMMM d')}</p>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {nearbyLocations.slice(0, 2).map((location, idx) => {
+                    const availabilityQuery = idx === 0 ? nearbyAvailability1 : nearbyAvailability2;
+                    let nearbySlots = availabilityQuery.data?.availableSlots?.map((slot: any) => ({
+                      ...slot,
+                      time: format(new Date(slot.startTime), 'h:mm a')
+                    })) || [];
+                    
+                    if (isUsingCreditsOrVoucher) {
+                      nearbySlots = nearbySlots.filter((slot: any) => !slot.isDiscounted);
+                    }
+                    
+                    return (
+                      <div key={location.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                            <MapPin className="w-4 h-4" style={{ color: '#FF502D' }} />
+                          </div>
+                          <div>
+                            <h5 className="font-semibold text-gray-900 text-sm">{location.name}</h5>
+                            <p className="text-xs text-gray-500">{location.address?.city}, {location.address?.state}</p>
+                          </div>
+                        </div>
+                        
+                        {availabilityQuery.isLoading ? (
+                          <p className="text-sm text-gray-500">Loading times...</p>
+                        ) : nearbySlots.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {nearbySlots.slice(0, 8).map((slot: any) => (
+                              <button
+                                key={slot.id}
+                                onClick={() => {
+                                  setBookingState(prev => ({
+                                    ...prev,
+                                    selectedLocation: {
+                                      id: location.id,
+                                      name: location.name,
+                                      city: location.address?.city || '',
+                                      state: location.address?.state || ''
+                                    },
+                                    selectedTime: slot,
+                                    selectedDate: selectedDate
+                                  }));
+                                  setSelectedTimeSlot(slot);
+                                }}
+                                className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-700 hover:border-gray-400 transition-colors"
+                                data-testid={`nearby-time-${location.id}-${slot.time.replace(/[:\s]/g, '-')}`}
+                              >
+                                {slot.time}
+                                {slot.isDiscounted && (
+                                  <span className="ml-1" style={{ color: '#FF502D' }}>-$10</span>
+                                )}
+                              </button>
+                            ))}
+                            {nearbySlots.length > 8 && (
+                              <span className="px-3 py-1.5 text-xs text-gray-400">
+                                +{nearbySlots.length - 8} more
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-400">No availability</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
