@@ -2266,8 +2266,8 @@ export default function BookingWidget() {
               <div className="lg:col-span-7 space-y-6">
                 {/* Selected Date Display with Esthetician Filter */}
                 {selectedDate && (
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 max-w-md">
+                    <div className="flex items-center justify-between gap-4">
                       <div>
                         <h3 className="text-lg font-bold text-gray-900 mb-1">
                           {format(selectedDate, 'EEEE, MMMM d')}
