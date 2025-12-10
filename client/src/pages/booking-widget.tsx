@@ -230,21 +230,41 @@ export default function BookingWidget() {
     enabled: !!bookingState.selectedLocation?.id,
   });
 
-  // Get nearby locations (top 3 that are not the current location)
+  // Get nearby locations (top 3 that are not the current location, sorted by distance)
   const getNearbyLocations = () => {
     if (!locationsData) return [];
     
-    const allLocations: Location[] = [];
+    const allLocations: any[] = [];
     Object.entries(locationsData as Record<string, any>).forEach(([state, cities]) => {
       Object.entries(cities as Record<string, any>).forEach(([city, locations]) => {
-        allLocations.push(...(locations as Location[]));
+        allLocations.push(...(locations as any[]));
       });
     });
     
-    // Filter out current location and return first 3
-    return allLocations
+    // Find the selected location to get its coordinates
+    const selectedLoc = allLocations.find(loc => loc.id === bookingState.selectedLocation?.id);
+    const selectedLat = selectedLoc?.coordinates?.lat || selectedLoc?.coordinates?.latitude;
+    const selectedLng = selectedLoc?.coordinates?.lng || selectedLoc?.coordinates?.longitude;
+    
+    // Filter out current location and add distance
+    const locationsWithDistance = allLocations
       .filter(loc => loc.id !== bookingState.selectedLocation?.id)
-      .slice(0, 3);
+      .map(loc => {
+        const lat = loc.coordinates?.lat || loc.coordinates?.latitude;
+        const lng = loc.coordinates?.lng || loc.coordinates?.longitude;
+        let distance: number | null = null;
+        if (selectedLat && selectedLng && lat && lng) {
+          distance = calculateDistance(selectedLat, selectedLng, lat, lng);
+        }
+        return { ...loc, distance };
+      })
+      .sort((a, b) => {
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
+        return a.distance - b.distance;
+      });
+    
+    return locationsWithDistance.slice(0, 3);
   };
   
   const nearbyLocations = getNearbyLocations();
@@ -2470,10 +2490,20 @@ export default function BookingWidget() {
                           <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
                             <MapPin className="w-4 h-4" style={{ color: '#FF502D' }} />
                           </div>
-                          <div>
+                          <div className="flex-1">
                             <h5 className="font-semibold text-gray-900 text-sm">{location.name}</h5>
                             <p className="text-xs text-gray-500">{location.address?.city}, {location.address?.state}</p>
                           </div>
+                          {location.distance !== null && location.distance !== undefined && (
+                            <span 
+                              className="text-xs font-semibold px-2 py-1 rounded-full"
+                              style={{ backgroundColor: '#FFF0ED', color: '#FF502D' }}
+                            >
+                              {location.distance < 0.1 
+                                ? `${Math.round(location.distance * 5280)} ft` 
+                                : `${location.distance.toFixed(1)} mi`}
+                            </span>
+                          )}
                         </div>
                         
                         {availabilityQuery.isLoading ? (
