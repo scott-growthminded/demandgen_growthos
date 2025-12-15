@@ -596,7 +596,7 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -608,12 +608,27 @@ export default function BookingWidget() {
 
         <ProgressBar />
 
+        {/* Hero Header */}
+        <div className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-5xl mx-auto px-6 py-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Find Your Studio</h1>
+                <p className="text-gray-600">Select a Glowbar location near you</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Main Content */}
-        <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-180px)]">
+        <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-260px)]">
           {/* Left side - Location finder and grouped locations - SCROLLABLE */}
           <div className="w-1/2 overflow-y-auto space-y-4 pr-4">
             {/* Location Finder Search */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
               <Label htmlFor="address-search" className="text-base font-semibold mb-2 block">
                 Find Studios Near You
               </Label>
@@ -668,8 +683,7 @@ export default function BookingWidget() {
                   Studios Near You
                 </h3>
                 {getLocationsSortedByDistance().map((location: any) => (
-                  <Card key={location.id} className="overflow-hidden">
-                    <CardContent className="p-4">
+                  <div key={location.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4">
                       <div className="flex justify-between items-start mb-1">
                         <h3 className="font-semibold">{location.name}</h3>
                         <span className="text-sm font-medium px-2 py-1 bg-gray-100 rounded" style={{ color: '#FF502D' }}>
@@ -708,8 +722,7 @@ export default function BookingWidget() {
                       >
                         SELECT STUDIO
                       </Button>
-                    </CardContent>
-                  </Card>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -753,8 +766,7 @@ export default function BookingWidget() {
                             }
                             
                             return (
-                              <Card key={location.id} className="overflow-hidden">
-                                <CardContent className="p-4">
+                              <div key={location.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4">
                                   <div className="flex justify-between items-start mb-1">
                                     <h3 className="font-semibold">{location.name}</h3>
                                     {distanceDisplay && (
@@ -792,8 +804,7 @@ export default function BookingWidget() {
                                   >
                                     SELECT STUDIO
                                   </Button>
-                                </CardContent>
-                              </Card>
+                              </div>
                             );
                           })}
                         </div>
@@ -982,7 +993,7 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -994,20 +1005,28 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Selected Studio Display */}
+        {/* Hero Header with Studio Info */}
         {bookingState.selectedLocation && (
-          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
-            <button
-              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
-              data-testid="button-change-studio"
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="font-medium">{bookingState.selectedLocation.name}</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
-              <span className="text-xs text-blue-600 ml-2">Change</span>
-            </button>
+          <div className="bg-white border-b border-gray-200 shadow-sm">
+            <div className="max-w-5xl mx-auto px-6 py-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
+                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
+                  <button
+                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+                    className="text-sm font-medium mt-1 hover:underline"
+                    style={{ color: '#FF502D' }}
+                    data-testid="button-change-studio"
+                  >
+                    Change Location
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1034,14 +1053,10 @@ export default function BookingWidget() {
                 Back
               </button>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-2xl">Enter Your Phone Number</CardTitle>
-                  <CardDescription>
-                    We'll use this to verify your account
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-2xl font-bold mb-2">Enter Your Phone Number</h2>
+                <p className="text-gray-600 mb-6">We'll use this to verify your account</p>
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
                     <Input
@@ -1065,8 +1080,8 @@ export default function BookingWidget() {
                   >
                     Continue
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1093,7 +1108,7 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -1105,20 +1120,28 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Selected Studio Display */}
+        {/* Hero Header with Studio Info */}
         {bookingState.selectedLocation && (
-          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
-            <button
-              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
-              data-testid="button-change-studio"
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="font-medium">{bookingState.selectedLocation.name}</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
-              <span className="text-xs text-blue-600 ml-2">Change</span>
-            </button>
+          <div className="bg-white border-b border-gray-200 shadow-sm">
+            <div className="max-w-5xl mx-auto px-6 py-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
+                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
+                  <button
+                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+                    className="text-sm font-medium mt-1 hover:underline"
+                    style={{ color: '#FF502D' }}
+                    data-testid="button-change-studio"
+                  >
+                    Change Location
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1145,14 +1168,10 @@ export default function BookingWidget() {
                 Back
               </button>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-2xl">Verify Your Phone Number</CardTitle>
-                  <CardDescription>
-                    We've sent a code to {bookingState.userPhone}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-2xl font-bold mb-2">Verify Your Phone Number</h2>
+                <p className="text-gray-600 mb-6">We've sent a code to {bookingState.userPhone}</p>
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="otp">Enter OTP Code</Label>
                     <Input
@@ -1177,8 +1196,8 @@ export default function BookingWidget() {
                   >
                     Verify & Continue
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1189,7 +1208,7 @@ export default function BookingWidget() {
   // Step 4: Customer Type Selection
   if (bookingState.step === 'customer-type') {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -1208,7 +1227,7 @@ export default function BookingWidget() {
             <div className="space-y-4 mt-8">
               <button
                 onClick={() => setBookingState(prev => ({ ...prev, customerType: 'new', isMember: false, step: 'product' }))}
-                className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
+                className="w-full p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:border-gray-300 transition-colors text-left group"
                 data-testid="button-new-customer"
               >
                 <div className="flex items-center justify-between">
@@ -1222,7 +1241,7 @@ export default function BookingWidget() {
 
               <button
                 onClick={() => setBookingState(prev => ({ ...prev, customerType: 'returning', step: 'login' }))}
-                className="w-full p-6 border-2 rounded-lg hover:border-gray-400 transition-colors text-left group"
+                className="w-full p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:border-gray-300 transition-colors text-left group"
                 data-testid="button-returning-customer"
               >
                 <div className="flex items-center justify-between">
@@ -1236,7 +1255,7 @@ export default function BookingWidget() {
             </div>
           </div>
 
-            <div className="relative rounded-lg overflow-hidden bg-gray-100 h-[600px]">
+            <div className="relative rounded-2xl overflow-hidden bg-gray-100 h-[600px] shadow-sm">
               <img 
                 src="https://glowbar.com/cdn/shop/files/glowbar_estheticians_certified_985ba0ae-536e-48ac-832d-d86b6a70c1c6.jpg?v=1675461347&width=1500" 
                 alt="Glowbar certified estheticians"
@@ -1263,7 +1282,7 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -1275,20 +1294,28 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Selected Studio Display */}
+        {/* Hero Header with Studio Info */}
         {bookingState.selectedLocation && (
-          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
-            <button
-              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
-              data-testid="button-change-studio"
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="font-medium">{bookingState.selectedLocation.name}</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
-              <span className="text-xs text-blue-600 ml-2">Change</span>
-            </button>
+          <div className="bg-white border-b border-gray-200 shadow-sm">
+            <div className="max-w-5xl mx-auto px-6 py-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
+                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
+                  <button
+                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+                    className="text-sm font-medium mt-1 hover:underline"
+                    style={{ color: '#FF502D' }}
+                    data-testid="button-change-studio"
+                  >
+                    Change Location
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1304,43 +1331,46 @@ export default function BookingWidget() {
               Back
             </Button>
 
-            <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Log in</h1>
-          
-            <div className="space-y-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+              <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Log in</h1>
+            
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="email" className="text-base mb-2 block">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  className="h-12"
+                  placeholder="your@email.com"
+                  data-testid="input-email"
+                />
+              </div>
+
               <div>
-                <Label htmlFor="email" className="text-base mb-2 block">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                className="h-12"
-                placeholder="your@email.com"
-                data-testid="input-email"
-              />
-            </div>
+                <Label htmlFor="password" className="text-base mb-2 block">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="h-12"
+                  placeholder="••••••••"
+                  data-testid="input-password"
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="password" className="text-base mb-2 block">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                className="h-12"
-                placeholder="••••••••"
-                data-testid="input-password"
-              />
+              <Button
+                onClick={handleLogin}
+                className="w-full h-12 mt-6 text-white hover:opacity-90"
+                style={{ backgroundColor: '#FF502D' }}
+                disabled={!loginEmail || !loginPassword}
+                data-testid="button-login"
+              >
+                Continue
+              </Button>
             </div>
-
-            <Button
-              onClick={handleLogin}
-              className="w-full h-12 mt-6"
-              disabled={!loginEmail || !loginPassword}
-              data-testid="button-login"
-            >
-              Continue
-            </Button>
           </div>
         </div>
       </div>
@@ -1397,7 +1427,7 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -1409,25 +1439,33 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Selected Studio Display */}
+        {/* Hero Header with Studio Info */}
         {bookingState.selectedLocation && (
-          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
-            <button
-              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
-              data-testid="button-change-studio"
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="font-medium">{bookingState.selectedLocation.name}</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
-              <span className="text-xs text-blue-600 ml-2">Change</span>
-            </button>
+          <div className="bg-white border-b border-gray-200 shadow-sm">
+            <div className="max-w-5xl mx-auto px-6 py-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
+                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
+                  <button
+                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+                    className="text-sm font-medium mt-1 hover:underline"
+                    style={{ color: '#FF502D' }}
+                    data-testid="button-change-studio"
+                  >
+                    Change Location
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Main Content */}
-        <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-180px)]">
+        <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-260px)]">
           {/* Left side - Services - SCROLLABLE */}
           <div className="w-1/2 overflow-y-auto space-y-2 pr-4">
             <Button
@@ -1460,7 +1498,7 @@ export default function BookingWidget() {
             {/* Membership Promo Banner - only for leads and non-members */}
             {(bookingState.userFlow === 'lead' || bookingState.userFlow === 'non-member') && (
               <div 
-                className="relative rounded-lg overflow-hidden mb-6"
+                className="relative rounded-2xl overflow-hidden mb-6 shadow-sm"
                 data-testid="banner-membership-promo"
               >
                 <img 
@@ -1480,7 +1518,7 @@ export default function BookingWidget() {
                           membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                       }}
-                      className="text-white px-5 py-1.5 rounded-full text-sm"
+                      className="text-white px-5 py-1.5 text-sm"
                       style={{ backgroundColor: '#FF502D' }}
                       data-testid="button-become-member"
                     >
@@ -1491,7 +1529,7 @@ export default function BookingWidget() {
               </div>
             )}
               
-              <Accordion type="single" collapsible className="space-y-2">
+              <Accordion type="single" collapsible className="space-y-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
               {/* Book a Treatment */}
               <AccordionItem value="treatment" className="border-b border-gray-200">
                 <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-treatment">
@@ -1920,7 +1958,7 @@ export default function BookingWidget() {
     const isValid = giftRecipientName && giftRecipientEmail;
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -1931,6 +1969,21 @@ export default function BookingWidget() {
         </div>
 
         <ProgressBar />
+
+        {/* Hero Header */}
+        <div className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-5xl mx-auto px-6 py-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                <Tag className="w-8 h-8" style={{ color: '#FF502D' }} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Gift Card</h2>
+                <p className="text-gray-600">{bookingState.selectedProduct?.name}</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="flex-1">
           <div className="max-w-2xl mx-auto px-6 py-8">
@@ -1951,8 +2004,7 @@ export default function BookingWidget() {
               </p>
             </div>
 
-            <Card>
-              <CardContent className="pt-6 space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
                 <div>
                   <Label htmlFor="recipientName">Recipient Name *</Label>
                   <Input
@@ -2028,8 +2080,7 @@ export default function BookingWidget() {
                     Continue to {bookingState.customerType === 'new' ? 'Your Info' : 'Checkout'}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+            </div>
           </div>
         </div>
       </div>
@@ -2559,7 +2610,7 @@ export default function BookingWidget() {
     const isValid = firstName && lastName && email && authPhone;
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -2571,20 +2622,28 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Selected Studio Display */}
+        {/* Hero Header with Studio Info */}
         {bookingState.selectedLocation && (
-          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
-            <button
-              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
-              data-testid="button-change-studio"
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="font-medium">{bookingState.selectedLocation.name}</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
-              <span className="text-xs text-blue-600 ml-2">Change</span>
-            </button>
+          <div className="bg-white border-b border-gray-200 shadow-sm">
+            <div className="max-w-5xl mx-auto px-6 py-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
+                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
+                  <button
+                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+                    className="text-sm font-medium mt-1 hover:underline"
+                    style={{ color: '#FF502D' }}
+                    data-testid="button-change-studio"
+                  >
+                    Change Location
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -2606,8 +2665,7 @@ export default function BookingWidget() {
               <p className="text-gray-600">Please provide your contact information</p>
             </div>
 
-            <Card>
-              <CardContent className="p-6 space-y-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
                 <div>
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
@@ -2686,14 +2744,14 @@ export default function BookingWidget() {
                       step: 'checkout'
                     }));
                   }}
-                  className="w-full bg-black text-white hover:bg-gray-800 mt-6"
+                  className="w-full text-white hover:opacity-90 mt-6"
+                  style={{ backgroundColor: '#FF502D' }}
                   disabled={!isValid}
                   data-testid="button-continue"
                 >
                   Continue to Checkout
                 </Button>
-              </CardContent>
-            </Card>
+            </div>
           </div>
 
           {/* Right Side: Image */}
@@ -2731,7 +2789,7 @@ export default function BookingWidget() {
     const total = bookingState.isMember ? 0 : productPrice + tax;
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -2743,20 +2801,28 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Selected Studio Display */}
+        {/* Hero Header with Studio Info */}
         {bookingState.selectedLocation && (
-          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
-            <button
-              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
-              data-testid="button-change-studio"
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="font-medium">{bookingState.selectedLocation.name}</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
-              <span className="text-xs text-blue-600 ml-2">Change</span>
-            </button>
+          <div className="bg-white border-b border-gray-200 shadow-sm">
+            <div className="max-w-5xl mx-auto px-6 py-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
+                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
+                  <button
+                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+                    className="text-sm font-medium mt-1 hover:underline"
+                    style={{ color: '#FF502D' }}
+                    data-testid="button-change-studio"
+                  >
+                    Change Location
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -2782,11 +2848,9 @@ export default function BookingWidget() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Left Column - Order/Appointment Summary */}
             <div>
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>{isPurchaseOnly ? 'Order Summary' : 'Appointment Summary'}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                <h3 className="text-xl font-bold mb-4">{isPurchaseOnly ? 'Order Summary' : 'Appointment Summary'}</h3>
+                <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-600">
                       {isPurchaseOnly ? 'Product' : 'Service'}
@@ -2820,68 +2884,52 @@ export default function BookingWidget() {
                       </div>
                     </>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Cancellation Policy - Only for bookings */}
               {!isPurchaseOnly && (
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Cancellation Policy</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-700">
-                      Free cancellation or modification before {bookingState.selectedDate && format(addDays(bookingState.selectedDate, -1), 'EEEE MM/dd/yyyy')} at {bookingState.selectedTime?.time}. After that, changes to the appointment will result in a charge of $30 plus any applicable taxes and fees. <a href="#" className="underline" style={{ color: '#FF502D' }}>Learn More</a>.
-                    </p>
-                  </CardContent>
-                </Card>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                  <h3 className="text-lg font-bold mb-3">Cancellation Policy</h3>
+                  <p className="text-sm text-gray-700">
+                    Free cancellation or modification before {bookingState.selectedDate && format(addDays(bookingState.selectedDate, -1), 'EEEE MM/dd/yyyy')} at {bookingState.selectedTime?.time}. After that, changes to the appointment will result in a charge of $30 plus any applicable taxes and fees. <a href="#" className="underline" style={{ color: '#FF502D' }}>Learn More</a>.
+                  </p>
+                </div>
               )}
 
               {/* Communication */}
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="text-lg">Communication</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-700">
-                    By {isPurchaseOnly ? 'completing this purchase' : 'booking this appointment'}, you agree to receive texts and emails with {isPurchaseOnly ? 'order confirmations,' : 'appointment reminders,'} account updates, news, and special offers. Texts will be sent via auto-SMS. Consent is optional. You can unsubscribe from an email anytime by clicking unsubscribe, and opt out of marketing texts anytime by replying NO PROMOS or all text communication by replying STOP. Text HELP for more info. Message frequency may vary. SMS and data rates may apply.
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                <h3 className="text-lg font-bold mb-3">Communication</h3>
+                <p className="text-sm text-gray-700">
+                  By {isPurchaseOnly ? 'completing this purchase' : 'booking this appointment'}, you agree to receive texts and emails with {isPurchaseOnly ? 'order confirmations,' : 'appointment reminders,'} account updates, news, and special offers. Texts will be sent via auto-SMS. Consent is optional. You can unsubscribe from an email anytime by clicking unsubscribe, and opt out of marketing texts anytime by replying NO PROMOS or all text communication by replying STOP. Text HELP for more info. Message frequency may vary. SMS and data rates may apply.
+                </p>
+              </div>
 
               {/* Terms of Service */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Terms of Service</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-700">
-                    By {isPurchaseOnly ? 'completing this purchase' : 'booking this appointment'} you are agreeing to Glowbar's <a href="#" className="underline" style={{ color: '#FF502D' }}>Terms of Service</a>
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 className="text-lg font-bold mb-3">Terms of Service</h3>
+                <p className="text-sm text-gray-700">
+                  By {isPurchaseOnly ? 'completing this purchase' : 'booking this appointment'} you are agreeing to Glowbar's <a href="#" className="underline" style={{ color: '#FF502D' }}>Terms of Service</a>
+                </p>
+              </div>
             </div>
 
             {/* Right Column - Payment */}
             <div>
               {/* Payment Info Notice */}
               {!isPurchaseOnly && (
-                <Card className="mb-6 bg-blue-50 border-blue-200">
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold mb-2">Payment Info</h3>
-                    <p className="text-sm text-gray-700 font-medium mb-1">Your card won't be charged today</p>
-                    <p className="text-sm text-gray-600">
-                      Your card will be used to hold your appointment time and will not be charged until after your appointment has been completed. If you are an active member, your voucher will be used to redeem your monthly facial on the day of your appointment.
-                    </p>
-                  </CardContent>
-                </Card>
+                <div className="bg-blue-50 rounded-2xl shadow-sm border border-blue-200 p-6 mb-6">
+                  <h3 className="font-semibold mb-2">Payment Info</h3>
+                  <p className="text-sm text-gray-700 font-medium mb-1">Your card won't be charged today</p>
+                  <p className="text-sm text-gray-600">
+                    Your card will be used to hold your appointment time and will not be charged until after your appointment has been completed. If you are an active member, your voucher will be used to redeem your monthly facial on the day of your appointment.
+                  </p>
+                </div>
               )}
 
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Payment Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                <h3 className="text-xl font-bold mb-4">Payment Details</h3>
+                <div className="space-y-4">
                   {/* Card Details */}
                   <div>
                     <Label htmlFor="cardName">Cardholder Name</Label>
@@ -3003,8 +3051,8 @@ export default function BookingWidget() {
                   >
                     {isPurchaseOnly ? 'COMPLETE PURCHASE' : 'BOOK NOW'}
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -3022,7 +3070,7 @@ export default function BookingWidget() {
     const isPurchaseOnly = isMembership || isPackage || isGiftCard;
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -3034,20 +3082,20 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Selected Studio Display - Only for bookings */}
+        {/* Hero Header with Studio Info - Only for bookings */}
         {!isPurchaseOnly && bookingState.selectedLocation && (
-          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
-            <button
-              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
-              data-testid="button-change-studio"
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="font-medium">{bookingState.selectedLocation.name}</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
-              <span className="text-xs text-blue-600 ml-2">Change</span>
-            </button>
+          <div className="bg-white border-b border-gray-200 shadow-sm">
+            <div className="max-w-5xl mx-auto px-6 py-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
+                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
+                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -3060,90 +3108,88 @@ export default function BookingWidget() {
               <h1 className="text-4xl font-bold mb-2" data-testid="text-title">
                 {isPurchaseOnly ? 'Purchase Confirmed!' : 'Booking Confirmed!'}
               </h1>
-            <p className="text-gray-600" data-testid="text-subtitle">
-              {isPurchaseOnly 
-                ? 'Your order has been successfully processed' 
-                : 'Your appointment has been successfully scheduled'}
-            </p>
-          </div>
+              <p className="text-gray-600" data-testid="text-subtitle">
+                {isPurchaseOnly 
+                  ? 'Your order has been successfully processed' 
+                  : 'Your appointment has been successfully scheduled'}
+              </p>
+            </div>
 
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>{isPurchaseOnly ? 'Order Details' : 'Appointment Details'}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600">{isPurchaseOnly ? 'Product' : 'Service'}</p>
-                <p className="font-semibold">{bookingState.selectedProduct?.name}</p>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+              <h3 className="text-xl font-bold mb-4">{isPurchaseOnly ? 'Order Details' : 'Appointment Details'}</h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-600">{isPurchaseOnly ? 'Product' : 'Service'}</p>
+                  <p className="font-semibold">{bookingState.selectedProduct?.name}</p>
+                </div>
+                {!isPurchaseOnly && bookingState.selectedLocation && (
+                  <div>
+                    <p className="text-sm text-gray-600">Location</p>
+                    <p className="font-semibold">{bookingState.selectedLocation.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}
+                    </p>
+                  </div>
+                )}
+                {!isPurchaseOnly && bookingState.selectedDate && (
+                  <div>
+                    <p className="text-sm text-gray-600">Date & Time</p>
+                    <p className="font-semibold">{format(bookingState.selectedDate, 'EEE, MMM d, yyyy')}</p>
+                    <p className="text-sm text-gray-500">{bookingState.selectedTime?.time || 'Time TBD'}</p>
+                  </div>
+                )}
+                {bookingState.userName && (
+                  <div>
+                    <p className="text-sm text-gray-600">{isPurchaseOnly ? 'Customer' : 'Guest'}</p>
+                    <p className="font-semibold">{bookingState.userName}</p>
+                    <p className="text-sm text-gray-500">{bookingState.userEmail}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-gray-600">Order Total</p>
+                  <p className="font-semibold">${bookingState.selectedProduct?.price.toFixed(2)}</p>
+                </div>
               </div>
-              {!isPurchaseOnly && bookingState.selectedLocation && (
-                <div>
-                  <p className="text-sm text-gray-600">Location</p>
-                  <p className="font-semibold">{bookingState.selectedLocation.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}
-                  </p>
-                </div>
-              )}
-              {!isPurchaseOnly && bookingState.selectedDate && (
-                <div>
-                  <p className="text-sm text-gray-600">Date & Time</p>
-                  <p className="font-semibold">{format(bookingState.selectedDate, 'EEE, MMM d, yyyy')}</p>
-                  <p className="text-sm text-gray-500">{bookingState.selectedTime?.time || 'Time TBD'}</p>
-                </div>
-              )}
-              {bookingState.userName && (
-                <div>
-                  <p className="text-sm text-gray-600">{isPurchaseOnly ? 'Customer' : 'Guest'}</p>
-                  <p className="font-semibold">{bookingState.userName}</p>
-                  <p className="text-sm text-gray-500">{bookingState.userEmail}</p>
-                </div>
-              )}
-              <div>
-                <p className="text-sm text-gray-600">Order Total</p>
-                <p className="font-semibold">${bookingState.selectedProduct?.price.toFixed(2)}</p>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          <div className="space-y-3">
-            {(isMembership || isPackage) && (
+            <div className="space-y-3">
+              {(isMembership || isPackage) && (
+                <Button
+                  onClick={() => {
+                    // Reset to product selection but keep user info
+                    setBookingState(prev => ({ 
+                      ...prev,
+                      step: 'product',
+                      selectedProduct: undefined,
+                      selectedDate: undefined,
+                      selectedTime: undefined,
+                      selectedEsthetician: undefined
+                    }));
+                  }}
+                  className="w-full text-white hover:opacity-90 text-lg py-6"
+                  style={{ backgroundColor: '#FF502D' }}
+                  data-testid="button-book-appointment"
+                >
+                  Book Your Appointment Now
+                </Button>
+              )}
               <Button
                 onClick={() => {
-                  // Reset to product selection but keep user info
-                  setBookingState(prev => ({ 
-                    ...prev,
-                    step: 'product',
-                    selectedProduct: undefined,
-                    selectedDate: undefined,
-                    selectedTime: undefined,
-                    selectedEsthetician: undefined
-                  }));
+                  setBookingState({ step: 'location' });
+                  setAcceptTerms(false);
                 }}
-                className="w-full text-white hover:opacity-90 text-lg py-6"
-                style={{ backgroundColor: '#FF502D' }}
-                data-testid="button-book-appointment"
+                className="w-full text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                data-testid="button-new-booking"
               >
-                Book Your Appointment Now
+                {isPurchaseOnly ? 'Make Another Purchase' : 'Book Another Appointment'}
               </Button>
-            )}
-            <Button
-              onClick={() => {
-                setBookingState({ step: 'location' });
-                setAcceptTerms(false);
-              }}
-              className="w-full text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
-              data-testid="button-new-booking"
-            >
-              {isPurchaseOnly ? 'Make Another Purchase' : 'Book Another Appointment'}
-            </Button>
-            <p className="text-sm text-gray-500 text-center">
-              A confirmation email has been sent to {bookingState.userEmail || 'your email'}
-            </p>
+              <p className="text-sm text-gray-500 text-center">
+                A confirmation email has been sent to {bookingState.userEmail || 'your email'}
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     );
   }
 
