@@ -608,23 +608,8 @@ export default function BookingWidget() {
 
         <ProgressBar />
 
-        {/* Hero Header */}
-        <div className="bg-white border-b border-gray-200 shadow-sm">
-          <div className="max-w-5xl mx-auto px-6 py-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Find Your Studio</h1>
-                <p className="text-gray-600">Select a Glowbar location near you</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Main Content */}
-        <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-260px)]">
+        <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-180px)]">
           {/* Left side - Location finder and grouped locations - SCROLLABLE */}
           <div className="w-1/2 overflow-y-auto space-y-4 pr-4">
             {/* Location Finder Search */}
