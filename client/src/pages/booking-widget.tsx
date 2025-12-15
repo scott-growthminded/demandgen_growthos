@@ -1005,28 +1005,20 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Hero Header with Studio Info */}
+        {/* Selected Studio Display */}
         {bookingState.selectedLocation && (
-          <div className="bg-white border-b border-gray-200 shadow-sm">
-            <div className="max-w-5xl mx-auto px-6 py-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
-                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
-                  <button
-                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-                    className="text-sm font-medium mt-1 hover:underline"
-                    style={{ color: '#FF502D' }}
-                    data-testid="button-change-studio"
-                  >
-                    Change Location
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs ml-2" style={{ color: '#FF502D' }}>Change</span>
+            </button>
           </div>
         )}
 
@@ -1120,28 +1112,20 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Hero Header with Studio Info */}
+        {/* Selected Studio Display */}
         {bookingState.selectedLocation && (
-          <div className="bg-white border-b border-gray-200 shadow-sm">
-            <div className="max-w-5xl mx-auto px-6 py-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
-                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
-                  <button
-                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-                    className="text-sm font-medium mt-1 hover:underline"
-                    style={{ color: '#FF502D' }}
-                    data-testid="button-change-studio"
-                  >
-                    Change Location
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs ml-2" style={{ color: '#FF502D' }}>Change</span>
+            </button>
           </div>
         )}
 
@@ -1294,28 +1278,20 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Hero Header with Studio Info */}
+        {/* Selected Studio Display */}
         {bookingState.selectedLocation && (
-          <div className="bg-white border-b border-gray-200 shadow-sm">
-            <div className="max-w-5xl mx-auto px-6 py-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
-                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
-                  <button
-                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-                    className="text-sm font-medium mt-1 hover:underline"
-                    style={{ color: '#FF502D' }}
-                    data-testid="button-change-studio"
-                  >
-                    Change Location
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs ml-2" style={{ color: '#FF502D' }}>Change</span>
+            </button>
           </div>
         )}
 
@@ -1439,33 +1415,25 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Hero Header with Studio Info */}
+        {/* Selected Studio Display */}
         {bookingState.selectedLocation && (
-          <div className="bg-white border-b border-gray-200 shadow-sm">
-            <div className="max-w-5xl mx-auto px-6 py-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
-                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
-                  <button
-                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-                    className="text-sm font-medium mt-1 hover:underline"
-                    style={{ color: '#FF502D' }}
-                    data-testid="button-change-studio"
-                  >
-                    Change Location
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs ml-2" style={{ color: '#FF502D' }}>Change</span>
+            </button>
           </div>
         )}
 
         {/* Main Content */}
-        <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-260px)]">
+        <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-180px)]">
           {/* Left side - Services - SCROLLABLE */}
           <div className="w-1/2 overflow-y-auto space-y-2 pr-4">
             <Button
@@ -1970,20 +1938,22 @@ export default function BookingWidget() {
 
         <ProgressBar />
 
-        {/* Hero Header */}
-        <div className="bg-white border-b border-gray-200 shadow-sm">
-          <div className="max-w-5xl mx-auto px-6 py-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                <Tag className="w-8 h-8" style={{ color: '#FF502D' }} />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Gift Card</h2>
-                <p className="text-gray-600">{bookingState.selectedProduct?.name}</p>
-              </div>
-            </div>
+        {/* Selected Studio Display */}
+        {bookingState.selectedLocation && (
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs ml-2" style={{ color: '#FF502D' }}>Change</span>
+            </button>
           </div>
-        </div>
+        )}
 
         <div className="flex-1">
           <div className="max-w-2xl mx-auto px-6 py-8">
@@ -2622,28 +2592,20 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Hero Header with Studio Info */}
+        {/* Selected Studio Display */}
         {bookingState.selectedLocation && (
-          <div className="bg-white border-b border-gray-200 shadow-sm">
-            <div className="max-w-5xl mx-auto px-6 py-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
-                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
-                  <button
-                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-                    className="text-sm font-medium mt-1 hover:underline"
-                    style={{ color: '#FF502D' }}
-                    data-testid="button-change-studio"
-                  >
-                    Change Location
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs ml-2" style={{ color: '#FF502D' }}>Change</span>
+            </button>
           </div>
         )}
 
@@ -2801,28 +2763,20 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Hero Header with Studio Info */}
+        {/* Selected Studio Display */}
         {bookingState.selectedLocation && (
-          <div className="bg-white border-b border-gray-200 shadow-sm">
-            <div className="max-w-5xl mx-auto px-6 py-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
-                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
-                  <button
-                    onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-                    className="text-sm font-medium mt-1 hover:underline"
-                    style={{ color: '#FF502D' }}
-                    data-testid="button-change-studio"
-                  >
-                    Change Location
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <button
+              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
+              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
+              data-testid="button-change-studio"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
+              <span className="text-xs ml-2" style={{ color: '#FF502D' }}>Change</span>
+            </button>
           </div>
         )}
 
@@ -3082,19 +3036,14 @@ export default function BookingWidget() {
 
         <ProgressBar />
         
-        {/* Hero Header with Studio Info - Only for bookings */}
+        {/* Selected Studio Display - Only for bookings */}
         {!isPurchaseOnly && bookingState.selectedLocation && (
-          <div className="bg-white border-b border-gray-200 shadow-sm">
-            <div className="max-w-5xl mx-auto px-6 py-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                  <MapPin className="w-8 h-8" style={{ color: '#FF502D' }} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">{bookingState.selectedLocation.name}</h2>
-                  <p className="text-gray-600">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</p>
-                </div>
-              </div>
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+            <div className="flex items-center gap-2 text-gray-700">
+              <MapPin className="w-4 h-4" />
+              <span className="font-medium">{bookingState.selectedLocation.name}</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
             </div>
           </div>
         )}
