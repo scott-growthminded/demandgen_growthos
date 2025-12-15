@@ -1600,9 +1600,6 @@ export default function BookingWidget() {
                             <h3 className="text-base font-semibold mb-2">
                               (Non-Member) First Time Treatment <span className="text-gray-600">30min</span>
                             </h3>
-                            <p className="text-xs text-gray-700 mb-2">
-                              If you're a new client and haven't purchased a membership, book this treatment. Your card will *not* be charged now; it will be charged after your first appointment.
-                            </p>
                             <p className="text-xl font-bold mb-1">$80.00</p>
                             <button 
                               onClick={() => {
