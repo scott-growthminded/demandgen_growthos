@@ -1488,12 +1488,10 @@ export default function BookingWidget() {
                 <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-treatment">
                   <span className="text-lg font-medium">Book a Treatment</span>
                 </AccordionTrigger>
-                <AccordionContent className="pb-4 ml-4">
-                  <div className="space-y-4">
+                <AccordionContent className="pt-4 pb-4">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                     {/* Treatment - changes based on user flow */}
-                    <Card className="overflow-hidden">
-                      <CardContent className="p-4">
-                        {bookingState.userFlow === 'member' ? (
+                    {bookingState.userFlow === 'member' ? (
                           <>
                             <h3 className="text-base font-semibold mb-2">
                               (Member) First Time & Returning Treatment <span className="text-gray-600">30min</span>
