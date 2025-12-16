@@ -1712,7 +1712,7 @@ export default function BookingWidget() {
                           className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-package-3"
                         >
-                          Select
+                          Buy Now
                         </Button>
                       </CardContent>
                     </Card>
@@ -1733,7 +1733,7 @@ export default function BookingWidget() {
                           className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-package-6"
                         >
-                          Select
+                          Buy Now
                         </Button>
                       </CardContent>
                     </Card>
@@ -1754,7 +1754,7 @@ export default function BookingWidget() {
                           className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-package-9"
                         >
-                          Select
+                          Buy Now
                         </Button>
                       </CardContent>
                     </Card>
@@ -1775,7 +1775,7 @@ export default function BookingWidget() {
                           className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-package-12"
                         >
-                          Select
+                          Buy Now
                         </Button>
                       </CardContent>
                     </Card>
