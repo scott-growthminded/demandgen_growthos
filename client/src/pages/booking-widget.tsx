@@ -1789,6 +1789,7 @@ export default function BookingWidget() {
                   <span className="text-lg font-medium">Purchase a Gift Card</span>
                 </AccordionTrigger>
                 <AccordionContent className="pb-4 ml-4">
+                  <p className="text-sm text-gray-500 mb-4">Gift cards can't be used to pay for membership.</p>
                   <div className="space-y-3">
                     {[
                       { amount: 80, description: '1 facial treatment' },
