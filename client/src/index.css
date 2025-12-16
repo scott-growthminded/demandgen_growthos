@@ -136,3 +136,8 @@
 .leaflet-popup-tip-container {
   display: none !important;
 }
+
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+  filter: none !important;
+}
