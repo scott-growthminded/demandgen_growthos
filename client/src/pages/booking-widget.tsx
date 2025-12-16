@@ -1695,7 +1695,7 @@ export default function BookingWidget() {
                           <span className="text-xl font-bold">$228.00</span>
                         </div>
                         <p className="text-xs text-gray-700 mb-2">
-                          Save 5% with a 3-pack of facials. All vouchers available immediately, expire in 6 months. Non-transferrable.
+                          Save 5% with a 3-pack of facials. All vouchers are available immediately and expire in 6 months. Non-transferrable.
                         </p>
                         <p className="text-sm font-medium text-gray-600 mb-3">$76 per facial</p>
                         <Button
@@ -1714,7 +1714,7 @@ export default function BookingWidget() {
                           <span className="text-xl font-bold">$432.00</span>
                         </div>
                         <p className="text-xs text-gray-700 mb-2">
-                          Save 10% with a 6-pack of facials. All vouchers available immediately, expire in 9 months. Non-transferrable.
+                          Save 10% with a 6-pack of facials. All vouchers are available immediately and expire in 9 months. Non-transferrable.
                         </p>
                         <p className="text-sm font-medium text-gray-600 mb-3">$72 per facial</p>
                         <Button
@@ -1733,7 +1733,7 @@ export default function BookingWidget() {
                           <span className="text-xl font-bold">$612.00</span>
                         </div>
                         <p className="text-xs text-gray-700 mb-2">
-                          Save 15% with a 9-pack of facials. All vouchers available immediately, expire in 12 months. Non-transferrable.
+                          Save 15% with a 9-pack of facials. All vouchers are available immediately and expire in 12 months. Non-transferrable.
                         </p>
                         <p className="text-sm font-medium text-gray-600 mb-3">$68 per facial</p>
                         <Button
@@ -1752,7 +1752,7 @@ export default function BookingWidget() {
                           <span className="text-xl font-bold">$780.00</span>
                         </div>
                         <p className="text-xs text-gray-700 mb-2">
-                          Save 20% with a 12-pack of facials. All vouchers available immediately, expire in 15 months. Non-transferrable.
+                          Save 20% with a 12-pack of facials. All vouchers are available immediately and expire in 15 months. Non-transferrable.
                         </p>
                         <p className="text-sm font-medium text-gray-600 mb-3">$65 per facial</p>
                         <Button
@@ -1777,11 +1777,11 @@ export default function BookingWidget() {
                     <p className="text-sm text-gray-500 mb-4">Gift cards can't be used to pay for membership.</p>
                     <div className="space-y-3">
                       {[
-                        { amount: 80, description: '1 facial treatment' },
+                        { amount: 80, description: '1 facial' },
                         { amount: 100, description: '1 facial + gratuity' },
-                        { amount: 160, description: '2 facial treatments' },
+                        { amount: 160, description: '2 facials' },
                         { amount: 200, description: '2 facials + gratuity' },
-                        { amount: 250, description: '3 facial treatments + gratuity' },
+                        { amount: 250, description: '3 facials + gratuity' },
                       ].map(({ amount, description }) => (
                         <button
                           key={amount}
