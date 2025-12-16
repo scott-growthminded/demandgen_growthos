@@ -1618,8 +1618,6 @@ export default function BookingWidget() {
                             </Button>
                           </>
                         )}
-                      </CardContent>
-                    </Card>
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -1631,12 +1629,11 @@ export default function BookingWidget() {
                     {bookingState.userFlow === 'member' ? 'Upgrade your membership' : 'Buy a Membership'}
                   </span>
                 </AccordionTrigger>
-                <AccordionContent className="pb-4 ml-4">
-                  <div className="space-y-4">
+                <AccordionContent className="pt-4 pb-4">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
                     {/* Black Friday Membership $60 - only for non-members */}
                     {bookingState.userFlow !== 'member' && (
-                      <Card className="overflow-hidden">
-                        <CardContent className="p-4">
+                      <div className="pb-5 border-b border-gray-100">
                           <h3 className="text-base font-semibold mb-2">2025 Black Friday Membership Deal ($60)</h3>
                           <p className="text-xs text-gray-700 mb-2">You'll receive the following:</p>
                           <ul className="text-xs text-gray-700 space-y-0.5 mb-2 list-disc list-inside">
@@ -1655,13 +1652,11 @@ export default function BookingWidget() {
                           >
                             Select
                           </Button>
-                        </CardContent>
-                      </Card>
+                      </div>
                     )}
 
                     {/* Black Friday Membership+ $110 - shown for all, as upgrade option for members */}
-                    <Card className="overflow-hidden">
-                      <CardContent className="p-4">
+                    <div>
                         <h3 className="text-base font-semibold mb-2">
                           {bookingState.userFlow === 'member' ? 'Glowbar Membership+' : 'Black Friday Glowbar Membership+ ($110)'}
                         </h3>
@@ -1681,8 +1676,7 @@ export default function BookingWidget() {
                         >
                           Select
                         </Button>
-                      </CardContent>
-                    </Card>
+                    </div>
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -1692,11 +1686,10 @@ export default function BookingWidget() {
                 <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-package">
                   <span className="text-lg font-medium">Purchase a Package</span>
                 </AccordionTrigger>
-                <AccordionContent className="pb-4 ml-4">
-                  <div className="space-y-4">
+                <AccordionContent className="pt-4 pb-4">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
                     {/* 3 Facials */}
-                    <Card className="overflow-hidden">
-                      <CardContent className="p-4">
+                    <div className="pb-5 border-b border-gray-100">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="text-base font-semibold">Three (3) Facials</h3>
                           <span className="text-xl font-bold">$228.00</span>
@@ -1712,12 +1705,10 @@ export default function BookingWidget() {
                         >
                           Buy Now
                         </Button>
-                      </CardContent>
-                    </Card>
+                    </div>
 
                     {/* 6 Facials */}
-                    <Card className="overflow-hidden">
-                      <CardContent className="p-4">
+                    <div className="pb-5 border-b border-gray-100">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="text-base font-semibold">Six (6) Facials</h3>
                           <span className="text-xl font-bold">$432.00</span>
@@ -1733,12 +1724,10 @@ export default function BookingWidget() {
                         >
                           Buy Now
                         </Button>
-                      </CardContent>
-                    </Card>
+                    </div>
 
                     {/* 9 Facials */}
-                    <Card className="overflow-hidden">
-                      <CardContent className="p-4">
+                    <div className="pb-5 border-b border-gray-100">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="text-base font-semibold">Nine (9) Facials</h3>
                           <span className="text-xl font-bold">$612.00</span>
@@ -1754,12 +1743,10 @@ export default function BookingWidget() {
                         >
                           Buy Now
                         </Button>
-                      </CardContent>
-                    </Card>
+                    </div>
 
                     {/* 12 Facials */}
-                    <Card className="overflow-hidden">
-                      <CardContent className="p-4">
+                    <div>
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="text-base font-semibold">Twelve (12) Facials</h3>
                           <span className="text-xl font-bold">$780.00</span>
@@ -1775,8 +1762,7 @@ export default function BookingWidget() {
                         >
                           Buy Now
                         </Button>
-                      </CardContent>
-                    </Card>
+                    </div>
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -1786,41 +1772,43 @@ export default function BookingWidget() {
                 <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-giftcard">
                   <span className="text-lg font-medium">Purchase a Gift Card</span>
                 </AccordionTrigger>
-                <AccordionContent className="pb-4 ml-4">
-                  <p className="text-sm text-gray-500 mb-4">Gift cards can't be used to pay for membership.</p>
-                  <div className="space-y-3">
-                    {[
-                      { amount: 80, description: '1 facial treatment' },
-                      { amount: 100, description: '1 facial + gratuity' },
-                      { amount: 160, description: '2 facial treatments' },
-                      { amount: 200, description: '2 facials + gratuity' },
-                      { amount: 250, description: '3 facial treatments + gratuity' },
-                    ].map(({ amount, description }) => (
+                <AccordionContent className="pt-4 pb-4">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                    <p className="text-sm text-gray-500 mb-4">Gift cards can't be used to pay for membership.</p>
+                    <div className="space-y-3">
+                      {[
+                        { amount: 80, description: '1 facial treatment' },
+                        { amount: 100, description: '1 facial + gratuity' },
+                        { amount: 160, description: '2 facial treatments' },
+                        { amount: 200, description: '2 facials + gratuity' },
+                        { amount: 250, description: '3 facial treatments + gratuity' },
+                      ].map(({ amount, description }) => (
+                        <button
+                          key={amount}
+                          onClick={() => handleProductSelect({ id: `giftcard-${amount}`, name: `Gift Card $${amount}`, price: amount, description: 'Gift card' })}
+                          className="w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between"
+                          data-testid={`button-giftcard-${amount}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
+                            <div className="text-left">
+                              <span className="text-lg font-medium">${amount}.00</span>
+                              <p className="text-sm text-gray-500">{description}</p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
                       <button
-                        key={amount}
-                        onClick={() => handleProductSelect({ id: `giftcard-${amount}`, name: `Gift Card $${amount}`, price: amount, description: 'Gift card' })}
-                        className="w-full p-4 border rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between"
-                        data-testid={`button-giftcard-${amount}`}
+                        onClick={() => handleProductSelect({ id: 'giftcard-custom', name: 'Custom Gift Card', price: 100, description: 'Custom amount gift card' })}
+                        className="w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between"
+                        data-testid="button-giftcard-custom"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
-                          <div className="text-left">
-                            <span className="text-lg font-medium">${amount}.00</span>
-                            <p className="text-sm text-gray-500">{description}</p>
-                          </div>
+                          <span className="text-lg">Custom</span>
                         </div>
                       </button>
-                    ))}
-                    <button
-                      onClick={() => handleProductSelect({ id: 'giftcard-custom', name: 'Custom Gift Card', price: 100, description: 'Custom amount gift card' })}
-                      className="w-full p-4 border rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between"
-                      data-testid="button-giftcard-custom"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
-                        <span className="text-lg">Custom</span>
-                      </div>
-                    </button>
+                    </div>
                   </div>
                 </AccordionContent>
               </AccordionItem>
