@@ -40,11 +40,11 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Create custom black marker icon (Peachy style)
+// Create custom red marker icon (Glowbar style)
 const blackIcon = new L.Icon({
   iconUrl: 'data:image/svg+xml;base64,' + btoa(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="24" height="36">
-      <path fill="#000000" stroke="#fff" stroke-width="1.5" d="M12 0C7.03 0 3 4.03 3 9c0 7.5 9 18 9 18s9-10.5 9-18c0-4.97-4.03-9-9-9z"/>
+      <path fill="#FF502D" stroke="#fff" stroke-width="1.5" d="M12 0C7.03 0 3 4.03 3 9c0 7.5 9 18 9 18s9-10.5 9-18c0-4.97-4.03-9-9-9z"/>
       <circle cx="12" cy="9" r="3" fill="#fff"/>
     </svg>
   `),
