@@ -1699,14 +1699,14 @@ export default function BookingWidget() {
                     {/* 3 Facials */}
                     <Card className="overflow-hidden">
                       <CardContent className="p-4">
-                        <h3 className="text-base font-semibold mb-2">1. Three (3) Facials</h3>
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-base font-semibold">Three (3) Facials</h3>
+                          <span className="text-xl font-bold">$228.00</span>
+                        </div>
                         <p className="text-xs text-gray-700 mb-2">
-                          Ready for consistent facials without the membership commitment? Purchase a 3-pack and save 5% off the price of the non-member facial: $76 per facial vs. $80 per facial.
+                          Save 5% with a 3-pack of facials. All vouchers available immediately, expire in 6 months. Non-transferrable.
                         </p>
-                        <p className="text-xs text-gray-700 mb-2">
-                          All 3 vouchers will be available immediately, expire after 6 months, and can be used whenever you need a pro touch. Packages are non-transferrable.
-                        </p>
-                        <p className="text-xl font-bold mb-3">$228.00</p>
+                        <p className="text-sm font-medium text-gray-600 mb-3">$76 per facial</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'package-3', name: 'Three (3) Facials Package', price: 228, description: '3 facial package' })}
                           className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
@@ -1720,14 +1720,14 @@ export default function BookingWidget() {
                     {/* 6 Facials */}
                     <Card className="overflow-hidden">
                       <CardContent className="p-4">
-                        <h3 className="text-base font-semibold mb-2">2. Six (6) Facials</h3>
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-base font-semibold">Six (6) Facials</h3>
+                          <span className="text-xl font-bold">$432.00</span>
+                        </div>
                         <p className="text-xs text-gray-700 mb-2">
-                          Ready for consistent facials without the membership commitment? Purchase a 6-pack and save 10% off the price of the non-member facial: $72 per facial vs. $80 per facial.
+                          Save 10% with a 6-pack of facials. All vouchers available immediately, expire in 9 months. Non-transferrable.
                         </p>
-                        <p className="text-xs text-gray-700 mb-2">
-                          All 6 vouchers will be available immediately, expire after 9 months, and can be used whenever you need a pro touch. Packages are non-transferrable.
-                        </p>
-                        <p className="text-xl font-bold mb-3">$432.00</p>
+                        <p className="text-sm font-medium text-gray-600 mb-3">$72 per facial</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'package-6', name: 'Six (6) Facials Package', price: 432, description: '6 facial package' })}
                           className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
@@ -1741,14 +1741,14 @@ export default function BookingWidget() {
                     {/* 9 Facials */}
                     <Card className="overflow-hidden">
                       <CardContent className="p-4">
-                        <h3 className="text-base font-semibold mb-2">3. Nine (9) Facials</h3>
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-base font-semibold">Nine (9) Facials</h3>
+                          <span className="text-xl font-bold">$612.00</span>
+                        </div>
                         <p className="text-xs text-gray-700 mb-2">
-                          Ready for consistent facials without the membership commitment? Purchase a 9-pack and save 15% off the price of the non-member facial: $68 per facial vs. $80 per facial.
+                          Save 15% with a 9-pack of facials. All vouchers available immediately, expire in 12 months. Non-transferrable.
                         </p>
-                        <p className="text-xs text-gray-700 mb-2">
-                          All 9 vouchers will be available immediately, expire after 12 months, and can be used whenever you need a pro touch. Packages are non-transferrable.
-                        </p>
-                        <p className="text-xl font-bold mb-3">$612.00</p>
+                        <p className="text-sm font-medium text-gray-600 mb-3">$68 per facial</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'package-9', name: 'Nine (9) Facials Package', price: 612, description: '9 facial package' })}
                           className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
@@ -1762,14 +1762,14 @@ export default function BookingWidget() {
                     {/* 12 Facials */}
                     <Card className="overflow-hidden">
                       <CardContent className="p-4">
-                        <h3 className="text-base font-semibold mb-2">4. Twelve (12) Facials</h3>
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-base font-semibold">Twelve (12) Facials</h3>
+                          <span className="text-xl font-bold">$780.00</span>
+                        </div>
                         <p className="text-xs text-gray-700 mb-2">
-                          Ready for consistent facials without the membership commitment? Purchase a 12-pack and save 20% off the price of the non-member facial: $65 per facial vs. $80 per facial.
+                          Save 20% with a 12-pack of facials. All vouchers available immediately, expire in 15 months. Non-transferrable.
                         </p>
-                        <p className="text-xs text-gray-700 mb-2">
-                          All 12 vouchers will be available immediately, expire after 15 months, and can be used whenever you need a pro touch. Packages are non-transferrable.
-                        </p>
-                        <p className="text-xl font-bold mb-3">$780.00</p>
+                        <p className="text-sm font-medium text-gray-600 mb-3">$65 per facial</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'package-12', name: 'Twelve (12) Facials Package', price: 780, description: '12 facial package' })}
                           className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
