@@ -893,17 +893,17 @@ export default function BookingWidget() {
                               style={{
                                 width: '100%',
                                 padding: '10px',
-                                backgroundColor: '#000',
+                                backgroundColor: '#FF502D',
                                 color: '#fff',
                                 border: 'none',
-                                borderRadius: '6px',
+                                borderRadius: '0',
                                 fontSize: '13px',
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 transition: 'background-color 0.2s'
                               }}
-                              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
-                              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#000'}
+                              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#E5452A'}
+                              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FF502D'}
                               data-testid={`button-select-studio-popup-${location.id}`}
                             >
                               SELECT STUDIO
