@@ -1790,7 +1790,13 @@ export default function BookingWidget() {
                 </AccordionTrigger>
                 <AccordionContent className="pb-4 ml-4">
                   <div className="space-y-3">
-                    {[80, 100, 150, 200, 250].map((amount) => (
+                    {[
+                      { amount: 80, description: '1 facial treatment' },
+                      { amount: 100, description: '1 facial + gratuity' },
+                      { amount: 160, description: '2 facial treatments' },
+                      { amount: 200, description: '2 facials + gratuity' },
+                      { amount: 250, description: '3 facial treatments + gratuity' },
+                    ].map(({ amount, description }) => (
                       <button
                         key={amount}
                         onClick={() => handleProductSelect({ id: `giftcard-${amount}`, name: `Gift Card $${amount}`, price: amount, description: 'Gift card' })}
@@ -1799,7 +1805,10 @@ export default function BookingWidget() {
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
-                          <span className="text-lg">${amount}.00</span>
+                          <div className="text-left">
+                            <span className="text-lg font-medium">${amount}.00</span>
+                            <p className="text-sm text-gray-500">{description}</p>
+                          </div>
                         </div>
                       </button>
                     ))}
