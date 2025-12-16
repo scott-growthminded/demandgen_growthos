@@ -1482,7 +1482,7 @@ export default function BookingWidget() {
               </div>
             )}
               
-              <Accordion type="single" collapsible className="space-y-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+              <Accordion type="single" collapsible className="space-y-2">
               {/* Book a Treatment */}
               <AccordionItem value="treatment" className="border-b border-gray-200">
                 <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-treatment">
