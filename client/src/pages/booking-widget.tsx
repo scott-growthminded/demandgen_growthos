@@ -2960,7 +2960,7 @@ export default function BookingWidget() {
               <p className="text-xs text-gray-500 text-center">
                 By continuing, you agree to our <a href="#" className="underline" style={{ color: '#FF502D' }}>Terms</a> and <a href="#" className="underline" style={{ color: '#FF502D' }}>Privacy Policy</a>. 
                 {!isPurchaseOnly && <> Cancel free 24hrs before. $30 late fee applies. </>}
-                By booking this appointment, you <a href="https://glowbar.com/pages/faqs" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#FF502D' }}>agree to receive</a> texts and emails from Glowbar. You can unsubscribe any time. Msg & data rates may apply.
+                By booking this appointment, you <a href="https://glowbar.com/pages/faqs" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#FF502D' }}>agree to receive</a> texts and emails from Glowbar. You can unsubscribe at any time. Msg & data rates may apply.
               </p>
             </div>
 
