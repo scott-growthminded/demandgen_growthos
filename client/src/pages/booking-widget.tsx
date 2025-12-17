@@ -2950,10 +2950,6 @@ export default function BookingWidget() {
                     <span>Secure Payment</span>
                   </div>
                   <div className="flex items-center gap-1 text-gray-500 text-xs">
-                    <Shield className="w-3 h-3" />
-                    <span>256-bit SSL</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-500 text-xs">
                     <CreditCard className="w-3 h-3" />
                     <span>All Cards Accepted</span>
                   </div>
