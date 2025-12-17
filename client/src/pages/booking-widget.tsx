@@ -2815,7 +2815,7 @@ export default function BookingWidget() {
                   </div>
                   <div>
                     <p className="font-semibold text-sm">Your card won't be charged today</p>
-                    <p className="text-xs text-gray-600">Card held for appointment. Charged after service.</p>
+                    <p className="text-xs text-gray-600">Card held for appointment, and won't be charged unless you cancel late or don't show up.</p>
                   </div>
                 </div>
               )}
