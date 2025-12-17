@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronDown, ChevronUp, ChevronRight, CheckCircle, User, MapPin, Tag, Search, Navigation, Clock, X } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp, ChevronRight, CheckCircle, User, MapPin, Tag, Search, Navigation, Clock, X, Lock, CreditCard, Star, Sparkles, Award, Shield } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -2731,6 +2731,13 @@ export default function BookingWidget() {
     const tax = productPrice * 0.09;
     const total = bookingState.isMember ? 0 : productPrice + tax;
 
+    // Testimonials data
+    const testimonials = [
+      { name: 'Sarah M.', text: 'Best facial I\'ve ever had! My skin has never looked better.', rating: 5 },
+      { name: 'Jessica L.', text: 'Love the convenience and my esthetician was amazing!', rating: 5 },
+      { name: 'Amanda K.', text: 'Worth every penny. I\'m hooked on Glowbar now!', rating: 5 },
+    ];
+
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
@@ -2762,231 +2769,264 @@ export default function BookingWidget() {
         )}
 
         <div className="flex-1">
-          <div className="max-w-4xl mx-auto px-6 py-8">
+          <div className="max-w-5xl mx-auto px-6 py-8">
             <Button
               variant="ghost"
               onClick={handleBack}
-              className="mb-6"
+              className="mb-4"
               data-testid="button-back"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
 
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Checkout</h1>
-            <p className="text-gray-600" data-testid="text-subtitle">
-              {isPurchaseOnly ? 'Review your order and complete purchase' : 'Review your appointment details'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Left Column - Order/Appointment Summary */}
-            <div>
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-                <h3 className="text-xl font-bold mb-4">{isPurchaseOnly ? 'Order Summary' : 'Appointment Summary'}</h3>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-600">
-                      {isPurchaseOnly ? 'Product' : 'Service'}
-                    </p>
-                    <p className="font-semibold">{bookingState.selectedProduct?.name}</p>
-                  </div>
-                  {!isPurchaseOnly && (
-                    <>
-                      <div>
-                        <p className="text-sm text-gray-600">Location</p>
-                        <p className="font-semibold">{bookingState.selectedLocation?.name}</p>
-                        <p className="text-sm text-gray-500">{bookingState.selectedLocation?.city}, {bookingState.selectedLocation?.state}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Date & Time</p>
-                        <p className="font-semibold">
-                          {bookingState.selectedDate && format(bookingState.selectedDate, 'EEEE, MMMM d, yyyy')}
-                          {' at '}
-                          {bookingState.selectedTime?.time}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Esthetician</p>
-                        <p className="font-semibold">
-                          {bookingState.selectedEsthetician === 'any' 
-                            ? 'No preference' 
-                            : staffData?.staff?.find(s => s.id === bookingState.selectedEsthetician)?.displayName 
-                              || staffData?.staff?.find(s => s.id === bookingState.selectedEsthetician)?.firstName 
-                              || 'No preference'}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Cancellation Policy - Only for bookings */}
-              {!isPurchaseOnly && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-                  <h3 className="text-lg font-bold mb-3">Cancellation Policy</h3>
-                  <p className="text-sm text-gray-700">
-                    Free cancellation or modification before {bookingState.selectedDate && format(addDays(bookingState.selectedDate, -1), 'EEEE MM/dd/yyyy')} at {bookingState.selectedTime?.time}. After that, changes to the appointment will result in a charge of $30 plus any applicable taxes and fees. <a href="#" className="underline" style={{ color: '#FF502D' }}>Learn More</a>.
-                  </p>
-                </div>
-              )}
-
-              {/* Communication */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-                <h3 className="text-lg font-bold mb-3">Communication</h3>
-                <p className="text-sm text-gray-700">
-                  By {isPurchaseOnly ? 'completing this purchase' : 'booking this appointment'}, you agree to receive texts and emails with {isPurchaseOnly ? 'order confirmations,' : 'appointment reminders,'} account updates, news, and special offers. Texts will be sent via auto-SMS. Consent is optional. You can unsubscribe from an email anytime by clicking unsubscribe, and opt out of marketing texts anytime by replying NO PROMOS or all text communication by replying STOP. Text HELP for more info. Message frequency may vary. SMS and data rates may apply.
-                </p>
-              </div>
-
-              {/* Terms of Service */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-bold mb-3">Terms of Service</h3>
-                <p className="text-sm text-gray-700">
-                  By {isPurchaseOnly ? 'completing this purchase' : 'booking this appointment'} you are agreeing to Glowbar's <a href="#" className="underline" style={{ color: '#FF502D' }}>Terms of Service</a>
-                </p>
-              </div>
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold mb-1" data-testid="text-title">Complete Your {isPurchaseOnly ? 'Purchase' : 'Booking'}</h1>
+              <p className="text-gray-600" data-testid="text-subtitle">You're almost there!</p>
             </div>
 
-            {/* Right Column - Payment */}
-            <div>
-              {/* Payment Info Notice */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Payment & Summary */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Order/Appointment Summary - Compact */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+                    <img src={luxurySpaImage} alt="Treatment" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg">{bookingState.selectedProduct?.name}</h3>
+                    {!isPurchaseOnly && (
+                      <div className="text-sm text-gray-600 mt-1">
+                        <p>{bookingState.selectedLocation?.name}</p>
+                        <p>{bookingState.selectedDate && format(bookingState.selectedDate, 'EEE, MMM d')} at {bookingState.selectedTime?.time}</p>
+                      </div>
+                    )}
+                    <p className="font-bold mt-2" style={{ color: '#FF502D' }}>${productPrice.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Info Notice - Compact */}
               {!isPurchaseOnly && (
-                <div className="bg-blue-50 rounded-2xl shadow-sm border border-blue-200 p-6 mb-6">
-                  <h3 className="font-semibold mb-2">Payment Info</h3>
-                  <p className="text-sm text-gray-700 font-medium mb-1">Your card won't be charged today</p>
-                  <p className="text-sm text-gray-600">
-                    Your card will be used to hold your appointment time and will not be charged until after your appointment has been completed. If you are an active member, your voucher will be used to redeem your monthly facial on the day of your appointment.
-                  </p>
+                <div className="rounded-xl p-4 flex items-center gap-3" style={{ backgroundColor: '#FFF0ED' }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FF502D' }}>
+                    <Shield className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">Your card won't be charged today</p>
+                    <p className="text-xs text-gray-600">Card held for appointment. Charged after service.</p>
+                  </div>
                 </div>
               )}
 
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-                <h3 className="text-xl font-bold mb-4">Payment Details</h3>
-                <div className="space-y-4">
-                  {/* Card Details */}
+              {/* Payment Form */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h3 className="font-bold mb-4">Payment Details</h3>
+                <div className="space-y-3">
                   <div>
-                    <Label htmlFor="cardName">Cardholder Name</Label>
+                    <Label htmlFor="cardName" className="text-sm">Cardholder Name</Label>
                     <Input
                       id="cardName"
                       value={cardName}
                       onChange={(e) => setCardName(e.target.value)}
                       placeholder="Name on card"
-                      className="mt-2"
+                      className="mt-1"
                       data-testid="input-card-name"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="cardNumber">Card Number</Label>
+                    <Label htmlFor="cardNumber" className="text-sm">Card Number</Label>
                     <Input
                       id="cardNumber"
                       value={cardNumber}
                       onChange={(e) => setCardNumber(e.target.value)}
                       placeholder="1234 5678 9012 3456"
-                      className="mt-2"
+                      className="mt-1"
                       data-testid="input-card-number"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label htmlFor="cardExpiry">Expiry Date</Label>
+                      <Label htmlFor="cardExpiry" className="text-sm">Expiry</Label>
                       <Input
                         id="cardExpiry"
                         value={cardExpiry}
                         onChange={(e) => setCardExpiry(e.target.value)}
                         placeholder="MM/YY"
-                        className="mt-2"
+                        className="mt-1"
                         data-testid="input-card-expiry"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="cardCvc">CVC</Label>
+                      <Label htmlFor="cardCvc" className="text-sm">CVC</Label>
                       <Input
                         id="cardCvc"
                         value={cardCvc}
                         onChange={(e) => setCardCvc(e.target.value)}
                         placeholder="123"
-                        className="mt-2"
+                        className="mt-1"
                         data-testid="input-card-cvc"
                       />
                     </div>
                   </div>
 
-                  {/* Promo Code */}
-                  <div className="pt-4 border-t">
-                    <Label htmlFor="promo">Promo Code (Optional)</Label>
-                    <div className="flex gap-2 mt-2">
-                      <Input
-                        id="promo"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        placeholder="Enter code"
-                        data-testid="input-promo"
-                      />
-                      <Button variant="outline" data-testid="button-apply-promo">
-                        APPLY
-                      </Button>
-                    </div>
+                  {/* Promo Code - Inline */}
+                  <div className="flex gap-2 pt-2">
+                    <Input
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      placeholder="Promo code"
+                      className="flex-1"
+                      data-testid="input-promo"
+                    />
+                    <Button variant="outline" className="px-4" data-testid="button-apply-promo">
+                      Apply
+                    </Button>
                   </div>
-
-                  {/* Price Breakdown */}
-                  <div className="border-t pt-4">
-                    {bookingState.isMember && !isPurchaseOnly ? (
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span>Treatment</span>
-                          <span>${productPrice.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-green-600">
-                          <span>Voucher Applied</span>
-                          <span>-${productPrice.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between font-bold text-lg border-t pt-2">
-                          <span>Total</span>
-                          <span data-testid="text-total">$0.00</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex justify-between mb-2">
-                          <span>{isPurchaseOnly ? 'Subtotal' : 'Treatment'}</span>
-                          <span>${productPrice.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between mb-2">
-                          <span>Tax</span>
-                          <span>${tax.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between font-bold text-lg border-t pt-2">
-                          <span>Total</span>
-                          <span data-testid="text-total">${total.toFixed(2)}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  <Button
-                    onClick={() => {
-                      if (!cardName || !cardNumber || !cardExpiry || !cardCvc) {
-                        toast({
-                          title: "Card Details Required",
-                          description: "Please enter your card details to continue",
-                          variant: "destructive"
-                        });
-                        return;
-                      }
-                      setBookingState(prev => ({ ...prev, step: 'confirmation' }));
-                    }}
-                    disabled={!cardName || !cardNumber || !cardExpiry || !cardCvc}
-                    className="w-full text-white hover:opacity-90 text-lg py-6"
-                    style={{ backgroundColor: '#FF502D' }}
-                    data-testid="button-book-now"
-                  >
-                    {isPurchaseOnly ? 'COMPLETE PURCHASE' : 'BOOK NOW'}
-                  </Button>
                 </div>
+
+                {/* Price Breakdown */}
+                <div className="border-t mt-4 pt-4">
+                  {bookingState.isMember && !isPurchaseOnly ? (
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Treatment</span>
+                        <span>${productPrice.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-green-600">
+                        <span>Voucher Applied</span>
+                        <span>-${productPrice.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-lg pt-2 border-t mt-2">
+                        <span>Total</span>
+                        <span data-testid="text-total">$0.00</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Subtotal</span>
+                        <span>${productPrice.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Tax</span>
+                        <span>${tax.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-lg pt-2 border-t mt-2">
+                        <span>Total</span>
+                        <span data-testid="text-total" style={{ color: '#FF502D' }}>${total.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  onClick={() => {
+                    if (!cardName || !cardNumber || !cardExpiry || !cardCvc) {
+                      toast({
+                        title: "Card Details Required",
+                        description: "Please enter your card details to continue",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    setBookingState(prev => ({ ...prev, step: 'confirmation' }));
+                  }}
+                  disabled={!cardName || !cardNumber || !cardExpiry || !cardCvc}
+                  className="w-full text-white hover:opacity-90 text-lg py-6 mt-4"
+                  style={{ backgroundColor: '#FF502D' }}
+                  data-testid="button-book-now"
+                >
+                  {isPurchaseOnly ? 'COMPLETE PURCHASE' : 'BOOK NOW'}
+                </Button>
+
+                {/* Trust Badges */}
+                <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t">
+                  <div className="flex items-center gap-1 text-gray-500 text-xs">
+                    <Lock className="w-3 h-3" />
+                    <span>Secure Payment</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-500 text-xs">
+                    <Shield className="w-3 h-3" />
+                    <span>256-bit SSL</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-500 text-xs">
+                    <CreditCard className="w-3 h-3" />
+                    <span>All Cards Accepted</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Condensed Terms */}
+              <p className="text-xs text-gray-500 text-center">
+                By continuing, you agree to our <a href="#" className="underline" style={{ color: '#FF502D' }}>Terms</a> and <a href="#" className="underline" style={{ color: '#FF502D' }}>Privacy Policy</a>. 
+                {!isPurchaseOnly && <> Cancel free 24hrs before. $30 late fee applies. </>}
+                Msg & data rates may apply.
+              </p>
+            </div>
+
+            {/* Right Column - Social Proof */}
+            <div className="space-y-4">
+              {/* Rating Summary */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+                <div className="flex justify-center mb-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="font-bold text-2xl">4.9</p>
+                <p className="text-sm text-gray-600">Based on 10,000+ reviews</p>
+              </div>
+
+              {/* Testimonials */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h4 className="font-bold mb-3">What Our Guests Say</h4>
+                <div className="space-y-4">
+                  {testimonials.map((testimonial, index) => (
+                    <div key={index} className="pb-3 border-b border-gray-100 last:border-0 last:pb-0">
+                      <div className="flex items-center gap-1 mb-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
+                      <p className="text-sm text-gray-700 italic">"{testimonial.text}"</p>
+                      <p className="text-xs text-gray-500 mt-1">— {testimonial.name}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Why Glowbar */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h4 className="font-bold mb-3">Why Glowbar?</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
+                      <Clock className="w-4 h-4" style={{ color: '#FF502D' }} />
+                    </div>
+                    <span className="text-sm">30-min express facials</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
+                      <Sparkles className="w-4 h-4" style={{ color: '#FF502D' }} />
+                    </div>
+                    <span className="text-sm">Medical-grade products</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
+                      <Award className="w-4 h-4" style={{ color: '#FF502D' }} />
+                    </div>
+                    <span className="text-sm">Expert estheticians</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Featured Image */}
+              <div className="rounded-2xl overflow-hidden shadow-sm">
+                <img src={luxurySpaImage} alt="Glowbar Experience" className="w-full h-40 object-cover" />
               </div>
             </div>
           </div>
