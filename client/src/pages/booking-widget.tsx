@@ -3003,19 +3003,19 @@ export default function BookingWidget() {
                     <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
                       <Clock className="w-4 h-4" style={{ color: '#FF502D' }} />
                     </div>
-                    <span className="text-sm">30-min express facials</span>
+                    <span className="text-sm">30-min expert facials</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
                       <Sparkles className="w-4 h-4" style={{ color: '#FF502D' }} />
                     </div>
-                    <span className="text-sm">Medical-grade products</span>
+                    <span className="text-sm">Customized for your skin</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
                       <Award className="w-4 h-4" style={{ color: '#FF502D' }} />
                     </div>
-                    <span className="text-sm">Expert estheticians</span>
+                    <span className="text-sm">No add-on fees, ever</span>
                   </div>
                 </div>
               </div>
