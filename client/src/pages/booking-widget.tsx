@@ -813,7 +813,7 @@ export default function BookingWidget() {
                     allLocations.reduce((sum: number, loc: any) => sum + ((loc.coordinates?.lng || loc.coordinates?.longitude) || 0), 0) / allLocations.length
                   ]}
                   zoom={7}
-                  style={{ height: '100%', width: '100%', filter: 'grayscale(100%)' }}
+                  style={{ height: '100%', width: '100%' }}
                   scrollWheelZoom={true}
                 >
                 <TileLayer

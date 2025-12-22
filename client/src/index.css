@@ -137,6 +137,11 @@
   display: none !important;
 }
 
+.leaflet-tile-pane {
+  filter: grayscale(100%) !important;
+}
+
+.leaflet-marker-pane,
 .leaflet-marker-icon,
 .leaflet-marker-shadow {
   filter: none !important;
