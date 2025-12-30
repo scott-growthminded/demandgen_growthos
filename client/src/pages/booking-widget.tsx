@@ -677,9 +677,14 @@ export default function BookingWidget() {
                             : `${location.distance.toFixed(1)} mi`}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-3">
+                      <p className="text-sm text-gray-600 mb-1">
                         {location.address?.line1}, {location.address?.city}, {location.address?.state}
                       </p>
+                      {location.subtext && (
+                        <p className="text-xs text-gray-500 mb-3 italic">
+                          {location.subtext}
+                        </p>
+                      )}
                       <Button
                         onClick={() => {
                           setSelectedDate(undefined);
@@ -760,9 +765,14 @@ export default function BookingWidget() {
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-sm text-gray-600 mb-3">
+                                  <p className="text-sm text-gray-600 mb-1">
                                     {location.address?.line1}, {location.address?.city}, {location.address?.state}
                                   </p>
+                                  {location.subtext && (
+                                    <p className="text-xs text-gray-500 mb-3 italic">
+                                      {location.subtext}
+                                    </p>
+                                  )}
                                   <Button
                                     onClick={() => {
                                       setSelectedDate(undefined);
@@ -869,6 +879,11 @@ export default function BookingWidget() {
                             <p style={{ margin: '0 0 12px 0', color: '#333', fontSize: '12px' }}>
                               {location.address?.city}, {location.address?.state} {location.address?.zip || ''}
                             </p>
+                            {location.subtext && (
+                              <p style={{ margin: '-8px 0 12px 0', color: '#666', fontSize: '11px', fontStyle: 'italic' }}>
+                                {location.subtext}
+                              </p>
+                            )}
                             <button
                               onClick={() => {
                                 setSelectedDate(undefined);

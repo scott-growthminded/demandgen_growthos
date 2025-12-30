@@ -429,6 +429,35 @@ export class BlvdService {
     };
 
     const response = await this.makeGraphqlRequest(query, variables);
+    
+    // Add subtext mapping for locations based on name keywords
+    if ((response.data as any)?.locations?.edges) {
+      const subtextMapping: Record<string, string> = {
+        'Murray Hill': 'At the corner of East 26th Street',
+        'West 100th': 'At the corner of West 100th Street, next to Starbucks',
+        'Bryn Mawr': 'Bryn Mawr Village Shopping Center, next to [Solidcore]',
+        'Rittenhouse Square': 'Between Chestnut and Ranstead Streets',
+        'Prospect Heights': 'Entrance on Atlantic Avenue',
+        'Chestnut Hill': 'Chestnut Hill Square, next to sweetgreen',
+        'Back Bay': 'Lower level, below Credo',
+        'Georgetown': 'Next to Tatte, between P and Q Streets',
+        'Jersey City': 'At the corner of Bay Street',
+        'Lynnfield': 'MarketStreet, between The Escape Game and Eddie Bauer',
+        'Hingham': 'Derby Street Shops, next to Ben & Jerry\'s'
+      };
+
+      (response.data as any).locations.edges.forEach((edge: any) => {
+        const name = edge.node.name;
+        // Exact match or partial match for subtext
+        for (const [key, value] of Object.entries(subtextMapping)) {
+          if (name.includes(key)) {
+            edge.node.subtext = value;
+            break;
+          }
+        }
+      });
+    }
+
     return response;
   }
 
