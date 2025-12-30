@@ -1460,8 +1460,8 @@ export default function BookingWidget() {
               <div className="mb-2">
                 <p className="text-xl text-gray-600" data-testid="text-welcome">Welcome Back, Test User!</p>
                 {bookingState.userFlow === 'non-member' && (
-                  <p className="text-sm text-gray-600" data-testid="text-credits-status">
-                    You have <span style={{ fontWeight: '600' }}>5 vouchers</span>.
+                  <p className="text-base text-gray-600" data-testid="text-credits-status">
+                    You have <span style={{ fontWeight: '600', color: '#FF502D' }}>5 vouchers</span>.
                   </p>
                 )}
                 {bookingState.userFlow === 'member' && (
