@@ -1466,15 +1466,11 @@ export default function BookingWidget() {
             {/* Membership Promo Banner - only for leads and non-members */}
             {(bookingState.userFlow === 'lead' || bookingState.userFlow === 'non-member') && (
               <div 
-                className="relative rounded-2xl overflow-hidden mb-6 shadow-sm"
+                className="relative mb-6 shadow-sm"
                 data-testid="banner-membership-promo"
+                style={{ backgroundColor: '#FF502D' }}
               >
-                <img 
-                  src={homeHeroImage} 
-                  alt="Glowbar member" 
-                  className="w-full h-28 object-cover object-top"
-                />
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <div className="flex items-center justify-center py-6">
                   <div className="text-center px-4">
                     <p className="font-bold text-base mb-0.5 text-white">LIMITED TIME!</p>
                     <p className="text-white text-xs mb-2">Sign up for the Glowbar Membership today and save $20/month</p>
@@ -1487,7 +1483,7 @@ export default function BookingWidget() {
                         }
                       }}
                       className="text-white px-5 py-1.5 text-sm"
-                      style={{ backgroundColor: '#FF502D' }}
+                      style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}
                       data-testid="button-become-member"
                     >
                       Become a member
