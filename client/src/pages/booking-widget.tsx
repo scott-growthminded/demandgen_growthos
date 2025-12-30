@@ -2887,9 +2887,8 @@ export default function BookingWidget() {
               </p>
             </div>
 
-            {/* Right Column - Social Proof */}
+            {/* Right Column - Rating Summary */}
             <div className="space-y-4">
-              {/* Rating Summary */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
                 <div className="flex justify-center mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -2899,29 +2898,24 @@ export default function BookingWidget() {
                 <p className="font-bold text-2xl">4.9</p>
                 <p className="text-sm text-gray-600">Based on 10,000+ reviews</p>
               </div>
+            </div>
+          </div>
 
-              {/* Testimonials */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                <h4 className="font-bold mb-3">What Our Guests Say</h4>
-                <div className="space-y-4">
-                  {testimonials.map((testimonial, index) => (
-                    <div key={index} className="pb-3 border-b border-gray-100 last:border-0 last:pb-0">
-                      <div className="flex items-center gap-1 mb-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-700 italic">"{testimonial.text}"</p>
-                      <p className="text-xs text-gray-500 mt-1">— {testimonial.name}</p>
-                    </div>
-                  ))}
+          {/* Testimonials - Full Width Below */}
+          <div className="mt-6">
+            <h4 className="font-bold mb-4 text-center">What Our Guests Say</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {testimonials.map((testimonial, index) => (
+                <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                  <div className="flex items-center gap-1 mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-700 italic mb-2">"{testimonial.text}"</p>
+                  <p className="text-xs text-gray-500">— {testimonial.name}</p>
                 </div>
-              </div>
-
-              {/* Featured Image */}
-              <div className="rounded-2xl overflow-hidden shadow-sm">
-                <img src={luxurySpaImage} alt="Glowbar Experience" className="w-full h-40 object-cover" />
-              </div>
+              ))}
             </div>
           </div>
         </div>
