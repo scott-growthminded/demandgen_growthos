@@ -1510,125 +1510,42 @@ export default function BookingWidget() {
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 pb-4">
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                    {/* Treatment - changes based on user flow */}
-                    {bookingState.userFlow === 'member' ? (
-                          <>
-                            <h3 className="text-base font-semibold mb-2">
-                              (Member) First Time & Returning Treatment <span className="text-gray-600">30min</span>
-                            </h3>
-                            <button 
-                              onClick={() => {
-                                const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
-                                if (membershipAccordion) {
-                                  membershipAccordion.click();
-                                  membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                }
-                              }}
-                              className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
-                              style={{ color: '#FF502D' }}
-                              data-testid="link-redeem-voucher"
-                            >
-                              Redeem with your voucher
-                            </button>
-                              <Button
-                                onClick={() => handleProductSelect({ 
-                                  id: 'member-treatment', 
-                                  name: '(Member) First Time & Returning Treatment', 
-                                  price: 0, 
-                                  description: '30min facial - voucher applied' 
-                                })}
-                                className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
-                                data-testid="button-select-treatment"
-                              >
-                                Select
-                              </Button>
-                          </>
-                        ) : bookingState.userFlow === 'non-member' ? (
-                          <>
-                            <h3 className="text-base font-semibold mb-2">
-                              (Non-Member) Returning Treatment <span className="text-gray-600">30min</span>
-                            </h3>
-                            <p className="text-xl font-bold mb-1">$80.00</p>
-                            <button 
-                              onClick={() => {
-                                const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
-                                if (membershipAccordion) {
-                                  membershipAccordion.click();
-                                  membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                }
-                              }}
-                              className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
-                              style={{ color: '#FF502D' }}
-                              data-testid="link-become-member"
-                            >
-                              Glowbar Members pay $65 - become a member and save $15/month
-                            </button>
-                            <div className="space-y-3">
-                                <Button
-                                  onClick={() => handleProductSelect({ 
-                                    id: 'returning-treatment', 
-                                    name: '(Non-Member) Returning Treatment', 
-                                    price: 80, 
-                                    description: '30min facial' 
-                                  })}
-                                  className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
-                                  data-testid="button-book-treatment-paid"
-                                >
-                                  Book Your Treatment ($80)
-                                </Button>
-                                <div>
-                                  <Button
-                                    onClick={() => handleProductSelect({ 
-                                      id: 'returning-treatment-credits', 
-                                      name: '(Non-Member) Returning Treatment - Vouchers', 
-                                      price: 0, 
-                                      description: '30min facial - using credits' 
-                                    })}
-                                    className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
-                                    data-testid="button-book-treatment-credits"
-                                  >
-                                    Book Your Treatment with Your Vouchers
-                                  </Button>
-                                <p className="text-xs text-gray-600 mt-1 text-center" data-testid="text-remaining-credits">
-                                  Your Remaining Vouchers: 5
-                                </p>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <h3 className="text-base font-semibold mb-2">
-                              (Non-Member) First Time Treatment <span className="text-gray-600">30min</span>
-                            </h3>
-                            <p className="text-xl font-bold mb-1">$80.00</p>
-                            <button 
-                              onClick={() => {
-                                const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
-                                if (membershipAccordion) {
-                                  membershipAccordion.click();
-                                  membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                }
-                              }}
-                              className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
-                              style={{ color: '#FF502D' }}
-                              data-testid="link-become-member"
-                            >
-                              Glowbar Members pay $65 - become a member and save $15/month
-                            </button>
-                            <Button
-                              onClick={() => handleProductSelect({ 
-                                id: 'first-time-treatment', 
-                                name: '(Non-Member) First Time Treatment', 
-                                price: 80, 
-                                description: '30min facial' 
-                              })}
-                              className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
-                              data-testid="button-select-treatment"
-                            >
-                              Select
-                            </Button>
-                          </>
-                        )}
+                    <h3 className="text-base font-semibold mb-2">
+                      Facial Treatment <span className="text-gray-600">30min</span>
+                    </h3>
+                    {bookingState.userFlow !== 'member' && (
+                      <p className="text-xl font-bold mb-1">$80.00</p>
+                    )}
+                    {bookingState.userFlow !== 'member' && (
+                      <button 
+                        onClick={() => {
+                          const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
+                          if (membershipAccordion) {
+                            membershipAccordion.click();
+                            membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }
+                        }}
+                        className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
+                        style={{ color: '#FF502D' }}
+                        data-testid="link-become-member"
+                      >
+                        Glowbar Members pay $65 - become a member and save $15/month
+                      </button>
+                    )}
+                    <Button
+                      onClick={() => handleProductSelect({ 
+                        id: bookingState.userFlow === 'member' ? 'member-treatment' : 
+                            bookingState.userFlow === 'non-member' ? 'returning-treatment' : 'first-time-treatment',
+                        name: bookingState.userFlow === 'member' ? 'Member Treatment' : 
+                              bookingState.userFlow === 'non-member' ? 'Returning Treatment' : 'First Time Treatment',
+                        price: bookingState.userFlow === 'member' ? 0 : 80,
+                        description: '30min facial'
+                      })}
+                      className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                      data-testid="button-select-treatment"
+                    >
+                      Book your treatment
+                    </Button>
                   </div>
                 </AccordionContent>
               </AccordionItem>
