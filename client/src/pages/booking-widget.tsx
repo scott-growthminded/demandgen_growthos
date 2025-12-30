@@ -2372,26 +2372,6 @@ export default function BookingWidget() {
                     <p className="text-gray-500">Try selecting a different date or changing your esthetician preference</p>
                   </div>
                 )}
-
-                {/* Continue Button */}
-                {isValid && (
-                  <Button
-                    onClick={() => {
-                      const nextStep = bookingState.customerType === 'new' ? 'personal-info' : 'checkout';
-                      setBookingState(prev => ({
-                        ...prev,
-                        selectedDate: selectedDate,
-                        selectedTime: selectedTimeSlot,
-                        step: nextStep
-                      }));
-                    }}
-                    className="w-full h-14 text-base font-semibold text-white hover:opacity-90 shadow-lg" 
-                    style={{ backgroundColor: "#FF502D" }}
-                    data-testid="button-continue"
-                  >
-                    Continue to payment
-                  </Button>
-                )}
               </div>
             </div>
 
@@ -2472,6 +2452,26 @@ export default function BookingWidget() {
                   })}
                 </div>
               </div>
+            )}
+
+            {/* Continue Button */}
+            {isValid && (
+              <Button
+                onClick={() => {
+                  const nextStep = bookingState.customerType === 'new' ? 'personal-info' : 'checkout';
+                  setBookingState(prev => ({
+                    ...prev,
+                    selectedDate: selectedDate,
+                    selectedTime: selectedTimeSlot,
+                    step: nextStep
+                  }));
+                }}
+                className="w-full h-14 text-base font-semibold text-white hover:opacity-90 shadow-lg mt-6" 
+                style={{ backgroundColor: "#FF502D" }}
+                data-testid="button-continue"
+              >
+                Continue to payment
+              </Button>
             )}
           </div>
         </div>
