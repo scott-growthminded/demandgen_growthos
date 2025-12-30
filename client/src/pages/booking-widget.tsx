@@ -2740,16 +2740,15 @@ export default function BookingWidget() {
               {/* Compact Timer - Only for appointment bookings */}
               {!isPurchaseOnly && (
                 <div 
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full ${
-                    checkoutTimeRemaining <= 60 
-                      ? 'bg-red-100 text-red-700' 
-                      : 'bg-gray-100 text-gray-700'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-white ${
+                    checkoutTimeRemaining <= 60 ? 'bg-red-500' : ''
                   }`}
+                  style={{ backgroundColor: checkoutTimeRemaining <= 60 ? undefined : '#FF502D' }}
                   data-testid="checkout-timer"
                 >
                   <Clock className="w-4 h-4" />
                   <span className="text-sm font-medium">Time left:</span>
-                  <span className={`font-bold ${checkoutTimeRemaining <= 60 ? 'text-red-600' : ''}`} data-testid="timer-display">
+                  <span className="font-bold" data-testid="timer-display">
                     {Math.floor(checkoutTimeRemaining / 60)}:{(checkoutTimeRemaining % 60).toString().padStart(2, '0')}
                   </span>
                 </div>
@@ -2801,18 +2800,18 @@ export default function BookingWidget() {
                     <button
                       key={card.id}
                       onClick={() => setSelectedPaymentMethod(card.id as 'saved-1' | 'saved-2')}
-                      className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${
+                      className={`w-full p-4 rounded-xl border flex items-center gap-4 transition-all ${
                         selectedPaymentMethod === card.id 
-                          ? 'border-[#FF502D] bg-orange-50' 
+                          ? 'border-gray-400 bg-gray-50' 
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                       data-testid={`card-option-${card.id}`}
                     >
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        selectedPaymentMethod === card.id ? 'border-[#FF502D]' : 'border-gray-300'
+                        selectedPaymentMethod === card.id ? 'border-gray-600' : 'border-gray-300'
                       }`}>
                         {selectedPaymentMethod === card.id && (
-                          <div className="w-3 h-3 rounded-full bg-[#FF502D]" />
+                          <div className="w-3 h-3 rounded-full bg-gray-600" />
                         )}
                       </div>
                       <div className="flex items-center gap-3 flex-1">
@@ -2830,18 +2829,18 @@ export default function BookingWidget() {
                   {/* Add New Card Option */}
                   <button
                     onClick={() => setSelectedPaymentMethod('new')}
-                    className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${
+                    className={`w-full p-4 rounded-xl border flex items-center gap-4 transition-all ${
                       selectedPaymentMethod === 'new' 
-                        ? 'border-[#FF502D] bg-orange-50' 
+                        ? 'border-gray-400 bg-gray-50' 
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                     data-testid="card-option-new"
                   >
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      selectedPaymentMethod === 'new' ? 'border-[#FF502D]' : 'border-gray-300'
+                      selectedPaymentMethod === 'new' ? 'border-gray-600' : 'border-gray-300'
                     }`}>
                       {selectedPaymentMethod === 'new' && (
-                        <div className="w-3 h-3 rounded-full bg-[#FF502D]" />
+                        <div className="w-3 h-3 rounded-full bg-gray-600" />
                       )}
                     </div>
                     <div className="flex items-center gap-3">
