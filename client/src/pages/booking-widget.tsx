@@ -194,6 +194,13 @@ export default function BookingWidget() {
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvc, setCardCvc] = useState('');
   const [cardName, setCardName] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'saved-1' | 'saved-2' | 'new'>('saved-1');
+  
+  // Dummy saved cards data
+  const savedCards = [
+    { id: 'saved-1', brand: 'Visa', last4: '4242', expiry: '12/26' },
+    { id: 'saved-2', brand: 'Mastercard', last4: '8888', expiry: '03/25' }
+  ];
 
   // Checkout countdown timer state (5 minutes = 300 seconds)
   const [checkoutTimeRemaining, setCheckoutTimeRemaining] = useState(300);
@@ -2725,42 +2732,29 @@ export default function BookingWidget() {
               Back
             </Button>
 
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold mb-1" data-testid="text-title">Complete Your {isPurchaseOnly ? 'Purchase' : 'Booking'}</h1>
-              <p className="text-gray-600" data-testid="text-subtitle">You're almost there!</p>
-            </div>
-
-            {/* Countdown Timer - Only for appointment bookings */}
-            {!isPurchaseOnly && (
-              <div 
-                className={`mb-6 rounded-xl p-4 flex items-center gap-3 ${
-                  checkoutTimeRemaining <= 60 
-                    ? 'bg-red-50 border border-red-200' 
-                    : 'bg-amber-50 border border-amber-200'
-                }`}
-                data-testid="checkout-timer"
-              >
-                <div 
-                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    checkoutTimeRemaining <= 60 ? 'bg-red-500' : 'bg-amber-500'
-                  }`}
-                >
-                  <Clock className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className={`font-semibold text-sm ${checkoutTimeRemaining <= 60 ? 'text-red-700' : 'text-amber-700'}`}>
-                    {checkoutTimeRemaining <= 0 
-                      ? 'Time expired! Your slot may no longer be available.' 
-                      : checkoutTimeRemaining <= 60 
-                        ? 'Hurry! Your reserved time is almost up!' 
-                        : 'Complete your booking to secure this time slot'}
-                  </p>
-                  <p className={`text-2xl font-bold ${checkoutTimeRemaining <= 60 ? 'text-red-600' : 'text-amber-600'}`} data-testid="timer-display">
-                    {Math.floor(checkoutTimeRemaining / 60)}:{(checkoutTimeRemaining % 60).toString().padStart(2, '0')}
-                  </p>
-                </div>
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold mb-1" data-testid="text-title">Complete your {isPurchaseOnly ? 'purchase' : 'booking'}</h1>
+                <p className="text-gray-600" data-testid="text-subtitle">You're almost there!</p>
               </div>
-            )}
+              {/* Compact Timer - Only for appointment bookings */}
+              {!isPurchaseOnly && (
+                <div 
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full ${
+                    checkoutTimeRemaining <= 60 
+                      ? 'bg-red-100 text-red-700' 
+                      : 'bg-gray-100 text-gray-700'
+                  }`}
+                  data-testid="checkout-timer"
+                >
+                  <Clock className="w-4 h-4" />
+                  <span className="text-sm font-medium">Time left:</span>
+                  <span className={`font-bold ${checkoutTimeRemaining <= 60 ? 'text-red-600' : ''}`} data-testid="timer-display">
+                    {Math.floor(checkoutTimeRemaining / 60)}:{(checkoutTimeRemaining % 60).toString().padStart(2, '0')}
+                  </span>
+                </div>
+              )}
+            </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Payment & Summary */}
@@ -2799,70 +2793,132 @@ export default function BookingWidget() {
 
               {/* Payment Form */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                <h3 className="font-bold mb-4">Payment details</h3>
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="cardName" className="text-sm">Cardholder Name</Label>
-                    <Input
-                      id="cardName"
-                      value={cardName}
-                      onChange={(e) => setCardName(e.target.value)}
-                      placeholder="Name on card"
-                      className="mt-1"
-                      data-testid="input-card-name"
-                    />
-                  </div>
+                <h3 className="font-bold mb-4">Payment method</h3>
+                
+                {/* Saved Cards */}
+                <div className="space-y-3 mb-4">
+                  {savedCards.map((card) => (
+                    <button
+                      key={card.id}
+                      onClick={() => setSelectedPaymentMethod(card.id as 'saved-1' | 'saved-2')}
+                      className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${
+                        selectedPaymentMethod === card.id 
+                          ? 'border-[#FF502D] bg-orange-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      data-testid={`card-option-${card.id}`}
+                    >
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        selectedPaymentMethod === card.id ? 'border-[#FF502D]' : 'border-gray-300'
+                      }`}>
+                        {selectedPaymentMethod === card.id && (
+                          <div className="w-3 h-3 rounded-full bg-[#FF502D]" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-10 h-7 bg-gray-100 rounded flex items-center justify-center text-xs font-bold text-gray-600">
+                          {card.brand === 'Visa' ? 'VISA' : 'MC'}
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium text-gray-900">•••• •••• •••• {card.last4}</p>
+                          <p className="text-xs text-gray-500">Expires {card.expiry}</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                  
+                  {/* Add New Card Option */}
+                  <button
+                    onClick={() => setSelectedPaymentMethod('new')}
+                    className={`w-full p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${
+                      selectedPaymentMethod === 'new' 
+                        ? 'border-[#FF502D] bg-orange-50' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    data-testid="card-option-new"
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      selectedPaymentMethod === 'new' ? 'border-[#FF502D]' : 'border-gray-300'
+                    }`}>
+                      {selectedPaymentMethod === 'new' && (
+                        <div className="w-3 h-3 rounded-full bg-[#FF502D]" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-7 bg-gray-100 rounded flex items-center justify-center">
+                        <CreditCard className="w-5 h-5 text-gray-500" />
+                      </div>
+                      <span className="font-medium text-gray-900">Add new card</span>
+                    </div>
+                  </button>
+                </div>
 
-                  <div>
-                    <Label htmlFor="cardNumber" className="text-sm">Card Number</Label>
-                    <Input
-                      id="cardNumber"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      placeholder="1234 5678 9012 3456"
-                      className="mt-1"
-                      data-testid="input-card-number"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
+                {/* New Card Form - Only shown when "new" is selected */}
+                {selectedPaymentMethod === 'new' && (
+                  <div className="space-y-3 pt-3 border-t">
                     <div>
-                      <Label htmlFor="cardExpiry" className="text-sm">Expiry</Label>
+                      <Label htmlFor="cardName" className="text-sm">Cardholder Name</Label>
                       <Input
-                        id="cardExpiry"
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(e.target.value)}
-                        placeholder="MM/YY"
+                        id="cardName"
+                        value={cardName}
+                        onChange={(e) => setCardName(e.target.value)}
+                        placeholder="Name on card"
                         className="mt-1"
-                        data-testid="input-card-expiry"
+                        data-testid="input-card-name"
                       />
                     </div>
+
                     <div>
-                      <Label htmlFor="cardCvc" className="text-sm">CVC</Label>
+                      <Label htmlFor="cardNumber" className="text-sm">Card Number</Label>
                       <Input
-                        id="cardCvc"
-                        value={cardCvc}
-                        onChange={(e) => setCardCvc(e.target.value)}
-                        placeholder="123"
+                        id="cardNumber"
+                        value={cardNumber}
+                        onChange={(e) => setCardNumber(e.target.value)}
+                        placeholder="1234 5678 9012 3456"
                         className="mt-1"
-                        data-testid="input-card-cvc"
+                        data-testid="input-card-number"
                       />
                     </div>
-                  </div>
 
-                  {/* Promo Code - Inline */}
-                  <div className="flex gap-2 pt-2">
-                    <Input
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      placeholder="Promo code"
-                      className="flex-1"
-                      data-testid="input-promo"
-                    />
-                    <Button variant="outline" className="px-4" data-testid="button-apply-promo">
-                      Apply
-                    </Button>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="cardExpiry" className="text-sm">Expiry</Label>
+                        <Input
+                          id="cardExpiry"
+                          value={cardExpiry}
+                          onChange={(e) => setCardExpiry(e.target.value)}
+                          placeholder="MM/YY"
+                          className="mt-1"
+                          data-testid="input-card-expiry"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="cardCvc" className="text-sm">CVC</Label>
+                        <Input
+                          id="cardCvc"
+                          value={cardCvc}
+                          onChange={(e) => setCardCvc(e.target.value)}
+                          placeholder="123"
+                          className="mt-1"
+                          data-testid="input-card-cvc"
+                        />
+                      </div>
+                    </div>
                   </div>
+                )}
+
+                {/* Promo Code - Inline */}
+                <div className="flex gap-2 pt-4">
+                  <Input
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    placeholder="Promo code"
+                    className="flex-1"
+                    data-testid="input-promo"
+                  />
+                  <Button variant="outline" className="px-4" data-testid="button-apply-promo">
+                    Apply
+                  </Button>
                 </div>
 
                 {/* Price Breakdown */}
@@ -2902,7 +2958,8 @@ export default function BookingWidget() {
 
                 <Button
                   onClick={() => {
-                    if (!cardName || !cardNumber || !cardExpiry || !cardCvc) {
+                    // If using new card, validate card details
+                    if (selectedPaymentMethod === 'new' && (!cardName || !cardNumber || !cardExpiry || !cardCvc)) {
                       toast({
                         title: "Card Details Required",
                         description: "Please enter your card details to continue",
@@ -2912,7 +2969,7 @@ export default function BookingWidget() {
                     }
                     setBookingState(prev => ({ ...prev, step: 'confirmation' }));
                   }}
-                  disabled={!cardName || !cardNumber || !cardExpiry || !cardCvc}
+                  disabled={selectedPaymentMethod === 'new' && (!cardName || !cardNumber || !cardExpiry || !cardCvc)}
                   className="w-full text-white hover:opacity-90 text-lg py-6 mt-4"
                   style={{ backgroundColor: '#FF502D' }}
                   data-testid="button-book-now"
