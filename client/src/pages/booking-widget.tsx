@@ -2405,7 +2405,6 @@ export default function BookingWidget() {
                             </span>
                           )}
                         </div>
-                        
                         {availabilityQuery.isLoading ? (
                           <p className="text-sm text-gray-400">Loading times...</p>
                         ) : nearbySlots.length > 0 ? (
@@ -2668,9 +2667,7 @@ export default function BookingWidget() {
             My Account
           </Button>
         </div>
-
         <ProgressBar />
-        
         {/* Selected Studio Display */}
         {bookingState.selectedLocation && (
           <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
@@ -2687,7 +2684,6 @@ export default function BookingWidget() {
             </button>
           </div>
         )}
-
         <div className="flex-1">
           <div className="max-w-5xl mx-auto px-6 py-8">
             <Button
@@ -2894,7 +2890,7 @@ export default function BookingWidget() {
                   ))}
                 </div>
                 <p className="font-bold text-2xl">4.9</p>
-                <p className="text-sm text-gray-600">Based on 10,000+ reviews</p>
+                <p className="text-sm text-gray-600">Based on 1,000+ reviews</p>
               </div>
 
               {/* Testimonials */}
@@ -2919,7 +2915,7 @@ export default function BookingWidget() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
     );
   }
 
