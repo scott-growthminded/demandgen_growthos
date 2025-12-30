@@ -493,7 +493,7 @@ export default function BookingWidget() {
       case 'product':
         // Route back based on user flow
         if (bookingState.userFlow === 'lead') {
-          setBookingState(prev => ({ ...prev, step: 'phone-verification' }));
+          setBookingState(prev => ({ ...prev, step: 'personal-info' }));
         } else if (bookingState.userFlow === 'non-member' || bookingState.userFlow === 'member') {
           setBookingState(prev => ({ ...prev, step: 'otp' }));
         } else if (bookingState.customerType === 'new') {
@@ -502,11 +502,11 @@ export default function BookingWidget() {
           setBookingState(prev => ({ ...prev, step: 'login' }));
         }
         break;
+      case 'personal-info':
+        setBookingState(prev => ({ ...prev, step: 'phone-verification' }));
+        break;
       case 'datetime':
         setBookingState(prev => ({ ...prev, step: 'product' }));
-        break;
-      case 'personal-info':
-        setBookingState(prev => ({ ...prev, step: 'datetime' }));
         break;
       case 'gift-recipient':
         setBookingState(prev => ({ ...prev, step: 'product' }));
@@ -524,8 +524,6 @@ export default function BookingWidget() {
         } else if (isPurchaseOnly) {
           // For other purchases, go back to product selection
           setBookingState(prev => ({ ...prev, step: 'product' }));
-        } else if (bookingState.customerType === 'new') {
-          setBookingState(prev => ({ ...prev, step: 'personal-info' }));
         } else {
           setBookingState(prev => ({ ...prev, step: 'datetime' }));
         }
@@ -959,7 +957,7 @@ export default function BookingWidget() {
           userPhone: phoneNumber,
           customerType: 'new',
           isMember: false,
-          step: 'product'
+          step: 'personal-info'
         }));
       } else if (/^2+$/.test(cleanPhone)) {
         // All 2's - Non-member flow
@@ -1387,7 +1385,7 @@ export default function BookingWidget() {
         setBookingState(prev => ({ 
           ...prev, 
           selectedProduct: product,
-          step: bookingState.customerType === 'new' ? 'personal-info' : 'checkout'
+          step: 'checkout'
         }));
       } else {
         // For treatments, show the confirmation dialog
@@ -1947,7 +1945,7 @@ export default function BookingWidget() {
                     onClick={() => {
                       setBookingState(prev => ({ 
                         ...prev, 
-                        step: bookingState.customerType === 'new' ? 'personal-info' : 'checkout'
+                        step: 'checkout'
                       }));
                     }}
                     disabled={!isValid}
@@ -1955,7 +1953,7 @@ export default function BookingWidget() {
                     style={{ backgroundColor: '#FF502D' }}
                     data-testid="button-continue"
                   >
-                    Continue to {bookingState.customerType === 'new' ? 'Your Info' : 'Checkout'}
+                    Continue to Checkout
                   </Button>
                 </div>
             </div>
@@ -2458,12 +2456,11 @@ export default function BookingWidget() {
             {isValid && (
               <Button
                 onClick={() => {
-                  const nextStep = bookingState.customerType === 'new' ? 'personal-info' : 'checkout';
                   setBookingState(prev => ({
                     ...prev,
                     selectedDate: selectedDate,
                     selectedTime: selectedTimeSlot,
-                    step: nextStep
+                    step: 'checkout'
                   }));
                 }}
                 className="w-full h-14 text-base font-semibold text-white hover:opacity-90 shadow-lg mt-6" 
@@ -2607,7 +2604,7 @@ export default function BookingWidget() {
                       userEmail: email,
                       userPhone: authPhone,
                       userName: `${firstName} ${lastName}`,
-                      step: 'checkout'
+                      step: 'product'
                     }));
                   }}
                   className="w-full text-white hover:opacity-90 mt-6"
@@ -2615,7 +2612,7 @@ export default function BookingWidget() {
                   disabled={!isValid}
                   data-testid="button-continue"
                 >
-                  Continue to Checkout
+                  Continue
                 </Button>
             </div>
           </div>
