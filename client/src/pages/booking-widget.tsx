@@ -2358,11 +2358,11 @@ export default function BookingWidget() {
                     <p className="text-gray-500">Loading available times...</p>
                   </div>
                 ) : hasAvailability ? (
-                  <div className="space-y-4">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
                     {/* Morning Slots */}
                     {morningSlots.length > 0 && (
-                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center gap-2 mb-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
                           <h4 className="font-semibold text-gray-900">Morning</h4>
                           <span className="text-xs text-gray-400">Before 12 PM</span>
                         </div>
@@ -2371,9 +2371,9 @@ export default function BookingWidget() {
                             <button
                               key={slot.id}
                               onClick={() => setSelectedTimeSlot(slot)}
-                              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                                 selectedTimeSlot?.id === slot.id
-                                  ? 'text-white shadow-lg scale-105'
+                                  ? 'text-white shadow-lg'
                                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                               }`}
                               style={selectedTimeSlot?.id === slot.id ? { backgroundColor: '#FF502D' } : {}}
@@ -2393,8 +2393,8 @@ export default function BookingWidget() {
 
                     {/* Afternoon Slots */}
                     {afternoonSlots.length > 0 && (
-                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center gap-2 mb-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
                           <h4 className="font-semibold text-gray-900">Afternoon</h4>
                           <span className="text-xs text-gray-400">12 PM - 5 PM</span>
                         </div>
@@ -2403,9 +2403,9 @@ export default function BookingWidget() {
                             <button
                               key={slot.id}
                               onClick={() => setSelectedTimeSlot(slot)}
-                              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                                 selectedTimeSlot?.id === slot.id
-                                  ? 'text-white shadow-lg scale-105'
+                                  ? 'text-white shadow-lg'
                                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                               }`}
                               style={selectedTimeSlot?.id === slot.id ? { backgroundColor: '#FF502D' } : {}}
@@ -2425,8 +2425,8 @@ export default function BookingWidget() {
 
                     {/* Evening Slots */}
                     {eveningSlots.length > 0 && (
-                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                        <div className="flex items-center gap-2 mb-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
                           <h4 className="font-semibold text-gray-900">Evening</h4>
                           <span className="text-xs text-gray-400">After 5 PM</span>
                         </div>
@@ -2435,9 +2435,9 @@ export default function BookingWidget() {
                             <button
                               key={slot.id}
                               onClick={() => setSelectedTimeSlot(slot)}
-                              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                                 selectedTimeSlot?.id === slot.id
-                                  ? 'text-white shadow-lg scale-105'
+                                  ? 'text-white shadow-lg'
                                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                               }`}
                               style={selectedTimeSlot?.id === slot.id ? { backgroundColor: '#FF502D' } : {}}
@@ -2465,6 +2465,83 @@ export default function BookingWidget() {
                   </div>
                 )}
 
+                {/* Nearby Locations - Inline Above Continue */}
+                {selectedDate && nearbyLocations.length >= 2 && (
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                    <h4 className="font-bold text-gray-900 text-sm mb-0.5">More times at nearby studios</h4>
+                    <p className="text-xs text-gray-500 mb-4">for {format(selectedDate, 'EEEE, MMMM d')}</p>
+                    
+                    <div className="space-y-4">
+                      {nearbyLocations.slice(0, 2).map((location, idx) => {
+                        const availabilityQuery = idx === 0 ? nearbyAvailability1 : nearbyAvailability2;
+                        let nearbySlots = availabilityQuery.data?.availableSlots?.map((slot: any) => ({
+                          ...slot,
+                          time: format(new Date(slot.startTime), 'h:mm a')
+                        })) || [];
+                        
+                        if (isUsingCreditsOrVoucher) {
+                          nearbySlots = nearbySlots.filter((slot: any) => !slot.isDiscounted);
+                        }
+                        
+                        return (
+                          <div key={location.id} className="border-t border-gray-100 pt-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className="font-semibold text-gray-900 text-xs">{location.name}</h5>
+                              {location.distance !== null && location.distance !== undefined && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                  {location.distance < 0.1 
+                                    ? `${Math.round(location.distance * 5280)} ft` 
+                                    : `${location.distance.toFixed(1)} mi`}
+                                </span>
+                              )}
+                            </div>
+                            
+                            {availabilityQuery.isLoading ? (
+                              <p className="text-[10px] text-gray-400">Loading times...</p>
+                            ) : nearbySlots.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5">
+                                {nearbySlots.slice(0, 5).map((slot: any) => (
+                                  <button
+                                    key={slot.id}
+                                    onClick={() => {
+                                      setBookingState(prev => ({
+                                        ...prev,
+                                        selectedLocation: {
+                                          id: location.id,
+                                          name: location.name,
+                                          city: location.address?.city || '',
+                                          state: location.address?.state || ''
+                                        },
+                                        selectedTime: slot,
+                                        selectedDate: selectedDate
+                                      }));
+                                      setSelectedTimeSlot(slot);
+                                      toast({
+                                        title: `Studio changed to ${location.name}`,
+                                        description: `${slot.time} on ${format(selectedDate!, 'MMM d')} selected`,
+                                      });
+                                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }}
+                                    className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-full text-[10px] font-medium text-gray-700 hover:border-gray-400 transition-colors"
+                                    data-testid={`nearby-time-${location.id}-${slot.time.replace(/[:\s]/g, '-')}`}
+                                  >
+                                    {slot.time}
+                                  </button>
+                                ))}
+                                {nearbySlots.length > 5 && (
+                                  <span className="text-[10px] text-gray-400 self-center">+{nearbySlots.length - 5}</span>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-[10px] text-gray-400">No availability</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Continue Button */}
                 {isValid && (
                   <Button
@@ -2484,99 +2561,6 @@ export default function BookingWidget() {
                     Continue to payment
                   </Button>
                 )}
-
-              </div>
-            </div>
-
-            {/* Nearby Locations - Full Width */}
-            {selectedDate && nearbyLocations.length >= 2 && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6">
-                <h4 className="font-bold text-gray-900 mb-1">More Times at Nearby Studios at Any Esthetician</h4>
-                <p className="text-sm text-gray-500 mb-4">for {format(selectedDate, 'EEEE, MMMM d')}</p>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {nearbyLocations.slice(0, 2).map((location, idx) => {
-                    const availabilityQuery = idx === 0 ? nearbyAvailability1 : nearbyAvailability2;
-                    let nearbySlots = availabilityQuery.data?.availableSlots?.map((slot: any) => ({
-                      ...slot,
-                      time: format(new Date(slot.startTime), 'h:mm a')
-                    })) || [];
-                    
-                    if (isUsingCreditsOrVoucher) {
-                      nearbySlots = nearbySlots.filter((slot: any) => !slot.isDiscounted);
-                    }
-                    
-                    return (
-                      <div key={location.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                            <MapPin className="w-4 h-4" style={{ color: '#FF502D' }} />
-                          </div>
-                          <div className="flex-1">
-                            <h5 className="font-semibold text-gray-900 text-sm">{location.name}</h5>
-                            <p className="text-xs text-gray-500">{location.address?.city}, {location.address?.state}</p>
-                          </div>
-                          {location.distance !== null && location.distance !== undefined && (
-                            <span 
-                              className="text-xs font-semibold px-2 py-1 rounded-full"
-                              style={{ backgroundColor: '#FFF0ED', color: '#FF502D' }}
-                            >
-                              {location.distance < 0.1 
-                                ? `${Math.round(location.distance * 5280)} ft` 
-                                : `${location.distance.toFixed(1)} mi`}
-                            </span>
-                          )}
-                        </div>
-                        {availabilityQuery.isLoading ? (
-                          <p className="text-sm text-gray-500">Loading times...</p>
-                        ) : nearbySlots.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {nearbySlots.slice(0, 8).map((slot: any) => (
-                              <button
-                                key={slot.id}
-                                onClick={() => {
-                                  setBookingState(prev => ({
-                                    ...prev,
-                                    selectedLocation: {
-                                      id: location.id,
-                                      name: location.name,
-                                      city: location.address?.city || '',
-                                      state: location.address?.state || ''
-                                    },
-                                    selectedTime: slot,
-                                    selectedDate: selectedDate
-                                  }));
-                                  setSelectedTimeSlot(slot);
-                                  toast({
-                                    title: `Studio changed to ${location.name}`,
-                                    description: `${slot.time} on ${format(selectedDate!, 'MMM d')} selected`,
-                                  });
-                                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }}
-                                className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-700 hover:border-gray-400 transition-colors"
-                                data-testid={`nearby-time-${location.id}-${slot.time.replace(/[:\s]/g, '-')}`}
-                              >
-                                {slot.time}
-                                {slot.isDiscounted && (
-                                  <span className="ml-1" style={{ color: '#FF502D' }}>-$10</span>
-                                )}
-                              </button>
-                            ))}
-                            {nearbySlots.length > 8 && (
-                              <span className="px-3 py-1.5 text-xs text-gray-400">
-                                +{nearbySlots.length - 8} more
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-400">No availability</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
