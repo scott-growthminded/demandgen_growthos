@@ -2481,7 +2481,7 @@ export default function BookingWidget() {
                     style={{ backgroundColor: "#FF502D" }}
                     data-testid="button-continue"
                   >
-                    Continue to {bookingState.customerType === 'new' ? 'Personal Info' : 'Checkout'}
+                    Continue to payment
                   </Button>
                 )}
 
