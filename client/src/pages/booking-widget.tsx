@@ -1062,7 +1062,7 @@ export default function BookingWidget() {
                   </Button>
                   
                   <p className="text-xs text-gray-400 text-center">
-                    International number?{' '}
+                    Do you have an international number?{' '}
                     <a 
                       href="https://glowbar.com/pages/locations" 
                       target="_blank" 
