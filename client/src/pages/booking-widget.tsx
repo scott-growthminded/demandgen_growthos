@@ -1032,32 +1032,24 @@ export default function BookingWidget() {
 
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 className="text-2xl font-bold mb-2">Enter Your Phone Number</h2>
-                <p className="text-gray-600 mb-4">We'll use this to verify your account</p>
-                <p className="text-sm text-gray-500 mb-6">
-                  If you have an international phone number, please{' '}
-                  <a 
-                    href="https://glowbar.com/pages/locations" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="underline hover:opacity-80"
-                    style={{ color: '#FF502D' }}
-                    data-testid="link-locations"
-                  >
-                    call the studio
-                  </a>{' '}
-                  for assistance.
-                </p>
+                <p className="text-gray-600 mb-6">We'll use this to verify your account</p>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="(555) 555-5555"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      data-testid="input-phone"
-                    />
+                    <div className="flex gap-2">
+                      <div className="flex items-center justify-center px-3 bg-gray-100 border border-gray-200 rounded-md text-sm text-gray-600 font-medium">
+                        +1
+                      </div>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="(555) 555-5555"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        className="flex-1"
+                        data-testid="input-phone"
+                      />
+                    </div>
                   </div>
 
                   <Button
@@ -1068,6 +1060,21 @@ export default function BookingWidget() {
                   >
                     Continue
                   </Button>
+                  
+                  <p className="text-xs text-gray-400 text-center">
+                    International number?{' '}
+                    <a 
+                      href="https://glowbar.com/pages/locations" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="underline hover:opacity-80"
+                      style={{ color: '#FF502D' }}
+                      data-testid="link-locations"
+                    >
+                      Call the studio
+                    </a>{' '}
+                    for assistance.
+                  </p>
                 </div>
               </div>
             </div>
