@@ -605,9 +605,7 @@ export default function BookingWidget() {
             My Account
           </Button>
         </div>
-
         <ProgressBar />
-
         {/* Main Content */}
         <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-180px)]">
           {/* Left side - Location finder and grouped locations - SCROLLABLE */}
@@ -717,7 +715,7 @@ export default function BookingWidget() {
               </div>
             ) : (
               /* State-based list */
-              <div className="space-y-2">
+              (<div className="space-y-2">
                 {stateOrder.map((stateCode) => {
                   const locations = groupedLocations[stateCode] || [];
                   if (locations.length === 0) return null;
@@ -807,7 +805,7 @@ export default function BookingWidget() {
                     </div>
                   );
                 })}
-              </div>
+              </div>)
             )}
           </div>
 
@@ -1427,9 +1425,7 @@ export default function BookingWidget() {
             My Account
           </Button>
         </div>
-
         <ProgressBar />
-        
         {/* Selected Studio Display */}
         {bookingState.selectedLocation && (
           <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
@@ -1446,7 +1442,6 @@ export default function BookingWidget() {
             </button>
           </div>
         )}
-
         {/* Main Content */}
         <div className="flex-1 flex gap-8 px-6 py-8 max-h-[calc(100vh-180px)]">
           {/* Left side - Services - SCROLLABLE */}
@@ -1488,7 +1483,7 @@ export default function BookingWidget() {
                 <div className="flex items-center justify-center py-6">
                   <div className="text-center px-4">
                     <p className="font-bold text-base mb-0.5 text-white">LIMITED TIME!</p>
-                    <p className="text-white text-xs mb-2">Sign up for the Glowbar Membership today and save $20/month</p>
+                    <p className="text-white text-xs mb-2">Sign up for the Glowbar Membership today and save $15/month</p>
                     <Button
                       onClick={() => {
                         const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
@@ -1853,7 +1848,6 @@ export default function BookingWidget() {
             </div>
           </div>
         </div>
-
         {/* Confirmation Dialog */}
         <Dialog open={isConfirmationDialogOpen} onOpenChange={setIsConfirmationDialogOpen}>
           <DialogContent className="sm:max-w-[450px]" data-testid="dialog-confirmation">
@@ -2123,9 +2117,7 @@ export default function BookingWidget() {
             My Account
           </Button>
         </div>
-
         <ProgressBar />
-        
         {/* Hero Location & Esthetician Header */}
         <div className="bg-white border-b border-gray-200 shadow-sm">
           <div className="max-w-5xl mx-auto px-6 py-6">
@@ -2152,7 +2144,6 @@ export default function BookingWidget() {
             </div>
           </div>
         </div>
-
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-5xl mx-auto px-6 py-8">
             <Button
@@ -2537,7 +2528,6 @@ export default function BookingWidget() {
                             </span>
                           )}
                         </div>
-                        
                         {availabilityQuery.isLoading ? (
                           <p className="text-sm text-gray-500">Loading times...</p>
                         ) : nearbySlots.length > 0 ? (
