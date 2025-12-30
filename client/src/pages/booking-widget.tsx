@@ -195,6 +195,9 @@ export default function BookingWidget() {
   const [cardCvc, setCardCvc] = useState('');
   const [cardName, setCardName] = useState('');
 
+  // Checkout countdown timer state (5 minutes = 300 seconds)
+  const [checkoutTimeRemaining, setCheckoutTimeRemaining] = useState(300);
+
   // Gift card recipient info
   const [giftRecipientName, setGiftRecipientName] = useState('');
   const [giftRecipientEmail, setGiftRecipientEmail] = useState('');
@@ -212,6 +215,32 @@ export default function BookingWidget() {
       setAuthPhone(phoneNumber);
     }
   }, [phoneNumber, authPhone]);
+
+  // Checkout countdown timer effect
+  useEffect(() => {
+    // Only run timer on checkout step for appointment bookings (not purchase-only)
+    const isMembership = bookingState.selectedProduct?.id.startsWith('membership-');
+    const isPackage = bookingState.selectedProduct?.id.startsWith('package-');
+    const isGiftCard = bookingState.selectedProduct?.id.startsWith('giftcard-');
+    const isPurchaseOnly = isMembership || isPackage || isGiftCard;
+
+    if (bookingState.step === 'checkout' && !isPurchaseOnly) {
+      // Reset timer when entering checkout
+      setCheckoutTimeRemaining(300);
+
+      const timer = setInterval(() => {
+        setCheckoutTimeRemaining(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [bookingState.step, bookingState.selectedProduct?.id]);
 
   // Fetch locations
   const { data: locationsData, isLoading: locationsLoading } = useQuery({
@@ -2701,6 +2730,38 @@ export default function BookingWidget() {
               <p className="text-gray-600" data-testid="text-subtitle">You're almost there!</p>
             </div>
 
+            {/* Countdown Timer - Only for appointment bookings */}
+            {!isPurchaseOnly && (
+              <div 
+                className={`mb-6 rounded-xl p-4 flex items-center gap-3 ${
+                  checkoutTimeRemaining <= 60 
+                    ? 'bg-red-50 border border-red-200' 
+                    : 'bg-amber-50 border border-amber-200'
+                }`}
+                data-testid="checkout-timer"
+              >
+                <div 
+                  className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    checkoutTimeRemaining <= 60 ? 'bg-red-500' : 'bg-amber-500'
+                  }`}
+                >
+                  <Clock className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className={`font-semibold text-sm ${checkoutTimeRemaining <= 60 ? 'text-red-700' : 'text-amber-700'}`}>
+                    {checkoutTimeRemaining <= 0 
+                      ? 'Time expired! Your slot may no longer be available.' 
+                      : checkoutTimeRemaining <= 60 
+                        ? 'Hurry! Your reserved time is almost up!' 
+                        : 'Complete your booking to secure this time slot'}
+                  </p>
+                  <p className={`text-2xl font-bold ${checkoutTimeRemaining <= 60 ? 'text-red-600' : 'text-amber-600'}`} data-testid="timer-display">
+                    {Math.floor(checkoutTimeRemaining / 60)}:{(checkoutTimeRemaining % 60).toString().padStart(2, '0')}
+                  </p>
+                </div>
+              </div>
+            )}
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Payment & Summary */}
             <div className="lg:col-span-2 space-y-4">
@@ -2889,7 +2950,7 @@ export default function BookingWidget() {
                     <Star key={star} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <p className="font-bold text-2xl">4.9</p>
+                <p className="font-bold text-2xl">4.8</p>
                 <p className="text-sm text-gray-600">Based on 1,000+ reviews</p>
               </div>
 
