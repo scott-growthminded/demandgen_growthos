@@ -1044,9 +1044,6 @@ export default function BookingWidget() {
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       data-testid="input-phone"
                     />
-                    <p className="text-sm text-gray-500">
-                      For testing: Use all 1's for new customers, all 2's for returning non-members, or all 3's for members
-                    </p>
                   </div>
 
                   <Button
@@ -1152,9 +1149,6 @@ export default function BookingWidget() {
                       maxLength={6}
                       data-testid="input-otp"
                     />
-                    <p className="text-sm text-gray-500">
-                      For testing: Any code with 4 or more characters will be accepted
-                    </p>
                   </div>
 
                   <Button
