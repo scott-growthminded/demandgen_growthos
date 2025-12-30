@@ -633,7 +633,7 @@ export default function BookingWidget() {
                 <Button
                   onClick={handleAddressSearch}
                   disabled={isSearching || !addressSearch.trim()}
-                  className="text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                  className="text-white hover:opacity-90" style={{ backgroundColor: "#000000" }}
                   data-testid="button-search-address"
                 >
                   {isSearching ? (
