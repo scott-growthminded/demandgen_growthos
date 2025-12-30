@@ -499,6 +499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: loc.id,
         name: loc.name,
         address: loc.address,
+        subtext: loc.subtext, // Pass subtext through to the frontend
         coordinates: loc.coordinates ? {
           lat: loc.coordinates.latitude,
           lng: loc.coordinates.longitude

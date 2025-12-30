@@ -450,7 +450,7 @@ export class BlvdService {
         const name = edge.node.name;
         // Exact match or partial match for subtext
         for (const [key, value] of Object.entries(subtextMapping)) {
-          if (name.includes(key)) {
+          if (name.toLowerCase().includes(key.toLowerCase())) {
             edge.node.subtext = value;
             break;
           }
