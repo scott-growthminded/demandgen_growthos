@@ -57,7 +57,7 @@ const blackIcon = new L.Icon({
 const userLocationIcon = new L.Icon({
   iconUrl: 'data:image/svg+xml;base64,' + btoa(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
-      <circle cx="12" cy="12" r="10" fill="#FF502D" stroke="#fff" stroke-width="2"/>
+      <circle cx="12" cy="12" r="10" fill="#000000" stroke="#fff" stroke-width="2"/>
       <circle cx="12" cy="12" r="4" fill="#fff"/>
     </svg>
   `),
@@ -2002,7 +2002,7 @@ export default function BookingWidget() {
                 </div>
 
                 <div className="pt-4">
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div className="bg-gray-50 rounded-xl p-4 mb-4">
                     <h3 className="font-semibold mb-2">Gift Card Summary</h3>
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
@@ -2291,9 +2291,16 @@ export default function BookingWidget() {
                         <h3 className="text-lg font-bold text-gray-900 mb-1">
                           {format(selectedDate, 'EEEE, MMMM d')}
                         </h3>
-                        <p className="text-sm text-gray-500">
-                          {hasAvailability ? `${timeSlots.length} time slots available` : 'No availability'}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-gray-500">
+                            {hasAvailability ? `${timeSlots.length} time slots available` : 'No availability'}
+                          </p>
+                          {hasAvailability && timeSlots.length <= 10 && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-600 animate-pulse">
+                              Limited spots left
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
@@ -2442,6 +2449,19 @@ export default function BookingWidget() {
                   </div>
                 )}
 
+                {/* Urgency Banner */}
+                {isValid && (
+                  <div className="rounded-xl p-4 flex items-center gap-3" style={{ backgroundColor: '#FFF7ED', border: '1px solid #FFEDD5' }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse" style={{ backgroundColor: '#FF502D' }}>
+                      <Clock className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm" style={{ color: '#C2410C' }}>This time is popular!</p>
+                      <p className="text-xs text-gray-600">2 other people are viewing this slot. Book now to secure your spot.</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Continue Button */}
                 {isValid && (
                   <Button
@@ -2454,7 +2474,7 @@ export default function BookingWidget() {
                         step: nextStep
                       }));
                     }}
-                    className="w-full h-14 text-base font-semibold rounded-xl text-white hover:opacity-90 shadow-lg" 
+                    className="w-full h-14 text-base font-semibold text-white hover:opacity-90 shadow-lg" 
                     style={{ backgroundColor: "#FF502D" }}
                     data-testid="button-continue"
                   >
@@ -2525,6 +2545,11 @@ export default function BookingWidget() {
                                     selectedDate: selectedDate
                                   }));
                                   setSelectedTimeSlot(slot);
+                                  toast({
+                                    title: `Studio changed to ${location.name}`,
+                                    description: `${slot.time} on ${format(selectedDate!, 'MMM d')} selected`,
+                                  });
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
                                 }}
                                 className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs font-medium text-gray-700 hover:border-gray-400 transition-colors"
                                 data-testid={`nearby-time-${location.id}-${slot.time.replace(/[:\s]/g, '-')}`}
@@ -2657,7 +2682,7 @@ export default function BookingWidget() {
 
                 {/* Email opt-in for leads */}
                 {bookingState.userFlow === 'lead' && (
-                  <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
                     <Checkbox
                       id="email-optin"
                       checked={emailOptIn}
