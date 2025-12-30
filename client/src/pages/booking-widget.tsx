@@ -1032,7 +1032,21 @@ export default function BookingWidget() {
 
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 className="text-2xl font-bold mb-2">Enter Your Phone Number</h2>
-                <p className="text-gray-600 mb-6">We'll use this to verify your account</p>
+                <p className="text-gray-600 mb-4">We'll use this to verify your account</p>
+                <p className="text-sm text-gray-500 mb-6">
+                  If you have an international phone number, please{' '}
+                  <a 
+                    href="https://glowbar.com/pages/locations" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:opacity-80"
+                    style={{ color: '#FF502D' }}
+                    data-testid="link-locations"
+                  >
+                    call the studio
+                  </a>{' '}
+                  for assistance.
+                </p>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
