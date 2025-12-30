@@ -854,7 +854,7 @@ export default function BookingWidget() {
                         icon={blackIcon}
                       >
                         <Popup closeButton={true} className="custom-popup">
-                          <div style={{ padding: '6px 4px', minWidth: '180px' }}>
+                          <div style={{ padding: '12px 16px', minWidth: '200px' }}>
                             <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 10px 0' }}>
                               {location.name}
                             </h3>
