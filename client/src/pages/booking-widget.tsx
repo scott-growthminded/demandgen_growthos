@@ -2561,13 +2561,13 @@ export default function BookingWidget() {
                     Continue to payment
                   </Button>
                 )}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    );
-  }
+        );
+      }
 
-  // Step 5: Personal Info (for new users)
+    // Step 5: Personal Info (for new users)
   if (bookingState.step === 'personal-info') {
     const isValid = firstName && lastName && email && authPhone;
 

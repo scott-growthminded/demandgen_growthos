@@ -1872,10 +1872,11 @@ export class BlvdService {
       const locationsResponse = await this.makeClientAPIRequest(locationsQuery);
       console.log('🔍 Client API Locations Response:', JSON.stringify(locationsResponse, null, 2));
       
-      if (locationsResponse.data?.locations?.edges) {
-        console.log(`Found ${locationsResponse.data.locations.edges.length} locations via Client API`);
+      const resData: any = locationsResponse.data;
+      if (resData?.locations?.edges) {
+        console.log(`Found ${resData.locations.edges.length} locations via Client API`);
         // Check if any location matches our target
-        const targetLocation = locationsResponse.data.locations.edges.find((edge: any) => 
+        const targetLocation = resData.locations.edges.find((edge: any) => 
           edge.node.id === locationId
         );
         if (targetLocation) {
@@ -1894,7 +1895,7 @@ export class BlvdService {
             pageInfo: { hasNextPage: false, endCursor: null }
           }
         }
-      } as GraphqlResponse;
+      } as unknown as GraphqlResponse;
     }
   }
 
@@ -1981,7 +1982,7 @@ export class BlvdService {
           data: {
             appointments: (response.data as any).business.appointments
           }
-        } as GraphqlResponse;
+        } as unknown as GraphqlResponse;
       } else {
         console.log('Alternative appointments query also failed, falling back to capacity-based calculation');
         return await this.getLocationCapacityForDate(locationId, startDate, endDate);
@@ -2008,7 +2009,7 @@ export class BlvdService {
         // Include location capacity info based on your real Glowbar data
         totalSlots: 31 // Default capacity, will adjust per location
       }
-    } as GraphqlResponse;
+    } as unknown as GraphqlResponse;
   }
 
   /**
@@ -2021,7 +2022,7 @@ export class BlvdService {
     const totalSlots = Math.floor(totalMinutes / slotDuration);
 
     // Count non-cancelled appointments
-    const bookedAppointments = appointments.filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED');
+    const bookedAppointments = (appointments as any[]).filter((apt: any) => !apt.cancelled && apt.state !== 'CANCELLED');
     const bookedSlots = bookedAppointments.length;
 
     // Calculate availability percentage
@@ -2253,8 +2254,8 @@ export class BlvdService {
           console.log(`  After filtering cancelled, HOLD & date: ${bookedAppointments.length} target date appointments (CONFIRMED only)`);
           
           // Verify all appointments are for the correct date
-          const dateMismatches = appointments.filter(apt => {
-            const aptDate = apt.startAt.split('T')[0];
+          const dateMismatches = appointments.filter((apt: any) => {
+            const aptDate = (apt.startAt as string).split('T')[0];
             return aptDate !== targetDate;
           });
           if (dateMismatches.length > 0) {
@@ -2843,8 +2844,8 @@ export class BlvdService {
           distance
         };
       })
-      .filter((loc): loc is NonNullable<typeof loc> => loc !== null && loc.distance <= maxDistanceMiles)
-      .sort((a: any, b: any) => a.distance - b.distance);
+      .filter((loc: any): loc is NonNullable<any> => loc !== null && (loc.distance as number) <= maxDistanceMiles)
+      .sort((a: any, b: any) => (a.distance as number) - (b.distance as number));
 
     console.log(`✅ Found ${nearbyLocations.length} nearby locations`);
     return nearbyLocations;
