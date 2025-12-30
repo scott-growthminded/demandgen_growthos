@@ -615,7 +615,7 @@ export default function BookingWidget() {
             {/* Location Finder Search */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
               <Label htmlFor="address-search" className="text-base font-semibold mb-2 block">
-                Find Studios Near You
+                Find studios near you
               </Label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -665,7 +665,7 @@ export default function BookingWidget() {
               <div className="space-y-3">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <MapPin className="w-5 h-5" style={{ color: '#FF502D' }} />
-                  Studios Near You
+                  Studios near you
                 </h3>
                 {getLocationsSortedByDistance().map((location: any) => (
                   <div key={location.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4">
@@ -1031,7 +1031,7 @@ export default function BookingWidget() {
               </button>
 
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-2xl font-bold mb-2">Enter Your Phone Number</h2>
+                <h2 className="text-2xl font-bold mb-2">Enter your phone number</h2>
                 <p className="text-gray-600 mb-6">We'll use this to verify your account</p>
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -1156,7 +1156,7 @@ export default function BookingWidget() {
               </button>
 
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-2xl font-bold mb-2">Verify Your Phone Number</h2>
+                <h2 className="text-2xl font-bold mb-2">Verify your phone number</h2>
                 <p className="text-gray-600 mb-6">We've sent a code to {bookingState.userPhone}</p>
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -1461,7 +1461,7 @@ export default function BookingWidget() {
                 )}
               </div>
             )}
-            <h1 className="text-2xl font-bold mb-4" data-testid="text-title">Select A Service</h1>
+            <h1 className="text-2xl font-bold mb-4" data-testid="text-title">Select a service</h1>
             
             {/* Membership Promo Banner - only for leads and non-members */}
             {(bookingState.userFlow === 'lead' || bookingState.userFlow === 'non-member') && (
@@ -1501,7 +1501,7 @@ export default function BookingWidget() {
               {/* Book a Treatment */}
               <AccordionItem value="treatment" className="border-b border-gray-200">
                 <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-treatment">
-                  <span className="text-lg font-medium">Book a Treatment</span>
+                  <span className="text-lg font-medium">Book a treatment</span>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 pb-4">
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
@@ -1641,7 +1641,7 @@ export default function BookingWidget() {
               <AccordionItem value="membership" className="border-b border-gray-200">
                 <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-membership">
                   <span className="text-lg font-medium">
-                    {bookingState.userFlow === 'member' ? 'Upgrade your membership' : 'Buy a Membership'}
+                    {bookingState.userFlow === 'member' ? 'Upgrade your membership' : 'Buy a membership'}
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 pb-4">
@@ -1699,7 +1699,7 @@ export default function BookingWidget() {
               {/* Purchase a Package */}
               <AccordionItem value="package" className="border-b border-gray-200">
                 <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-package">
-                  <span className="text-lg font-medium">Purchase a Package</span>
+                  <span className="text-lg font-medium">Purchase a package</span>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 pb-4">
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
@@ -1785,7 +1785,7 @@ export default function BookingWidget() {
               {/* Purchase a Gift Card */}
               <AccordionItem value="giftcard" className="border-b border-gray-200">
                 <AccordionTrigger className="py-4 hover:no-underline hover:bg-gray-50 transition-colors" data-testid="accordion-giftcard">
-                  <span className="text-lg font-medium">Purchase a Gift Card</span>
+                  <span className="text-lg font-medium">Purchase a gift card</span>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 pb-4">
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
@@ -1964,7 +1964,7 @@ export default function BookingWidget() {
             </Button>
 
             <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Gift Card Recipient</h1>
+              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Gift card recipient</h1>
               <p className="text-gray-600" data-testid="text-subtitle">
                 Who are you sending this gift card to?
               </p>
@@ -2018,7 +2018,7 @@ export default function BookingWidget() {
 
                 <div className="pt-4">
                   <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                    <h3 className="font-semibold mb-2">Gift Card Summary</h3>
+                    <h3 className="font-semibold mb-2">Gift card summary</h3>
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Gift Card</span>
@@ -2644,7 +2644,7 @@ export default function BookingWidget() {
             </Button>
 
             <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Personal Information</h1>
+              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Personal information</h1>
               <p className="text-gray-600">Please provide your contact information</p>
             </div>
 
@@ -2862,7 +2862,7 @@ export default function BookingWidget() {
 
               {/* Payment Form */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                <h3 className="font-bold mb-4">Payment Details</h3>
+                <h3 className="font-bold mb-4">Payment details</h3>
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="cardName" className="text-sm">Cardholder Name</Label>
@@ -2987,11 +2987,11 @@ export default function BookingWidget() {
                 <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t">
                   <div className="flex items-center gap-1 text-gray-500 text-xs">
                     <Lock className="w-3 h-3" />
-                    <span>Secure Payment</span>
+                    <span>Secure payment</span>
                   </div>
                   <div className="flex items-center gap-1 text-gray-500 text-xs">
                     <CreditCard className="w-3 h-3" />
-                    <span>All Cards Accepted</span>
+                    <span>All cards accepted</span>
                   </div>
                 </div>
               </div>
@@ -3122,7 +3122,7 @@ export default function BookingWidget() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-              <h3 className="text-xl font-bold mb-4">{isPurchaseOnly ? 'Order Details' : 'Appointment Details'}</h3>
+              <h3 className="text-xl font-bold mb-4">{isPurchaseOnly ? 'Order details' : 'Appointment details'}</h3>
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-600">{isPurchaseOnly ? 'Product' : 'Service'}</p>
