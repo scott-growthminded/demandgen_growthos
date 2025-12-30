@@ -2915,10 +2915,6 @@ export default function BookingWidget() {
                 </div>
               </div>
 
-              {/* Featured Image */}
-              <div className="rounded-2xl overflow-hidden shadow-sm">
-                <img src={luxurySpaImage} alt="Glowbar Experience" className="w-full h-40 object-cover" />
-              </div>
             </div>
           </div>
         </div>
