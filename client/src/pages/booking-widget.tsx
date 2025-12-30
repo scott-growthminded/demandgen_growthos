@@ -2918,31 +2918,6 @@ export default function BookingWidget() {
                 </div>
               </div>
 
-              {/* Why Glowbar */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                <h4 className="font-bold mb-3">Why Glowbar?</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
-                      <Clock className="w-4 h-4" style={{ color: '#FF502D' }} />
-                    </div>
-                    <span className="text-sm">30-min expert facials</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
-                      <Sparkles className="w-4 h-4" style={{ color: '#FF502D' }} />
-                    </div>
-                    <span className="text-sm">Customized for your skin</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
-                      <Award className="w-4 h-4" style={{ color: '#FF502D' }} />
-                    </div>
-                    <span className="text-sm">No add-on fees, ever</span>
-                  </div>
-                </div>
-              </div>
-
               {/* Featured Image */}
               <div className="rounded-2xl overflow-hidden shadow-sm">
                 <img src={luxurySpaImage} alt="Glowbar Experience" className="w-full h-40 object-cover" />
