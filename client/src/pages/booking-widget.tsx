@@ -1576,7 +1576,7 @@ export default function BookingWidget() {
                               style={{ color: '#FF502D' }}
                               data-testid="link-become-member"
                             >
-                              Glowbar Members pay $60 - become a member and save $20/month
+                              Glowbar Members pay $65 - become a member and save $20/month
                             </button>
                             <div className="space-y-3">
                               <Button
@@ -1628,7 +1628,7 @@ export default function BookingWidget() {
                               style={{ color: '#FF502D' }}
                               data-testid="link-become-member"
                             >
-                              Glowbar Members pay $60 - become a member and save $20/month
+                              Glowbar Members pay $65 - become a member and save $20/month
                             </button>
                             <Button
                               onClick={() => handleProductSelect({ 
@@ -1657,10 +1657,10 @@ export default function BookingWidget() {
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 pb-4">
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
-                    {/* Glowbar Membership $60 - only for non-members */}
+                    {/* Glowbar Membership $65 - only for non-members */}
                     {bookingState.userFlow !== 'member' && (
                       <div className="pb-5 border-b border-gray-100">
-                          <h3 className="text-base font-semibold mb-2">Glowbar Membership ($60)</h3>
+                          <h3 className="text-base font-semibold mb-2">Glowbar Membership ($65)</h3>
                           <p className="text-xs text-gray-700 mb-2">You'll receive the following:</p>
                           <ul className="text-xs text-gray-700 space-y-0.5 mb-2 list-disc list-inside">
                             <li>1 facial vouchers per month redeemable at any Glowbar studio for 3 months</li>
@@ -1670,11 +1670,11 @@ export default function BookingWidget() {
                             <li>Access to our loyalty program</li>
                             <li>4 month minimum commitment</li>
                           </ul>
-                          <p className="text-xl font-bold mb-3">$60.00</p>
+                          <p className="text-xl font-bold mb-3">$65.00</p>
                           <Button
-                            onClick={() => handleProductSelect({ id: 'membership-60', name: 'Glowbar Membership', price: 60, description: 'Monthly membership' })}
+                            onClick={() => handleProductSelect({ id: 'membership-65', name: 'Glowbar Membership', price: 65, description: 'Monthly membership' })}
                             className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
-                            data-testid="button-select-membership-60"
+                            data-testid="button-select-membership-65"
                           >
                             Select
                           </Button>
