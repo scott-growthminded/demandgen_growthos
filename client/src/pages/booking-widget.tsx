@@ -1542,18 +1542,18 @@ export default function BookingWidget() {
                             >
                               Redeem with your voucher
                             </button>
-                            <Button
-                              onClick={() => handleProductSelect({ 
-                                id: 'member-treatment', 
-                                name: '(Member) First Time & Returning Treatment', 
-                                price: 0, 
-                                description: '30min facial - voucher applied' 
-                              })}
-                              className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
-                              data-testid="button-select-treatment"
-                            >
-                              Select
-                            </Button>
+                              <Button
+                                onClick={() => handleProductSelect({ 
+                                  id: 'member-treatment', 
+                                  name: '(Member) First Time & Returning Treatment', 
+                                  price: 0, 
+                                  description: '30min facial - voucher applied' 
+                                })}
+                                className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                                data-testid="button-select-treatment"
+                              >
+                                Select
+                              </Button>
                           </>
                         ) : bookingState.userFlow === 'non-member' ? (
                           <>
@@ -1579,31 +1579,31 @@ export default function BookingWidget() {
                               Glowbar Members pay $65 - become a member and save $15/month
                             </button>
                             <div className="space-y-3">
-                              <Button
-                                onClick={() => handleProductSelect({ 
-                                  id: 'returning-treatment', 
-                                  name: '(Non-Member) Returning Treatment', 
-                                  price: 80, 
-                                  description: '30min facial' 
-                                })}
-                                className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
-                                data-testid="button-book-treatment-paid"
-                              >
-                                Book Your Treatment ($80)
-                              </Button>
-                              <div>
                                 <Button
                                   onClick={() => handleProductSelect({ 
-                                    id: 'returning-treatment-credits', 
-                                    name: '(Non-Member) Returning Treatment - Credits', 
-                                    price: 0, 
-                                    description: '30min facial - using credits' 
+                                    id: 'returning-treatment', 
+                                    name: '(Non-Member) Returning Treatment', 
+                                    price: 80, 
+                                    description: '30min facial' 
                                   })}
-                                  className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
-                                  data-testid="button-book-treatment-credits"
+                                  className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                                  data-testid="button-book-treatment-paid"
                                 >
-                                  Book Your Treatment with Your Credits
+                                  Book Your Treatment ($80)
                                 </Button>
+                                <div>
+                                  <Button
+                                    onClick={() => handleProductSelect({ 
+                                      id: 'returning-treatment-credits', 
+                                      name: '(Non-Member) Returning Treatment - Credits', 
+                                      price: 0, 
+                                      description: '30min facial - using credits' 
+                                    })}
+                                    className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                                    data-testid="button-book-treatment-credits"
+                                  >
+                                    Book Your Treatment with Your Credits
+                                  </Button>
                                 <p className="text-xs text-gray-600 mt-1 text-center" data-testid="text-remaining-credits">
                                   Your Remaining Credits: 5
                                 </p>
@@ -1637,7 +1637,7 @@ export default function BookingWidget() {
                                 price: 80, 
                                 description: '30min facial' 
                               })}
-                              className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                              className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                               data-testid="button-select-treatment"
                             >
                               Select
@@ -1673,7 +1673,7 @@ export default function BookingWidget() {
                           <p className="text-xl font-bold mb-3">$65.00</p>
                           <Button
                             onClick={() => handleProductSelect({ id: 'membership-65', name: 'Glowbar Membership', price: 65, description: 'Monthly membership' })}
-                            className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                            className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                             data-testid="button-select-membership-65"
                           >
                             Select
@@ -1697,7 +1697,7 @@ export default function BookingWidget() {
                         <p className="text-xl font-bold mb-3">$110.00</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'membership-110', name: bookingState.userFlow === 'member' ? 'Glowbar Membership+' : 'Glowbar Membership+', price: 110, description: 'Monthly membership' })}
-                          className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                          className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-membership-110"
                         >
                           Select
@@ -1726,7 +1726,7 @@ export default function BookingWidget() {
                         <p className="text-sm font-medium text-gray-600 mb-3">$76 per facial</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'package-3', name: 'Three (3) Facials Package', price: 228, description: '3 facial package' })}
-                          className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                          className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-package-3"
                         >
                           Buy Now
@@ -1745,7 +1745,7 @@ export default function BookingWidget() {
                         <p className="text-sm font-medium text-gray-600 mb-3">$72 per facial</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'package-6', name: 'Six (6) Facials Package', price: 432, description: '6 facial package' })}
-                          className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                          className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-package-6"
                         >
                           Buy Now
@@ -1764,7 +1764,7 @@ export default function BookingWidget() {
                         <p className="text-sm font-medium text-gray-600 mb-3">$68 per facial</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'package-9', name: 'Nine (9) Facials Package', price: 612, description: '9 facial package' })}
-                          className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                          className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-package-9"
                         >
                           Buy Now
@@ -1783,7 +1783,7 @@ export default function BookingWidget() {
                         <p className="text-sm font-medium text-gray-600 mb-3">$65 per facial</p>
                         <Button
                           onClick={() => handleProductSelect({ id: 'package-12', name: 'Twelve (12) Facials Package', price: 780, description: '12 facial package' })}
-                          className="w-full h-12 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                          className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                           data-testid="button-select-package-12"
                         >
                           Buy Now
