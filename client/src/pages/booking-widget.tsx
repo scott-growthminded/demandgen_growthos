@@ -1516,12 +1516,6 @@ export default function BookingWidget() {
                             <h3 className="text-base font-semibold mb-2">
                               (Member) First Time & Returning Treatment <span className="text-gray-600">30min</span>
                             </h3>
-                            <p className="text-xs text-gray-700 mb-2">
-                              If you have purchased a membership online or in-studio, book this treatment.
-                            </p>
-                            <p className="text-xs text-gray-700 mb-2">
-                              Please note, your card will *not* be charged now and your monthly voucher will be applied to your appointment upon checkout. We can't wait to see your face.
-                            </p>
                             <button 
                               onClick={() => {
                                 const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
@@ -1554,9 +1548,6 @@ export default function BookingWidget() {
                             <h3 className="text-base font-semibold mb-2">
                               (Non-Member) Returning Treatment <span className="text-gray-600">30min</span>
                             </h3>
-                            <p className="text-xs text-gray-700 mb-2">
-                              Welcome back! Book your next facial treatment. Your card will *not* be charged now; it will be charged after your appointment.
-                            </p>
                             <p className="text-xl font-bold mb-1">$80.00</p>
                             <button 
                               onClick={() => {
@@ -1589,17 +1580,17 @@ export default function BookingWidget() {
                                   <Button
                                     onClick={() => handleProductSelect({ 
                                       id: 'returning-treatment-credits', 
-                                      name: '(Non-Member) Returning Treatment - Credits', 
+                                      name: '(Non-Member) Returning Treatment - Vouchers', 
                                       price: 0, 
                                       description: '30min facial - using credits' 
                                     })}
                                     className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
                                     data-testid="button-book-treatment-credits"
                                   >
-                                    Book Your Treatment with Your Credits
+                                    Book Your Treatment with Your Vouchers
                                   </Button>
                                 <p className="text-xs text-gray-600 mt-1 text-center" data-testid="text-remaining-credits">
-                                  Your Remaining Credits: 5
+                                  Your Remaining Vouchers: 5
                                 </p>
                               </div>
                             </div>
