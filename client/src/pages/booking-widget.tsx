@@ -679,7 +679,7 @@ export default function BookingWidget() {
                         {location.address?.line1}, {location.address?.city}, {location.address?.state}
                       </p>
                       {location.subtext && (
-                        <p className="text-xs text-gray-500 mb-3 italic">
+                        <p className="text-xs text-[#FF502D] font-medium mb-3">
                           {location.subtext}
                         </p>
                       )}
@@ -767,7 +767,7 @@ export default function BookingWidget() {
                                     {location.address?.line1}, {location.address?.city}, {location.address?.state}
                                   </p>
                                   {location.subtext && (
-                                    <p className="text-xs text-gray-500 mb-3 italic">
+                                    <p className="text-xs text-[#FF502D] font-medium mb-3">
                                       {location.subtext}
                                     </p>
                                   )}
@@ -878,7 +878,7 @@ export default function BookingWidget() {
                               {location.address?.city}, {location.address?.state} {location.address?.zip || ''}
                             </p>
                             {location.subtext && (
-                              <p style={{ margin: '-8px 0 12px 0', color: '#666', fontSize: '11px', fontStyle: 'italic' }}>
+                              <p style={{ margin: '-8px 0 12px 0', color: '#FF502D', fontSize: '11px', fontWeight: '500' }}>
                                 {location.subtext}
                               </p>
                             )}

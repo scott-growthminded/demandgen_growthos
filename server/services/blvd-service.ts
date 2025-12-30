@@ -430,22 +430,35 @@ export class BlvdService {
 
     const response = await this.makeGraphqlRequest(query, variables);
     
-    // Add subtext mapping for locations based on name keywords
-    if ((response.data as any)?.locations?.edges) {
-      const subtextMapping: Record<string, string> = {
-        'Murray Hill': 'At the corner of East 26th Street',
-        'West 100th': 'At the corner of West 100th Street, next to Starbucks',
-        'Bryn Mawr': 'Bryn Mawr Village Shopping Center, next to [Solidcore]',
-        'Rittenhouse Square': 'Between Chestnut and Ranstead Streets',
-        'Prospect Heights': 'Entrance on Atlantic Avenue',
-        'Chestnut Hill': 'Chestnut Hill Square, next to sweetgreen',
-        'Back Bay': 'Lower level, below Credo',
-        'Georgetown': 'Next to Tatte, between P and Q Streets',
-        'Jersey City': 'At the corner of Bay Street',
-        'Lynnfield': 'MarketStreet, between The Escape Game and Eddie Bauer',
-        'Hingham': 'Derby Street Shops, next to Ben & Jerry\'s'
-      };
+    // Detailed subtext mapping for location identification and additional context
+    const subtextMapping: Record<string, string> = {
+      'Murray Hill': 'At the corner of East 26th Street',
+      'West 100th': 'At the corner of West 100th Street, next to Starbucks',
+      'Bryn Mawr': 'Bryn Mawr Village Shopping Center, next to [Solidcore]',
+      'Rittenhouse Square': 'Between Chestnut and Ranstead Streets',
+      'Prospect Heights': 'Entrance on Atlantic Avenue',
+      'Chestnut Hill': 'Chestnut Hill Square, next to sweetgreen',
+      'Back Bay': 'Lower level, below Credo',
+      'Georgetown': 'Next to Tatte, between P and Q Streets',
+      'Jersey City': 'At the corner of Bay Street',
+      'Lynnfield': 'MarketStreet, between The Escape Game and Eddie Bauer',
+      'Hingham': 'Derby Street Shops, next to Ben & Jerry\'s',
+      "Upper East Side": "81st & 2nd",
+      "Flatiron": "20th & 5th",
+      "Upper West Side": "71st & Columbus",
+      "West Village": "Greenwich & 6th Ave",
+      "Tribeca": "West Broadway & Duane",
+      "Midtown East": "54th & 3rd",
+      "Chelsea": "21st & 8th",
+      "Cobble Hill": "Court & Bergen",
+      "Williamsburg": "Wythe & N 4th",
+      "Hoboken": "Washington St",
+      "Scarsdale": "Central Ave",
+      "Greenwich": "Putnam Ave",
+      "Westport": "Post Rd E"
+    };
 
+    if ((response.data as any)?.locations?.edges) {
       (response.data as any).locations.edges.forEach((edge: any) => {
         const name = edge.node.name;
         // Exact match or partial match for subtext
