@@ -1492,11 +1492,10 @@ export default function BookingWidget() {
                           membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                       }}
-                      className="text-white px-5 py-1.5 text-sm"
-                      style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}
+                      className="bg-white text-black px-5 py-1.5 text-sm hover:bg-gray-100"
                       data-testid="button-become-member"
                     >
-                      Become a member
+                      Join now
                     </Button>
                   </div>
                 </div>
