@@ -1576,7 +1576,7 @@ export default function BookingWidget() {
                               style={{ color: '#FF502D' }}
                               data-testid="link-become-member"
                             >
-                              Glowbar Members pay $65 - become a member and save $20/month
+                              Glowbar Members pay $65 - become a member and save $15/month
                             </button>
                             <div className="space-y-3">
                               <Button
@@ -1628,7 +1628,7 @@ export default function BookingWidget() {
                               style={{ color: '#FF502D' }}
                               data-testid="link-become-member"
                             >
-                              Glowbar Members pay $65 - become a member and save $20/month
+                              Glowbar Members pay $65 - become a member and save $15/month
                             </button>
                             <Button
                               onClick={() => handleProductSelect({ 
