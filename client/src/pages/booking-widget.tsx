@@ -2386,7 +2386,7 @@ export default function BookingWidget() {
             {selectedDate && nearbyLocations.length >= 2 && (
               <div className="mt-6">
                 <div className="mb-4">
-                  <h4 className="font-bold text-gray-900 text-lg">More times at nearby studios at any esthetician</h4>
+                  <h4 className="font-bold text-gray-900 text-lg">More times at nearby studios with any estheticians</h4>
                   <p className="text-sm text-gray-500">for {format(selectedDate, 'EEEE, MMMM d')}</p>
                 </div>
                 
