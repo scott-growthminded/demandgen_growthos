@@ -2720,7 +2720,25 @@ export default function BookingWidget() {
                         <p>{bookingState.selectedDate && format(bookingState.selectedDate, 'EEE, MMM d')} at {bookingState.selectedTime?.time}</p>
                       </div>
                     )}
-                    <p className="font-bold mt-2" style={{ color: '#FF502D' }}>${productPrice.toFixed(2)}</p>
+                    {!isPurchaseOnly && (
+                      <p className="font-bold mt-2" style={{ color: '#FF502D' }}>
+                        ${bookingState.userFlow === 'member' ? '65.00' : '80.00'}
+                      </p>
+                    )}
+                    {isPurchaseOnly && (
+                      <p className="font-bold mt-2" style={{ color: '#FF502D' }}>${productPrice.toFixed(2)}</p>
+                    )}
+                    {/* Voucher info for members and non-members */}
+                    {!isPurchaseOnly && bookingState.userFlow === 'member' && (
+                      <p className="text-sm text-gray-600 mt-2" data-testid="text-checkout-voucher-info">
+                        You have <span style={{ fontWeight: '600', color: '#FF502D' }}>1 voucher</span> in your account that can be used for this facial.
+                      </p>
+                    )}
+                    {!isPurchaseOnly && bookingState.userFlow === 'non-member' && (
+                      <p className="text-sm text-gray-600 mt-2" data-testid="text-checkout-voucher-info">
+                        You have <span style={{ fontWeight: '600', color: '#FF502D' }}>5 vouchers</span> in your account that can be used for this facial.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
