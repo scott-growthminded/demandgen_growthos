@@ -1962,7 +1962,7 @@ export default function BookingWidget() {
                   <h3 className="font-semibold mb-2">Gift card summary</h3>
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Gift Card</span>
+                      <span className="text-gray-600">Description</span>
                       <span className="font-medium">{bookingState.selectedProduct?.name}</span>
                     </div>
                     <div className="flex justify-between">
