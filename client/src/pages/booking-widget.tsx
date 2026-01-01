@@ -2955,8 +2955,12 @@ export default function BookingWidget() {
               {/* Condensed Terms */}
               <p className="text-xs text-gray-500 text-center">
                 By continuing, you agree to our <a href="#" className="underline" style={{ color: '#FF502D' }}>Terms</a> and <a href="#" className="underline" style={{ color: '#FF502D' }}>Privacy Policy</a>. 
-                {!isPurchaseOnly && <> Free cancellation or modification 24 hours before your appointment. After that, changes to the appointment will result in a charge of $30 plus any applicable taxes and fees. <a href="https://glowbar.com/pages/faqs" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#FF502D' }}>Learn More</a>. </>}
-                By booking this appointment, you agree to receive texts and emails from Glowbar. You can unsubscribe at any time. Msg & data rates may apply.
+                {!isPurchaseOnly ? (
+                  <> Free cancellation or modification 24 hours before your appointment. After that, changes to the appointment will result in a charge of $30 plus any applicable taxes and fees. <a href="https://glowbar.com/pages/faqs" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#FF502D' }}>Learn More</a>. </>
+                ) : (
+                  <> By purchasing this service, you agree to receive texts and emails from Glowbar. You can unsubscribe at any time. Msg & data rates may apply. </>
+                )}
+                {!isPurchaseOnly && <>By booking this appointment, you agree to receive texts and emails from Glowbar. You can unsubscribe at any time. Msg & data rates may apply.</>}
               </p>
             </div>
 
