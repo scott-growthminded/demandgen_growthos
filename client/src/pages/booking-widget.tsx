@@ -2418,7 +2418,7 @@ export default function BookingWidget() {
                           <p className="text-sm text-gray-400">Loading times...</p>
                         ) : nearbySlots.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
-                            {nearbySlots.slice(0, 6).map((slot: any) => (
+                            {nearbySlots.slice(0, 4).map((slot: any) => (
                               <button
                                 key={slot.id}
                                 onClick={() => {
@@ -2446,8 +2446,8 @@ export default function BookingWidget() {
                                 {slot.time}
                               </button>
                             ))}
-                            {nearbySlots.length > 6 && (
-                              <span className="text-sm text-gray-400 self-center">+{nearbySlots.length - 6} more</span>
+                            {nearbySlots.length > 4 && (
+                              <span className="text-sm text-gray-400 self-center underline cursor-pointer hover:text-gray-600">view more</span>
                             )}
                           </div>
                         ) : (
