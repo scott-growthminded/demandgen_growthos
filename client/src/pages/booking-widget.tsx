@@ -3039,7 +3039,7 @@ export default function BookingWidget() {
                 <CheckCircle className="w-12 h-12 text-green-600" />
               </div>
               <h1 className="text-4xl font-bold mb-2" data-testid="text-title">
-                {isPurchaseOnly ? 'Purchase Confirmed!' : 'Booking Confirmed!'}
+                {isPurchaseOnly ? 'Purchase Confirmed!' : 'Booking confirmed!'}
               </h1>
               <p className="text-gray-600" data-testid="text-subtitle">
                 {isPurchaseOnly 
