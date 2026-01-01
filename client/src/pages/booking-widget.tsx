@@ -3111,7 +3111,7 @@ export default function BookingWidget() {
                   setBookingState({ step: 'location' });
                   setAcceptTerms(false);
                 }}
-                className="w-full text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                className="w-full bg-black text-white hover:opacity-90"
                 data-testid="button-new-booking"
               >
                 {isPurchaseOnly ? 'Make Another Purchase' : 'Book Another Appointment'}
