@@ -1871,24 +1871,24 @@ export default function BookingWidget() {
               Back
             </Button>
 
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Gift card recipient</h1>
-              <p className="text-gray-600" data-testid="text-subtitle">
-                Who are you sending this gift card to?
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
-              {/* Gift Card Mockup */}
-              <div className="mb-6">
+            <div className="mb-8 flex items-center justify-between gap-4">
+              <div>
+                <h1 className="text-4xl font-bold mb-2" data-testid="text-title">Gift card recipient</h1>
+                <p className="text-gray-600" data-testid="text-subtitle">
+                  Who are you sending this gift card to?
+                </p>
+              </div>
+              <div className="shrink-0">
                 <img 
                   src={giftCardMockupPath} 
                   alt="Glowbar Gift Card" 
-                  className="w-full h-auto rounded-xl shadow-md border border-gray-100"
+                  className="w-32 h-auto rounded-lg shadow-sm border border-gray-100"
                   data-testid="img-gift-card-mockup"
                 />
               </div>
+            </div>
 
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="recipientName">Recipient Name *</Label>
