@@ -1472,14 +1472,9 @@ export default function BookingWidget() {
                   </p>
                 )}
                 {bookingState.userFlow === 'member' && (
-                  <>
-                    <p className="text-sm text-gray-600" data-testid="text-membership-status">
-                      Your membership is <span style={{ color: '#FF502D', fontWeight: '600' }}>Active</span>
-                    </p>
-                    <p className="text-base text-gray-600" data-testid="text-member-vouchers">
-                      You have <span style={{ fontWeight: '600', color: '#FF502D' }}>1 voucher</span> available.
-                    </p>
-                  </>
+                  <p className="text-base text-gray-600" data-testid="text-membership-status">
+                    Your membership is <span style={{ color: '#FF502D', fontWeight: '600' }}>Active</span>. You have <span style={{ fontWeight: '600', color: '#FF502D' }}>1 voucher</span> available.
+                  </p>
                 )}
               </div>
             )}
