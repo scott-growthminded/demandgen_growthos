@@ -23,64 +23,65 @@ export function PersonalInfoPage() {
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-2xl mx-auto pt-8">
         <Card className="p-6">
-          <h1 className="text-2xl font-semibold text-gray-600 mb-6" data-testid="text-page-title">
+          <h1 className="text-2xl font-bold mb-6" data-testid="text-page-title">
             Personal info
           </h1>
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
+              <Label htmlFor="firstName" className="text-sm font-medium">First Name</Label>
               <Input
                 id="firstName"
                 placeholder="Name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="h-14 bg-gray-300 border-0"
+                className="h-12 bg-gray-50 border border-gray-200"
                 data-testid="input-first-name"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
+              <Label htmlFor="lastName" className="text-sm font-medium">Last Name</Label>
               <Input
                 id="lastName"
                 placeholder="Last Name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="h-14 bg-gray-300 border-0"
+                className="h-12 bg-gray-50 border border-gray-200"
                 data-testid="input-last-name"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-14 bg-gray-300 border-0"
+                className="h-12 bg-gray-50 border border-gray-200"
                 data-testid="input-email"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone" className="text-sm font-medium">Phone</Label>
               <Input
                 id="phone"
                 type="tel"
                 placeholder="Phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="h-14 bg-gray-300 border-0"
+                className="h-12 bg-gray-50 border border-gray-200"
                 data-testid="input-phone"
               />
             </div>
             
             <Button
               onClick={handleContinue}
-              className="w-full h-12 bg-blue-600 hover:bg-blue-700 mt-6"
+              className="w-full h-12 text-base font-medium text-white hover:opacity-90 mt-6"
+              style={{ backgroundColor: '#FF502D' }}
               disabled={!isValid}
               data-testid="button-continue"
             >

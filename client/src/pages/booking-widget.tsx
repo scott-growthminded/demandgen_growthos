@@ -1958,7 +1958,7 @@ export default function BookingWidget() {
                       }));
                     }}
                     disabled={!isValid}
-                    className="w-full text-white hover:opacity-90"
+                    className="w-full h-12 text-base font-medium text-white hover:opacity-90"
                     style={{ backgroundColor: '#FF502D' }}
                     data-testid="button-continue"
                   >
@@ -2615,7 +2615,7 @@ export default function BookingWidget() {
                       step: 'product'
                     }));
                   }}
-                  className="w-full text-white hover:opacity-90 mt-6"
+                  className="w-full h-12 text-base font-medium text-white hover:opacity-90 mt-6"
                   style={{ backgroundColor: '#FF502D' }}
                   disabled={!isValid}
                   data-testid="button-continue"
@@ -2706,7 +2706,7 @@ export default function BookingWidget() {
             </Button>
 
             <div className="mb-6">
-              <h1 className="text-3xl font-bold mb-1" data-testid="text-title">Complete your {isPurchaseOnly ? 'purchase' : 'booking'}</h1>
+              <h1 className="text-2xl font-bold mb-1" data-testid="text-title">Complete your {isPurchaseOnly ? 'purchase' : 'booking'}</h1>
               <p className="text-gray-600" data-testid="text-subtitle">You're almost there!</p>
             </div>
 
@@ -2924,7 +2924,7 @@ export default function BookingWidget() {
                     setBookingState(prev => ({ ...prev, step: 'confirmation' }));
                   }}
                   disabled={selectedPaymentMethod === 'new' && (!cardName || !cardNumber || !cardExpiry || !cardCvc)}
-                  className="w-full text-white hover:opacity-90 text-lg py-6 mt-4"
+                  className="w-full h-14 text-base font-semibold text-white hover:opacity-90 mt-4"
                   style={{ backgroundColor: '#FF502D' }}
                   data-testid="button-book-now"
                 >
@@ -3091,7 +3091,7 @@ export default function BookingWidget() {
                       selectedEsthetician: undefined
                     }));
                   }}
-                  className="w-full text-white hover:opacity-90 text-lg py-6"
+                  className="w-full h-14 text-base font-semibold text-white hover:opacity-90"
                   style={{ backgroundColor: '#FF502D' }}
                   data-testid="button-book-appointment"
                 >
