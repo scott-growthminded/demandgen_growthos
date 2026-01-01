@@ -202,8 +202,6 @@ export default function BookingWidget() {
     { id: 'saved-2', brand: 'Mastercard', last4: '8888', expiry: '03/25' }
   ];
 
-  // Checkout countdown timer state (5 minutes = 300 seconds)
-  const [checkoutTimeRemaining, setCheckoutTimeRemaining] = useState(300);
 
   // Gift card recipient info
   const [giftRecipientName, setGiftRecipientName] = useState('');
@@ -223,31 +221,6 @@ export default function BookingWidget() {
     }
   }, [phoneNumber, authPhone]);
 
-  // Checkout countdown timer effect
-  useEffect(() => {
-    // Only run timer on checkout step for appointment bookings (not purchase-only)
-    const isMembership = bookingState.selectedProduct?.id.startsWith('membership-');
-    const isPackage = bookingState.selectedProduct?.id.startsWith('package-');
-    const isGiftCard = bookingState.selectedProduct?.id.startsWith('giftcard-');
-    const isPurchaseOnly = isMembership || isPackage || isGiftCard;
-
-    if (bookingState.step === 'checkout' && !isPurchaseOnly) {
-      // Reset timer when entering checkout
-      setCheckoutTimeRemaining(300);
-
-      const timer = setInterval(() => {
-        setCheckoutTimeRemaining(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-  }, [bookingState.step, bookingState.selectedProduct?.id]);
 
   // Fetch locations
   const { data: locationsData, isLoading: locationsLoading } = useQuery({
@@ -2732,27 +2705,9 @@ export default function BookingWidget() {
               Back
             </Button>
 
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold mb-1" data-testid="text-title">Complete your {isPurchaseOnly ? 'purchase' : 'booking'}</h1>
-                <p className="text-gray-600" data-testid="text-subtitle">You're almost there!</p>
-              </div>
-              {/* Compact Timer - Only for appointment bookings */}
-              {!isPurchaseOnly && (
-                <div 
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-white ${
-                    checkoutTimeRemaining <= 60 ? 'bg-red-500' : ''
-                  }`}
-                  style={{ backgroundColor: checkoutTimeRemaining <= 60 ? undefined : '#FF502D' }}
-                  data-testid="checkout-timer"
-                >
-                  <Clock className="w-4 h-4" />
-                  <span className="text-sm font-medium">Time left:</span>
-                  <span className="font-bold" data-testid="timer-display">
-                    {Math.floor(checkoutTimeRemaining / 60)}:{(checkoutTimeRemaining % 60).toString().padStart(2, '0')}
-                  </span>
-                </div>
-              )}
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold mb-1" data-testid="text-title">Complete your {isPurchaseOnly ? 'purchase' : 'booking'}</h1>
+              <p className="text-gray-600" data-testid="text-subtitle">You're almost there!</p>
             </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
