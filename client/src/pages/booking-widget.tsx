@@ -2404,15 +2404,8 @@ export default function BookingWidget() {
                     
                     return (
                       <div key={location.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="mb-3">
                           <h5 className="font-semibold text-gray-900">{location.name}</h5>
-                          {location.distance !== null && location.distance !== undefined && (
-                            <span className="text-xs font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-600">
-                              {location.distance < 0.1 
-                                ? `${Math.round(location.distance * 5280)} ft` 
-                                : `${location.distance.toFixed(1)} mi`}
-                            </span>
-                          )}
                         </div>
                         {availabilityQuery.isLoading ? (
                           <p className="text-sm text-gray-400">Loading times...</p>
