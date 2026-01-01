@@ -211,6 +211,7 @@ export default function BookingWidget() {
   // Gift card recipient info
   const [giftRecipientName, setGiftRecipientName] = useState('');
   const [giftRecipientEmail, setGiftRecipientEmail] = useState('');
+  const [giftFrom, setGiftFrom] = useState('');
   const [giftMessage, setGiftMessage] = useState('');
   const [giftDeliveryDate, setGiftDeliveryDate] = useState<Date | undefined>(new Date());
   
@@ -1844,7 +1845,7 @@ export default function BookingWidget() {
 
   // Step 3.5: Gift Card Recipient Information
   if (bookingState.step === 'gift-recipient') {
-    const isValid = giftRecipientName && giftRecipientEmail && giftDeliveryDate;
+    const isValid = giftRecipientName && giftRecipientEmail && giftFrom && giftDeliveryDate;
 
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -1889,7 +1890,7 @@ export default function BookingWidget() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div>
                   <Label htmlFor="recipientName">Recipient Name *</Label>
                   <Input
@@ -1912,6 +1913,18 @@ export default function BookingWidget() {
                     placeholder="Enter recipient's email"
                     className="mt-2"
                     data-testid="input-recipient-email"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="giftFrom">From *</Label>
+                  <Input
+                    id="giftFrom"
+                    value={giftFrom}
+                    onChange={(e) => setGiftFrom(e.target.value)}
+                    placeholder="Your name"
+                    className="mt-2"
+                    data-testid="input-gift-from"
                   />
                 </div>
               </div>
@@ -1958,20 +1971,6 @@ export default function BookingWidget() {
               </div>
 
               <div className="pt-4">
-                <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                  <h3 className="font-semibold mb-2">Gift card summary</h3>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Description</span>
-                      <span className="font-medium">{bookingState.selectedProduct?.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Amount</span>
-                      <span className="font-medium">${bookingState.selectedProduct?.price.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-
                 <Button
                   onClick={() => setBookingState(prev => ({ ...prev, step: 'checkout' }))}
                   className="w-full h-12 text-base font-medium text-white hover:opacity-90"
