@@ -1728,26 +1728,36 @@ export default function BookingWidget() {
                         <button
                           key={amount}
                           onClick={() => handleProductSelect({ id: `giftcard-${amount}`, name: `Gift Card $${amount}`, price: amount, description: 'Gift card' })}
-                          className="w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between"
+                          className="w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between group"
                           data-testid={`button-giftcard-${amount}`}
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
                             <div className="text-left">
                               <span className="text-lg font-medium">${amount}.00</span>
                               <p className="text-sm text-gray-500">{description}</p>
                             </div>
                           </div>
+                          <div 
+                            className="px-4 py-2 rounded-full text-sm font-semibold text-white transition-opacity opacity-0 group-hover:opacity-100"
+                            style={{ backgroundColor: '#FF502D' }}
+                          >
+                            Buy now
+                          </div>
                         </button>
                       ))}
                       <button
                         onClick={() => handleProductSelect({ id: 'giftcard-custom', name: 'Custom Gift Card', price: 100, description: 'Custom amount gift card' })}
-                        className="w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between"
+                        className="w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between group"
                         data-testid="button-giftcard-custom"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
                           <span className="text-lg">Custom</span>
+                        </div>
+                        <div 
+                          className="px-4 py-2 rounded-full text-sm font-semibold text-white transition-opacity opacity-0 group-hover:opacity-100"
+                          style={{ backgroundColor: '#FF502D' }}
+                        >
+                          Buy now
                         </div>
                       </button>
                     </div>
