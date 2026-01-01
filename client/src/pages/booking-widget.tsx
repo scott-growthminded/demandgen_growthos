@@ -1844,7 +1844,7 @@ export default function BookingWidget() {
 
   // Step 3.5: Gift Card Recipient Information
   if (bookingState.step === 'gift-recipient') {
-    const isValid = giftRecipientName && giftRecipientEmail;
+    const isValid = giftRecipientName && giftRecipientEmail && giftDeliveryDate;
 
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -1858,23 +1858,6 @@ export default function BookingWidget() {
         </div>
 
         <ProgressBar />
-
-        {/* Selected Studio Display */}
-        {bookingState.selectedLocation && (
-          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
-            <button
-              onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
-              className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
-              data-testid="button-change-studio"
-            >
-              <MapPin className="w-4 h-4" />
-              <span className="font-medium">{bookingState.selectedLocation.name}</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-sm">{bookingState.selectedLocation.city}, {bookingState.selectedLocation.state}</span>
-              <span className="text-xs ml-2" style={{ color: '#FF502D' }}>Change</span>
-            </button>
-          </div>
-        )}
 
         <div className="flex-1">
           <div className="max-w-2xl mx-auto px-6 py-8">
@@ -1974,78 +1957,31 @@ export default function BookingWidget() {
                 </Popover>
               </div>
 
-              <Button
-                onClick={() => setBookingState(prev => ({ ...prev, step: 'checkout' }))}
-                className="w-full h-12 text-base font-medium text-white hover:opacity-90 mt-6"
-                style={{ backgroundColor: '#FF502D' }}
-                disabled={!giftRecipientName || !giftRecipientEmail || !giftDeliveryDate}
-                data-testid="button-continue"
-              >
-                Continue to payment
-              </Button>
-            </div>
-                  <Label htmlFor="recipientEmail">Recipient Email *</Label>
-                  <Input
-                    id="recipientEmail"
-                    type="email"
-                    value={giftRecipientEmail}
-                    onChange={(e) => setGiftRecipientEmail(e.target.value)}
-                    placeholder="recipient@example.com"
-                    className="mt-2"
-                    data-testid="input-recipient-email"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    The gift card will be sent to this email address
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="giftMessage">Personal Message (Optional)</Label>
-                  <textarea
-                    id="giftMessage"
-                    value={giftMessage}
-                    onChange={(e) => setGiftMessage(e.target.value)}
-                    placeholder="Write a personal message..."
-                    rows={4}
-                    className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:border-transparent"
-                    style={{ '--tw-ring-color': '#FF502D' } as any}
-                    data-testid="input-gift-message"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Maximum 200 characters
-                  </p>
-                </div>
-
-                <div className="pt-4">
-                  <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                    <h3 className="font-semibold mb-2">Gift card summary</h3>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Gift Card</span>
-                        <span className="font-medium">{bookingState.selectedProduct?.name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Amount</span>
-                        <span className="font-medium">${bookingState.selectedProduct?.price.toFixed(2)}</span>
-                      </div>
+              <div className="pt-4">
+                <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                  <h3 className="font-semibold mb-2">Gift card summary</h3>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Gift Card</span>
+                      <span className="font-medium">{bookingState.selectedProduct?.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Amount</span>
+                      <span className="font-medium">${bookingState.selectedProduct?.price.toFixed(2)}</span>
                     </div>
                   </div>
-
-                  <Button
-                    onClick={() => {
-                      setBookingState(prev => ({ 
-                        ...prev, 
-                        step: 'checkout'
-                      }));
-                    }}
-                    disabled={!isValid}
-                    className="w-full h-12 text-base font-medium text-white hover:opacity-90"
-                    style={{ backgroundColor: '#FF502D' }}
-                    data-testid="button-continue"
-                  >
-                    Continue to Checkout
-                  </Button>
                 </div>
+
+                <Button
+                  onClick={() => setBookingState(prev => ({ ...prev, step: 'checkout' }))}
+                  className="w-full h-12 text-base font-medium text-white hover:opacity-90"
+                  style={{ backgroundColor: '#FF502D' }}
+                  disabled={!isValid}
+                  data-testid="button-continue"
+                >
+                  Continue to Checkout
+                </Button>
+              </div>
             </div>
           </div>
         </div>
