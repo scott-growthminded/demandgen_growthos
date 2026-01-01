@@ -31,6 +31,11 @@ import glowbarLogoPath from "@assets/image_1763999100752.png";
 import facialTreatmentImage from "@assets/stock_images/woman_receiving_faci_e972fbc7.jpg";
 import luxurySpaImage from "@assets/stock_images/woman_at_luxury_spa__a296b478.jpg";
 import homeHeroImage from "@assets/home_hero_flip_1764064272021.png";
+import giftCardMockupPath from "@assets/Gift_Card_(9)_1767270260646.png";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
 
 // Fix Leaflet default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -207,6 +212,7 @@ export default function BookingWidget() {
   const [giftRecipientName, setGiftRecipientName] = useState('');
   const [giftRecipientEmail, setGiftRecipientEmail] = useState('');
   const [giftMessage, setGiftMessage] = useState('');
+  const [giftDeliveryDate, setGiftDeliveryDate] = useState<Date | undefined>(new Date());
   
   // Location finder state
   const [addressSearch, setAddressSearch] = useState('');
@@ -1890,6 +1896,17 @@ export default function BookingWidget() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+              {/* Gift Card Mockup */}
+              <div className="mb-6">
+                <img 
+                  src={giftCardMockupPath} 
+                  alt="Glowbar Gift Card" 
+                  className="w-full h-auto rounded-xl shadow-md border border-gray-100"
+                  data-testid="img-gift-card-mockup"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="recipientName">Recipient Name *</Label>
                   <Input
@@ -1903,6 +1920,70 @@ export default function BookingWidget() {
                 </div>
 
                 <div>
+                  <Label htmlFor="recipientEmail">Recipient Email *</Label>
+                  <Input
+                    id="recipientEmail"
+                    type="email"
+                    value={giftRecipientEmail}
+                    onChange={(e) => setGiftRecipientEmail(e.target.value)}
+                    placeholder="Enter recipient's email"
+                    className="mt-2"
+                    data-testid="input-recipient-email"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="giftMessage">Personal Message (Optional)</Label>
+                <textarea
+                  id="giftMessage"
+                  value={giftMessage}
+                  onChange={(e) => setGiftMessage(e.target.value)}
+                  className="w-full mt-2 p-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  rows={4}
+                  placeholder="Add a special note..."
+                  data-testid="textarea-gift-message"
+                />
+              </div>
+
+              <div>
+                <Label className="block mb-2">Delivery Date *</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full h-12 justify-start text-left font-normal",
+                        !giftDeliveryDate && "text-muted-foreground"
+                      )}
+                      data-testid="button-delivery-date"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {giftDeliveryDate ? format(giftDeliveryDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={giftDeliveryDate}
+                      onSelect={setGiftDeliveryDate}
+                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <Button
+                onClick={() => setBookingState(prev => ({ ...prev, step: 'checkout' }))}
+                className="w-full h-12 text-base font-medium text-white hover:opacity-90 mt-6"
+                style={{ backgroundColor: '#FF502D' }}
+                disabled={!giftRecipientName || !giftRecipientEmail || !giftDeliveryDate}
+                data-testid="button-continue"
+              >
+                Continue to payment
+              </Button>
+            </div>
                   <Label htmlFor="recipientEmail">Recipient Email *</Label>
                   <Input
                     id="recipientEmail"
