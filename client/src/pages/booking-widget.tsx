@@ -3076,7 +3076,10 @@ export default function BookingWidget() {
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-600">{isPurchaseOnly ? 'Product' : 'Service'}</p>
-                  <p className="font-semibold">{bookingState.selectedProduct?.name}</p>
+                  <p className="font-semibold">
+                    {bookingState.selectedProduct?.name}
+                    {bookingState.selectedProduct?.id.startsWith('giftcard-') && " - One facial + Gratuity"}
+                  </p>
                 </div>
                 {!isPurchaseOnly && bookingState.selectedLocation && (
                   <div>
@@ -3134,7 +3137,8 @@ export default function BookingWidget() {
                   setBookingState({ step: 'location' });
                   setAcceptTerms(false);
                 }}
-                className="w-full bg-black text-white hover:opacity-90"
+                className="w-full text-white hover:opacity-90"
+                style={{ backgroundColor: (isMembership || isPackage) ? '#000000' : '#FF502D' }}
                 data-testid="button-new-booking"
               >
                 {isPurchaseOnly ? 'Make Another Purchase' : 'Book Another Appointment'}
