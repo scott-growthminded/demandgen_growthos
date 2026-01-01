@@ -2720,11 +2720,6 @@ export default function BookingWidget() {
                         <p>{bookingState.selectedDate && format(bookingState.selectedDate, 'EEE, MMM d')} at {bookingState.selectedTime?.time}</p>
                       </div>
                     )}
-                    {!isPurchaseOnly && (
-                      <p className="font-bold mt-2" style={{ color: '#FF502D' }}>
-                        ${bookingState.userFlow === 'member' ? '65.00' : '80.00'}
-                      </p>
-                    )}
                     {isPurchaseOnly && (
                       <p className="font-bold mt-2" style={{ color: '#FF502D' }}>${productPrice.toFixed(2)}</p>
                     )}
