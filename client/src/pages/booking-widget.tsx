@@ -2730,7 +2730,10 @@ export default function BookingWidget() {
                     <img src={luxurySpaImage} alt="Treatment" className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg">{bookingState.selectedProduct?.name}</h3>
+                    <h3 className="font-bold text-lg">
+                      {bookingState.selectedProduct?.name}
+                      {bookingState.selectedProduct?.id.startsWith('giftcard-') && " - One facial + Gratuity"}
+                    </h3>
                     {!isPurchaseOnly && (
                       <div className="text-sm text-gray-600 mt-1">
                         <p>{bookingState.selectedLocation?.name}</p>
