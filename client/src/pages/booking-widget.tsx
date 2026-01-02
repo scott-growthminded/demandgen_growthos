@@ -2323,7 +2323,7 @@ export default function BookingWidget() {
                               {slot.time}
                               {slot.isDiscounted && (
                                 <span className="ml-1.5 text-xs" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFD4CC' : '#FF502D' }}>
-                                  -$10
+                                  $10 OFF
                                 </span>
                               )}
                             </button>
@@ -2355,7 +2355,7 @@ export default function BookingWidget() {
                               {slot.time}
                               {slot.isDiscounted && (
                                 <span className="ml-1.5 text-xs" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFD4CC' : '#FF502D' }}>
-                                  -$10
+                                  $10 OFF
                                 </span>
                               )}
                             </button>
@@ -2387,7 +2387,7 @@ export default function BookingWidget() {
                               {slot.time}
                               {slot.isDiscounted && (
                                 <span className="ml-1.5 text-xs" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFD4CC' : '#FF502D' }}>
-                                  -$10
+                                  $10 OFF
                                 </span>
                               )}
                             </button>
