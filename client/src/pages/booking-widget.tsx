@@ -2992,19 +2992,6 @@ export default function BookingWidget() {
                 </div>
               </div>
 
-              {/* Payment Info Notice - Compact */}
-              {!isPurchaseOnly && (
-                <div className="rounded-xl p-4 flex items-center gap-3" style={{ backgroundColor: '#FFF0ED' }}>
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FF502D' }}>
-                    <Shield className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm">Your card won't be charged today</p>
-                    <p className="text-xs text-gray-600">Card held for appointment, and won't be charged unless you cancel late or don't show up.</p>
-                  </div>
-                </div>
-              )}
-
               {/* Payment Form */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                 <h3 className="font-bold mb-4">Payment method</h3>
@@ -3154,6 +3141,19 @@ export default function BookingWidget() {
                     </div>
                   </div>
                 </div>
+
+                {/* Payment Info Notice */}
+                {!isPurchaseOnly && (
+                  <div className="rounded-xl p-4 flex items-center gap-3 mt-4" style={{ backgroundColor: '#FFF0ED' }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FF502D' }}>
+                      <Shield className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Your card won't be charged today</p>
+                      <p className="text-xs text-gray-600">Card held for appointment, and won't be charged unless you cancel late or don't show up.</p>
+                    </div>
+                  </div>
+                )}
 
                 <Button
                   onClick={() => {
