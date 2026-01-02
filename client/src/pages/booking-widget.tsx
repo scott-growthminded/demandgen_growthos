@@ -1523,43 +1523,211 @@ export default function BookingWidget() {
                   <span className="text-lg font-medium">Book a treatment</span>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 pb-4">
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                    <h3 className="text-base font-semibold mb-2">
-                      Facial Treatment <span className="text-gray-600">30min</span>
-                    </h3>
-                    {bookingState.userFlow !== 'member' && (
-                      <p className="text-xl font-bold mb-1">$80.00</p>
-                    )}
-                    {bookingState.userFlow !== 'member' && (
-                      <button 
-                        onClick={() => {
-                          const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
-                          if (membershipAccordion) {
-                            membershipAccordion.click();
-                            membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                          }
-                        }}
-                        className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
-                        style={{ color: '#FF502D' }}
-                        data-testid="link-become-member"
-                      >
-                        Glowbar Members pay $65 - become a member and save $15/month
-                      </button>
-                    )}
-                    <Button
-                      onClick={() => handleProductSelect({ 
-                        id: bookingState.userFlow === 'member' ? 'member-treatment' : 
-                            bookingState.userFlow === 'non-member' ? 'returning-treatment' : 'first-time-treatment',
-                        name: bookingState.userFlow === 'member' ? 'Member Treatment' : 
-                              bookingState.userFlow === 'non-member' ? 'Returning Treatment' : 'First Time Treatment',
-                        price: bookingState.userFlow === 'member' ? 0 : 80,
-                        description: '30min facial'
-                      })}
-                      className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
-                      data-testid="button-select-treatment"
-                    >
-                      Book your treatment
-                    </Button>
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
+                    {/* Determine treatment options based on user flow and location */}
+                    {(() => {
+                      const isMurrayHill = bookingState.selectedLocation?.name === 'Murray Hill';
+                      const isFirstTime = bookingState.userFlow === 'lead'; // 0 visits
+                      const isReturningNonMember = bookingState.userFlow === 'non-member'; // 1+ visits, not member
+                      const isMember = bookingState.userFlow === 'member';
+                      
+                      return (
+                        <>
+                          {/* NON-MEMBER: First Time Treatment (NOT Murray Hill) */}
+                          {isFirstTime && !isMurrayHill && (
+                            <>
+                              <div className="pb-5 border-b border-gray-100">
+                                <h3 className="text-base font-semibold mb-2">
+                                  First Time Treatment <span className="text-gray-600">30min</span>
+                                </h3>
+                                <p className="text-xl font-bold mb-1">$80.00</p>
+                                <button 
+                                  onClick={() => {
+                                    const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
+                                    if (membershipAccordion) {
+                                      membershipAccordion.click();
+                                      membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }
+                                  }}
+                                  className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
+                                  style={{ color: '#FF502D' }}
+                                  data-testid="link-become-member"
+                                >
+                                  Glowbar Members pay $65 - become a member and save $15/month
+                                </button>
+                                <Button
+                                  onClick={() => handleProductSelect({ 
+                                    id: 'first-time-treatment',
+                                    name: 'First Time Treatment',
+                                    price: 80,
+                                    description: '30min facial'
+                                  })}
+                                  className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                                  data-testid="button-select-first-time-treatment"
+                                >
+                                  Book your treatment
+                                </Button>
+                              </div>
+                              <div>
+                                <h3 className="text-base font-semibold mb-2">
+                                  First Time Treatment: 17 and under <span className="text-gray-600">30min</span>
+                                </h3>
+                                <p className="text-xs text-gray-600 mb-2">All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person.</p>
+                                <p className="text-xl font-bold mb-3">$80.00</p>
+                                <Button
+                                  onClick={() => handleProductSelect({ 
+                                    id: 'first-time-treatment-minor',
+                                    name: 'First Time Treatment: 17 and under',
+                                    price: 80,
+                                    description: '30min facial'
+                                  })}
+                                  className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                                  data-testid="button-select-first-time-treatment-minor"
+                                >
+                                  Book your treatment
+                                </Button>
+                              </div>
+                            </>
+                          )}
+
+                          {/* NON-MEMBER: 40 Minute First Time Treatment (Murray Hill only) */}
+                          {isFirstTime && isMurrayHill && (
+                            <>
+                              <div className="pb-5 border-b border-gray-100">
+                                <h3 className="text-base font-semibold mb-2">
+                                  40 Minute First-Time Treatment <span className="text-gray-600">40min</span>
+                                </h3>
+                                <p className="text-xl font-bold mb-1">$80.00</p>
+                                <button 
+                                  onClick={() => {
+                                    const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
+                                    if (membershipAccordion) {
+                                      membershipAccordion.click();
+                                      membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }
+                                  }}
+                                  className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
+                                  style={{ color: '#FF502D' }}
+                                  data-testid="link-become-member"
+                                >
+                                  Glowbar Members pay $65 - become a member and save $15/month
+                                </button>
+                                <Button
+                                  onClick={() => handleProductSelect({ 
+                                    id: 'first-time-treatment-40min',
+                                    name: '40 Minute First-Time Treatment',
+                                    price: 80,
+                                    description: '40min facial'
+                                  })}
+                                  className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                                  data-testid="button-select-first-time-treatment-40min"
+                                >
+                                  Book your treatment
+                                </Button>
+                              </div>
+                              <div>
+                                <h3 className="text-base font-semibold mb-2">
+                                  40 Minute First Time Treatment: 17 and Under <span className="text-gray-600">40min</span>
+                                </h3>
+                                <p className="text-xs text-gray-600 mb-2">All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person.</p>
+                                <p className="text-xl font-bold mb-3">$80.00</p>
+                                <Button
+                                  onClick={() => handleProductSelect({ 
+                                    id: 'first-time-treatment-40min-minor',
+                                    name: '40 Minute First Time Treatment: 17 and Under',
+                                    price: 80,
+                                    description: '40min facial'
+                                  })}
+                                  className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                                  data-testid="button-select-first-time-treatment-40min-minor"
+                                >
+                                  Book your treatment
+                                </Button>
+                              </div>
+                            </>
+                          )}
+
+                          {/* NON-MEMBER: Returning Treatment (1+ visits) */}
+                          {isReturningNonMember && (
+                            <div>
+                              <h3 className="text-base font-semibold mb-2">
+                                Returning Treatment <span className="text-gray-600">30min</span>
+                              </h3>
+                              <p className="text-xl font-bold mb-1">$80.00</p>
+                              <button 
+                                onClick={() => {
+                                  const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
+                                  if (membershipAccordion) {
+                                    membershipAccordion.click();
+                                    membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                  }
+                                }}
+                                className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
+                                style={{ color: '#FF502D' }}
+                                data-testid="link-become-member"
+                              >
+                                Glowbar Members pay $65 - become a member and save $15/month
+                              </button>
+                              <Button
+                                onClick={() => handleProductSelect({ 
+                                  id: 'returning-treatment',
+                                  name: 'Returning Treatment',
+                                  price: 80,
+                                  description: '30min facial'
+                                })}
+                                className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                                data-testid="button-select-returning-treatment"
+                              >
+                                Book your treatment
+                              </Button>
+                            </div>
+                          )}
+
+                          {/* MEMBER: First Time & Returning Treatment */}
+                          {isMember && (
+                            <>
+                              <div className="pb-5 border-b border-gray-100">
+                                <h3 className="text-base font-semibold mb-2">
+                                  First Time & Returning Treatment <span className="text-gray-600">30min</span>
+                                </h3>
+                                <p className="text-sm text-gray-600 mb-3">Use your membership voucher for this treatment</p>
+                                <Button
+                                  onClick={() => handleProductSelect({ 
+                                    id: 'member-treatment',
+                                    name: 'Member Treatment',
+                                    price: 0,
+                                    description: '30min facial'
+                                  })}
+                                  className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                                  data-testid="button-select-member-treatment"
+                                >
+                                  Book your treatment
+                                </Button>
+                              </div>
+                              <div>
+                                <h3 className="text-base font-semibold mb-2">
+                                  First Time Treatment: 17 and under <span className="text-gray-600">30min</span>
+                                </h3>
+                                <p className="text-xs text-gray-600 mb-2">All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person.</p>
+                                <p className="text-sm text-gray-600 mb-3">Use your membership voucher for this treatment</p>
+                                <Button
+                                  onClick={() => handleProductSelect({ 
+                                    id: 'member-treatment-minor',
+                                    name: 'Member Treatment: 17 and under',
+                                    price: 0,
+                                    description: '30min facial'
+                                  })}
+                                  className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                                  data-testid="button-select-member-treatment-minor"
+                                >
+                                  Book your treatment
+                                </Button>
+                              </div>
+                            </>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </AccordionContent>
               </AccordionItem>
