@@ -2905,9 +2905,9 @@ export default function BookingWidget() {
 
     // Testimonials data
     const testimonials = [
-      { name: 'Sarah M.', text: 'Best facial I\'ve ever had! My skin has never looked better.', rating: 5 },
-      { name: 'Jessica L.', text: 'Love the convenience and my esthetician was amazing!', rating: 5 },
-      { name: 'Amanda K.', text: 'Worth every penny. I\'m hooked on Glowbar now!', rating: 5 },
+      { name: 'Paulina Trujillo', text: 'First time having a facial at Glowbar and omg. I did not wait more than a second as soon as I sat down after washing my face!', rating: 5 },
+      { name: 'Selina Mendez', text: 'Couldn\'t have chose a better place to get my very first facial at!', rating: 5 },
+      { name: 'Alyssa M.', text: 'Glowbar has changed my skin! I\'ve been going monthly for over a year and my skin has never been better!', rating: 5 },
     ];
 
     return (
