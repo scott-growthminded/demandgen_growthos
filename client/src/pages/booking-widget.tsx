@@ -3137,39 +3137,22 @@ export default function BookingWidget() {
 
                 {/* Price Breakdown */}
                 <div className="border-t mt-4 pt-4">
-                  {bookingState.isMember && !isPurchaseOnly ? (
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span>Treatment</span>
-                        <span>$65.00</span>
-                      </div>
-                      <div className="flex justify-between text-green-600">
-                        <span>Voucher Applied</span>
-                        <span>-$65.00</span>
-                      </div>
-                      <div className="flex justify-between font-bold text-lg pt-2 border-t mt-2">
-                        <span>Total</span>
-                        <span data-testid="text-total">$65.00</span>
-                      </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Subtotal</span>
+                      <span>${(bookingState.userFlow === 'member' ? 65 : productPrice).toFixed(2)}</span>
                     </div>
-                  ) : (
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span>Subtotal</span>
-                        <span>${(bookingState.userFlow === 'member' ? 65 : 80).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Tax</span>
-                        <span>${((bookingState.userFlow === 'member' ? 65 : 80) * 0.09).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between font-bold text-lg pt-2 border-t mt-2">
-                        <span>Total</span>
-                        <span data-testid="text-total" style={{ color: '#FF502D' }}>
-                          ${((bookingState.userFlow === 'member' ? 65 : 80) * 1.09).toFixed(2)}
-                        </span>
-                      </div>
+                    <div className="flex justify-between">
+                      <span>Tax</span>
+                      <span>${((bookingState.userFlow === 'member' ? 65 : productPrice) * 0.09).toFixed(2)}</span>
                     </div>
-                  )}
+                    <div className="flex justify-between font-bold text-lg pt-2 border-t mt-2">
+                      <span>Total</span>
+                      <span data-testid="text-total" style={{ color: '#FF502D' }}>
+                        ${((bookingState.userFlow === 'member' ? 65 : productPrice) * 1.09).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 <Button
