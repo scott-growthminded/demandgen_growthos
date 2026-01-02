@@ -430,7 +430,7 @@ export class BlvdService {
 
     const response = await this.makeGraphqlRequest(query, variables);
     
-    // Detailed subtext mapping for location identification and additional context
+    // Location descriptions for specific studios only
     const subtextMapping: Record<string, string> = {
       'Murray Hill': 'At the corner of East 26th Street',
       'West 100th': 'At the corner of West 100th Street, next to Starbucks',
@@ -442,20 +442,7 @@ export class BlvdService {
       'Georgetown': 'Next to Tatte, between P and Q Streets',
       'Jersey City': 'At the corner of Bay Street',
       'Lynnfield': 'MarketStreet, between The Escape Game and Eddie Bauer',
-      'Hingham': 'Derby Street Shops, next to Ben & Jerry\'s',
-      "Upper East Side": "81st & 2nd",
-      "Flatiron": "20th & 5th",
-      "Upper West Side": "71st & Columbus",
-      "West Village": "Greenwich & 6th Ave",
-      "Tribeca": "West Broadway & Duane",
-      "Midtown East": "54th & 3rd",
-      "Chelsea": "21st & 8th",
-      "Cobble Hill": "Court & Bergen",
-      "Williamsburg": "Wythe & N 4th",
-      "Hoboken": "Washington St",
-      "Scarsdale": "Central Ave",
-      "Greenwich": "Putnam Ave",
-      "Westport": "Post Rd E"
+      'Hingham': 'Derby Street Shops, next to Ben & Jerry\'s'
     };
 
     if ((response.data as any)?.locations?.edges) {

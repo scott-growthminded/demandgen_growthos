@@ -1727,7 +1727,7 @@ export default function BookingWidget() {
                       ].map(({ amount, description }) => (
                         <button
                           key={amount}
-                          onClick={() => handleProductSelect({ id: `giftcard-${amount}`, name: `Gift Card $${amount}`, price: amount, description: 'Gift card' })}
+                          onClick={() => handleProductSelect({ id: `giftcard-${amount}`, name: `Gift Card $${amount}`, price: amount, description })}
                           className="w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between group"
                           data-testid={`button-giftcard-${amount}`}
                         >
@@ -2752,7 +2752,7 @@ export default function BookingWidget() {
                   <div className="flex-1">
                     <h3 className="font-bold text-lg">
                       {bookingState.selectedProduct?.name}
-                      {bookingState.selectedProduct?.id.startsWith('giftcard-') && " - One facial + Gratuity"}
+                      {bookingState.selectedProduct?.id.startsWith('giftcard-') && bookingState.selectedProduct?.description && ` - ${bookingState.selectedProduct.description}`}
                     </h3>
                     {!isPurchaseOnly && (
                       <div className="text-sm text-gray-600 mt-1">
@@ -3099,7 +3099,7 @@ export default function BookingWidget() {
                   <p className="text-sm text-gray-600">{isPurchaseOnly ? 'Product' : 'Service'}</p>
                   <p className="font-semibold">
                     {bookingState.selectedProduct?.name}
-                    {bookingState.selectedProduct?.id.startsWith('giftcard-') && " - One facial + Gratuity"}
+                    {bookingState.selectedProduct?.id.startsWith('giftcard-') && bookingState.selectedProduct?.description && ` - ${bookingState.selectedProduct.description}`}
                   </p>
                 </div>
                 {!isPurchaseOnly && bookingState.selectedLocation && (
