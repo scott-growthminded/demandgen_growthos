@@ -2450,14 +2450,9 @@ export default function BookingWidget() {
                                       state: location.address?.state || ''
                                     },
                                     selectedTime: slot,
-                                    selectedDate: selectedDate
+                                    selectedDate: selectedDate,
+                                    step: 'checkout'
                                   }));
-                                  setSelectedTimeSlot(slot);
-                                  toast({
-                                    title: `Studio changed to ${location.name}`,
-                                    description: `${slot.time} on ${format(selectedDate!, 'MMM d')} selected`,
-                                  });
-                                  window.scrollTo({ top: 0, behavior: 'smooth' });
                                 }}
                                 className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-gray-400 hover:bg-gray-100 transition-colors"
                                 data-testid={`nearby-time-${location.id}-${slot.time.replace(/[:\s]/g, '-')}`}
@@ -2466,7 +2461,23 @@ export default function BookingWidget() {
                               </button>
                             ))}
                             {nearbySlots.length > 4 && (
-                              <span className="text-sm text-gray-400 self-center underline cursor-pointer hover:text-gray-600">view more</span>
+                              <span 
+                                onClick={() => {
+                                  setBookingState(prev => ({
+                                    ...prev,
+                                    selectedLocation: {
+                                      id: location.id,
+                                      name: location.name,
+                                      city: location.address?.city || '',
+                                      state: location.address?.state || ''
+                                    }
+                                  }));
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                className="text-sm text-gray-400 self-center underline cursor-pointer hover:text-gray-600"
+                              >
+                                view more
+                              </span>
                             )}
                           </div>
                         ) : (
