@@ -1553,7 +1553,7 @@ export default function BookingWidget() {
                             <>
                               <div className="pb-5 border-b border-gray-100">
                                 <h3 className="text-base font-semibold mb-2">
-                                  First Time Treatment <span className="text-gray-600">30min</span>
+                                  First Time Treatment <span className="text-gray-600 ml-2">30min</span>
                                 </h3>
                                 <p className="text-xl font-bold mb-1">$80.00</p>
                                 <button 
@@ -1585,7 +1585,7 @@ export default function BookingWidget() {
                               </div>
                               <div>
                                 <h3 className="text-base font-semibold mb-2">
-                                  First Time Treatment: 17 and under <span className="text-gray-600">30min</span>
+                                  First Time Treatment: 17 and under <span className="text-gray-600 ml-2">30min</span>
                                 </h3>
                                 <p className="text-xs text-gray-600 mb-2">All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person.</p>
                                 <p className="text-xl font-bold mb-3">$80.00</p>
@@ -1610,7 +1610,7 @@ export default function BookingWidget() {
                             <>
                               <div className="pb-5 border-b border-gray-100">
                                 <h3 className="text-base font-semibold mb-2">
-                                  40 Minute First-Time Treatment <span className="text-gray-600">40min</span>
+                                  40 Minute First-Time Treatment <span className="text-gray-600 ml-2">40min</span>
                                 </h3>
                                 <p className="text-xl font-bold mb-1">$80.00</p>
                                 <button 
@@ -1642,7 +1642,7 @@ export default function BookingWidget() {
                               </div>
                               <div>
                                 <h3 className="text-base font-semibold mb-2">
-                                  40 Minute First Time Treatment: 17 and Under <span className="text-gray-600">40min</span>
+                                  40 Minute First Time Treatment: 17 and Under <span className="text-gray-600 ml-2">40min</span>
                                 </h3>
                                 <p className="text-xs text-gray-600 mb-2">All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person.</p>
                                 <p className="text-xl font-bold mb-3">$80.00</p>
@@ -1666,7 +1666,7 @@ export default function BookingWidget() {
                           {isReturningNonMember && (
                             <div>
                               <h3 className="text-base font-semibold mb-2">
-                                Returning Treatment <span className="text-gray-600">30min</span>
+                                Returning Treatment <span className="text-gray-600 ml-2">30min</span>
                               </h3>
                               <p className="text-xl font-bold mb-1">$80.00</p>
                               <button 
@@ -1703,7 +1703,7 @@ export default function BookingWidget() {
                             <>
                               <div className={bookingState.visitCount === 0 ? "pb-5 border-b border-gray-100" : ""}>
                                 <h3 className="text-base font-semibold mb-2">
-                                  First Time & Returning Treatment <span className="text-gray-600">30min</span>
+                                  First Time & Returning Treatment <span className="text-gray-600 ml-2">30min</span>
                                 </h3>
                                 <p className="text-sm text-gray-600 mb-3">Use your membership voucher for this treatment</p>
                                 <Button
@@ -1723,7 +1723,7 @@ export default function BookingWidget() {
                               {bookingState.visitCount === 0 && (
                                 <div>
                                   <h3 className="text-base font-semibold mb-2">
-                                    First Time Treatment: 17 and under <span className="text-gray-600">30min</span>
+                                    First Time Treatment: 17 and under <span className="text-gray-600 ml-2">30min</span>
                                   </h3>
                                   <p className="text-xs text-gray-600 mb-2">All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person.</p>
                                   <p className="text-sm text-gray-600 mb-3">Use your membership voucher for this treatment</p>
