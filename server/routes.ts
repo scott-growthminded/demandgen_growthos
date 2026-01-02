@@ -490,8 +490,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const locationsResponse = await blvdService.executeLocationsQuery();
       const allLocations = (locationsResponse.data as any)?.locations?.edges?.map((edge: any) => edge.node) || [];
       
-      // Filter out remote locations and group by state and city
-      const physicalLocations = allLocations.filter((loc: any) => !loc.isRemote);
+      // Filter out remote locations and excluded locations, then group by state and city
+      const excludedLocationNames = ['Williamsburg Kent', 'Training Studio'];
+      const physicalLocations = allLocations.filter((loc: any) => 
+        !loc.isRemote && !excludedLocationNames.includes(loc.name)
+      );
       
       // Don't pre-load staff - we'll fetch them when checking availability for a specific date
       // This ensures we only show staff who are actually available
