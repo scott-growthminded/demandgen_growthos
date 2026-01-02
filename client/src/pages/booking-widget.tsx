@@ -101,6 +101,7 @@ interface BookingState {
   userFlow?: UserFlow;
   customerType?: 'new' | 'returning';
   isMember?: boolean;
+  visitCount?: number; // Track number of visits (0 = first-time, 1+ = returning)
   selectedRegion?: string;
   selectedLocation?: {
     id: string;
@@ -966,39 +967,53 @@ export default function BookingWidget() {
       
       // Determine flow based on phone number pattern
       if (/^1+$/.test(cleanPhone)) {
-        // All 1's - Lead flow
+        // All 1's - Lead flow (0 visits, first-time non-member)
         setBookingState(prev => ({
           ...prev,
           userFlow: 'lead',
           userPhone: phoneNumber,
           customerType: 'new',
           isMember: false,
+          visitCount: 0,
           step: 'personal-info'
         }));
       } else if (/^2+$/.test(cleanPhone)) {
-        // All 2's - Non-member flow
+        // All 2's - Non-member flow (1+ visits, returning non-member)
         setBookingState(prev => ({
           ...prev,
           userFlow: 'non-member',
           userPhone: phoneNumber,
           customerType: 'returning',
           isMember: false,
+          visitCount: 5,
           step: 'otp'
         }));
       } else if (/^3+$/.test(cleanPhone)) {
-        // All 3's - Member flow
+        // All 3's - Member flow (1+ visits, returning member)
         setBookingState(prev => ({
           ...prev,
           userFlow: 'member',
           userPhone: phoneNumber,
           customerType: 'returning',
           isMember: true,
+          visitCount: 3,
+          step: 'otp'
+        }));
+      } else if (/^4+$/.test(cleanPhone)) {
+        // All 4's - First-time member flow (0 visits, new member)
+        setBookingState(prev => ({
+          ...prev,
+          userFlow: 'member',
+          userPhone: phoneNumber,
+          customerType: 'new',
+          isMember: true,
+          visitCount: 0,
           step: 'otp'
         }));
       } else {
         toast({
           title: "Invalid Phone Number",
-          description: "Please enter a valid phone number (all 1's, all 2's, or all 3's for testing)",
+          description: "Please enter a valid phone number (all 1's, 2's, 3's, or 4's for testing)",
           variant: "destructive"
         });
       }
@@ -1686,7 +1701,7 @@ export default function BookingWidget() {
                           {/* MEMBER: First Time & Returning Treatment */}
                           {isMember && (
                             <>
-                              <div className="pb-5 border-b border-gray-100">
+                              <div className={bookingState.visitCount === 0 ? "pb-5 border-b border-gray-100" : ""}>
                                 <h3 className="text-base font-semibold mb-2">
                                   First Time & Returning Treatment <span className="text-gray-600">30min</span>
                                 </h3>
@@ -1704,25 +1719,28 @@ export default function BookingWidget() {
                                   Book your treatment
                                 </Button>
                               </div>
-                              <div>
-                                <h3 className="text-base font-semibold mb-2">
-                                  First Time Treatment: 17 and under <span className="text-gray-600">30min</span>
-                                </h3>
-                                <p className="text-xs text-gray-600 mb-2">All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person.</p>
-                                <p className="text-sm text-gray-600 mb-3">Use your membership voucher for this treatment</p>
-                                <Button
-                                  onClick={() => handleProductSelect({ 
-                                    id: 'member-treatment-minor',
-                                    name: 'Member Treatment: 17 and under',
-                                    price: 0,
-                                    description: '30min facial'
-                                  })}
-                                  className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
-                                  data-testid="button-select-member-treatment-minor"
-                                >
-                                  Book your treatment
-                                </Button>
-                              </div>
+                              {/* Only show 17 and under option for members with 0 visits */}
+                              {bookingState.visitCount === 0 && (
+                                <div>
+                                  <h3 className="text-base font-semibold mb-2">
+                                    First Time Treatment: 17 and under <span className="text-gray-600">30min</span>
+                                  </h3>
+                                  <p className="text-xs text-gray-600 mb-2">All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person.</p>
+                                  <p className="text-sm text-gray-600 mb-3">Use your membership voucher for this treatment</p>
+                                  <Button
+                                    onClick={() => handleProductSelect({ 
+                                      id: 'member-treatment-minor',
+                                      name: 'Member Treatment: 17 and under',
+                                      price: 0,
+                                      description: '30min facial'
+                                    })}
+                                    className="w-full h-11 text-white hover:opacity-90" style={{ backgroundColor: "#FF502D" }}
+                                    data-testid="button-select-member-treatment-minor"
+                                  >
+                                    Book your treatment
+                                  </Button>
+                                </div>
+                              )}
                             </>
                           )}
                         </>
