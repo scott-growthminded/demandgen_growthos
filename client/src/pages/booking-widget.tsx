@@ -1588,7 +1588,21 @@ export default function BookingWidget() {
                                   First Time Treatment: 17 and under <span className="text-gray-600 ml-2">30min</span>
                                 </h3>
                                 <p className="text-xs text-gray-600 mb-2">All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person.</p>
-                                <p className="text-xl font-bold mb-3">$80.00</p>
+                                <p className="text-xl font-bold mb-1">$80.00</p>
+                                <button 
+                                  onClick={() => {
+                                    const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
+                                    if (membershipAccordion) {
+                                      membershipAccordion.click();
+                                      membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }
+                                  }}
+                                  className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
+                                  style={{ color: '#FF502D' }}
+                                  data-testid="link-become-member-minor"
+                                >
+                                  Glowbar Members pay $65 - become a member and save $15/month
+                                </button>
                                 <Button
                                   onClick={() => handleProductSelect({ 
                                     id: 'first-time-treatment-minor',
@@ -1645,7 +1659,21 @@ export default function BookingWidget() {
                                   40 Minute First Time Treatment: 17 and Under <span className="text-gray-600 ml-2">40min</span>
                                 </h3>
                                 <p className="text-xs text-gray-600 mb-2">All clients under 17 will need to be accompanied by a parent or guardian at their first appointment to sign a waiver in-person.</p>
-                                <p className="text-xl font-bold mb-3">$80.00</p>
+                                <p className="text-xl font-bold mb-1">$80.00</p>
+                                <button 
+                                  onClick={() => {
+                                    const membershipAccordion = document.querySelector('[data-testid="accordion-membership"]') as HTMLElement;
+                                    if (membershipAccordion) {
+                                      membershipAccordion.click();
+                                      membershipAccordion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }
+                                  }}
+                                  className="text-xs mb-3 underline cursor-pointer hover:opacity-80 text-left"
+                                  style={{ color: '#FF502D' }}
+                                  data-testid="link-become-member-minor-40min"
+                                >
+                                  Glowbar Members pay $65 - become a member and save $15/month
+                                </button>
                                 <Button
                                   onClick={() => handleProductSelect({ 
                                     id: 'first-time-treatment-40min-minor',
