@@ -2450,9 +2450,9 @@ export default function BookingWidget() {
                                       state: location.address?.state || ''
                                     },
                                     selectedTime: slot,
-                                    selectedDate: selectedDate,
-                                    step: 'checkout'
+                                    selectedDate: selectedDate
                                   }));
+                                  setSelectedTimeSlot(slot);
                                 }}
                                 className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-gray-400 hover:bg-gray-100 transition-colors"
                                 data-testid={`nearby-time-${location.id}-${slot.time.replace(/[:\s]/g, '-')}`}
