@@ -2911,7 +2911,7 @@ export default function BookingWidget() {
     ];
 
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-white flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -2923,7 +2923,7 @@ export default function BookingWidget() {
         <ProgressBar />
         {/* Selected Studio Display */}
         {bookingState.selectedLocation && (
-          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
+          <div className="border-b border-gray-200 px-6 py-3 bg-white">
             <button
               onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
               className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
@@ -2958,7 +2958,7 @@ export default function BookingWidget() {
             {/* Left Column - Payment & Summary */}
             <div className="lg:col-span-2 space-y-4">
               {/* Order/Appointment Summary - Compact */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5">
                 <div className="flex items-start gap-4">
                   <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
                     <img src={luxurySpaImage} alt="Treatment" className="w-full h-full object-cover" />
@@ -2993,7 +2993,7 @@ export default function BookingWidget() {
               </div>
 
               {/* Payment Form */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5">
                 <h3 className="font-bold mb-4">Payment method</h3>
                 
                 {/* Saved Cards */}
@@ -3204,7 +3204,7 @@ export default function BookingWidget() {
             {/* Right Column - Social Proof */}
             <div className="space-y-4">
               {/* Rating Summary */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+              <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
                 <div className="flex justify-center mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star key={star} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
@@ -3215,7 +3215,7 @@ export default function BookingWidget() {
               </div>
 
               {/* Testimonials */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5">
                 <h4 className="font-bold mb-3">What Our Guests Say</h4>
                 <div className="space-y-4">
                   {testimonials.map((testimonial, index) => (
