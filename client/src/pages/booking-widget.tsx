@@ -611,7 +611,7 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -626,7 +626,7 @@ export default function BookingWidget() {
           {/* Left side - Location finder and grouped locations - SCROLLABLE */}
           <div className="w-1/2 overflow-y-auto space-y-4 pr-4">
             {/* Location Finder Search */}
-            <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
               <Label htmlFor="address-search" className="text-base font-semibold mb-2 block">
                 Find studios near you
               </Label>
@@ -681,7 +681,7 @@ export default function BookingWidget() {
                   Studios near you
                 </h3>
                 {getLocationsSortedByDistance().map((location: any) => (
-                  <div key={location.id} className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4">
+                  <div key={location.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4">
                       <div className="flex justify-between items-start mb-1">
                         <h3 className="font-semibold">{location.name}</h3>
                         <span className="text-sm font-medium px-2 py-1 bg-gray-100 rounded" style={{ color: '#FF502D' }}>
@@ -769,7 +769,7 @@ export default function BookingWidget() {
                             }
                             
                             return (
-                              <div key={location.id} className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4">
+                              <div key={location.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-4">
                                   <div className="flex justify-between items-start mb-1">
                                     <h3 className="font-semibold">{location.name}</h3>
                                     {distanceDisplay && (
@@ -1020,7 +1020,7 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -1072,7 +1072,7 @@ export default function BookingWidget() {
                 Back
               </button>
 
-              <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 className="text-2xl font-bold mb-2">Enter your phone number</h2>
                 <p className="text-gray-600 mb-6">We'll use this to verify your account</p>
                 <div className="space-y-4">
@@ -1145,7 +1145,7 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -1197,7 +1197,7 @@ export default function BookingWidget() {
                 Back
               </button>
 
-              <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 className="text-2xl font-bold mb-2">Verify your phone number</h2>
                 <p className="text-gray-600 mb-6">We've sent a code to {bookingState.userPhone}</p>
                 <div className="space-y-4">
@@ -1234,7 +1234,7 @@ export default function BookingWidget() {
   // Step 4: Customer Type Selection
   if (bookingState.step === 'customer-type') {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -1253,7 +1253,7 @@ export default function BookingWidget() {
             <div className="space-y-4 mt-8">
               <button
                 onClick={() => setBookingState(prev => ({ ...prev, customerType: 'new', isMember: false, step: 'product' }))}
-                className="w-full p-6 bg-gray-50 rounded-2xl shadow-sm border border-gray-100 hover:border-gray-300 transition-colors text-left group"
+                className="w-full p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:border-gray-300 transition-colors text-left group"
                 data-testid="button-new-customer"
               >
                 <div className="flex items-center justify-between">
@@ -1267,7 +1267,7 @@ export default function BookingWidget() {
 
               <button
                 onClick={() => setBookingState(prev => ({ ...prev, customerType: 'returning', step: 'login' }))}
-                className="w-full p-6 bg-gray-50 rounded-2xl shadow-sm border border-gray-100 hover:border-gray-300 transition-colors text-left group"
+                className="w-full p-6 bg-white rounded-2xl shadow-sm border border-gray-100 hover:border-gray-300 transition-colors text-left group"
                 data-testid="button-returning-customer"
               >
                 <div className="flex items-center justify-between">
@@ -1308,7 +1308,7 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -1349,7 +1349,7 @@ export default function BookingWidget() {
               Back
             </Button>
 
-            <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
               <h1 className="text-4xl font-bold mb-8" data-testid="text-title">Log in</h1>
             
               <div className="space-y-4">
@@ -1445,7 +1445,7 @@ export default function BookingWidget() {
     };
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -1538,7 +1538,7 @@ export default function BookingWidget() {
                   <span className="text-lg font-medium">Book a treatment</span>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 pb-4">
-                  <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
                     {/* Determine treatment options based on user flow and location */}
                     {(() => {
                       const isMurrayHill = bookingState.selectedLocation?.name === 'Murray Hill';
@@ -1786,7 +1786,7 @@ export default function BookingWidget() {
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 pb-4">
-                  <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
                     {/* Glowbar Membership $65 - only for non-members */}
                     {bookingState.userFlow !== 'member' && (
                       <div className="pb-5 border-b border-gray-100">
@@ -1843,7 +1843,7 @@ export default function BookingWidget() {
                   <span className="text-lg font-medium">Purchase a package</span>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 pb-4">
-                  <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-5">
                     {/* 3 Facials */}
                     <div className="pb-5 border-b border-gray-100">
                         <div className="flex justify-between items-start mb-2">
@@ -1929,7 +1929,7 @@ export default function BookingWidget() {
                   <span className="text-lg font-medium">Purchase a gift card</span>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 pb-4">
-                  <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                     <p className="text-sm text-gray-500 mb-4">Gift cards can't be used to pay for membership.</p>
                     <div className="space-y-3">
                       {[
@@ -2072,7 +2072,7 @@ export default function BookingWidget() {
     const isValid = giftRecipientName && giftRecipientEmail && giftFrom && giftDeliveryDate;
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -2113,7 +2113,7 @@ export default function BookingWidget() {
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="recipientName">Recipient Name *</Label>
@@ -2262,7 +2262,7 @@ export default function BookingWidget() {
       : staffData?.staff?.find((s) => s.id === esthetician)?.displayName || 'Selected Esthetician';
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -2315,7 +2315,7 @@ export default function BookingWidget() {
               
               {/* Left: Modern Calendar */}
               <div className="lg:col-span-5">
-                <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-8">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-8">
                   {(() => {
                     const today = new Date();
                     const monthStart = new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth(), 1);
@@ -2456,7 +2456,7 @@ export default function BookingWidget() {
               <div className="lg:col-span-7 space-y-6">
                 {/* Selected Date Display with Esthetician Filter */}
                 {selectedDate && (
-                  <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div>
                         <h3 className="text-lg font-bold text-gray-900 mb-1">
@@ -2500,7 +2500,7 @@ export default function BookingWidget() {
 
                 {/* Time Slots by Period */}
                 {!selectedDate ? (
-                  <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
                     <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                       <Clock className="w-8 h-8 text-gray-400" />
                     </div>
@@ -2508,12 +2508,12 @@ export default function BookingWidget() {
                     <p className="text-gray-500">Choose a date from the calendar to see available times</p>
                   </div>
                 ) : availabilityLoading ? (
-                  <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
                     <div className="animate-spin w-8 h-8 border-3 border-gray-200 rounded-full mx-auto mb-4" style={{ borderTopColor: '#FF502D' }}></div>
                     <p className="text-gray-500">Loading available times...</p>
                   </div>
                 ) : hasAvailability ? (
-                  <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
                     {/* Morning Slots */}
                     {morningSlots.length > 0 && (
                       <div>
@@ -2611,7 +2611,7 @@ export default function BookingWidget() {
                     )}
                   </div>
                 ) : (
-                  <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
                     <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                       <X className="w-8 h-8 text-gray-400" />
                     </div>
@@ -2643,7 +2643,7 @@ export default function BookingWidget() {
                     }
                     
                     return (
-                      <div key={location.id} className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5">
+                      <div key={location.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                         <div className="mb-3">
                           <h5 className="font-semibold text-gray-900">{location.name}</h5>
                         </div>
@@ -2733,7 +2733,7 @@ export default function BookingWidget() {
     const isValid = firstName && lastName && email && authPhone;
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -2780,7 +2780,7 @@ export default function BookingWidget() {
               <p className="text-gray-600">Please provide your contact information</p>
             </div>
 
-            <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
                 <div>
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
@@ -2911,7 +2911,7 @@ export default function BookingWidget() {
     ];
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -2923,7 +2923,7 @@ export default function BookingWidget() {
         <ProgressBar />
         {/* Selected Studio Display */}
         {bookingState.selectedLocation && (
-          <div className="border-b border-gray-200 px-6 py-3 bg-white">
+          <div className="border-b border-gray-200 px-6 py-3 bg-gray-50">
             <button
               onClick={() => setBookingState(prev => ({ ...prev, step: 'location' }))}
               className="flex items-center gap-2 text-gray-700 hover:text-black transition-colors"
@@ -2958,7 +2958,7 @@ export default function BookingWidget() {
             {/* Left Column - Payment & Summary */}
             <div className="lg:col-span-2 space-y-4">
               {/* Order/Appointment Summary - Compact */}
-              <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                 <div className="flex items-start gap-4">
                   <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
                     <img src={luxurySpaImage} alt="Treatment" className="w-full h-full object-cover" />
@@ -2993,7 +2993,7 @@ export default function BookingWidget() {
               </div>
 
               {/* Payment Form */}
-              <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                 <h3 className="font-bold mb-4">Payment method</h3>
                 
                 {/* Saved Cards */}
@@ -3204,7 +3204,7 @@ export default function BookingWidget() {
             {/* Right Column - Social Proof */}
             <div className="space-y-4">
               {/* Rating Summary */}
-              <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
                 <div className="flex justify-center mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star key={star} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
@@ -3215,7 +3215,7 @@ export default function BookingWidget() {
               </div>
 
               {/* Testimonials */}
-              <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
                 <h4 className="font-bold mb-3">What Our Guests Say</h4>
                 <div className="space-y-4">
                   {testimonials.map((testimonial, index) => (
@@ -3249,7 +3249,7 @@ export default function BookingWidget() {
     const isPurchaseOnly = isMembership || isPackage || isGiftCard;
 
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between bg-white">
           <button onClick={() => setBookingState({ step: 'phone-verification' })} className="cursor-pointer" data-testid="button-logo"><img src={glowbarLogoPath} alt="Glowbar" className="h-8" /></button>
@@ -3289,7 +3289,7 @@ export default function BookingWidget() {
               </p>
             </div>
 
-            <div className="bg-gray-50 rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
               <h3 className="text-xl font-bold mb-4">{isPurchaseOnly ? 'Order details' : 'Appointment details'}</h3>
               <div className="space-y-4">
                 <div>
