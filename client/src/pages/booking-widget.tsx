@@ -2473,12 +2473,22 @@ export default function BookingWidget() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFF0ED' }}>
-                          <User className="w-4 h-4" style={{ color: '#FF502D' }} />
+                      <div 
+                        className={`flex items-center gap-3 rounded-xl px-4 py-3 border transition-all ${
+                          esthetician !== 'any' 
+                            ? 'border-2' 
+                            : 'bg-gray-50 border-gray-200'
+                        }`}
+                        style={esthetician !== 'any' ? { backgroundColor: '#FFF0ED', borderColor: '#FF502D' } : {}}
+                      >
+                        <div 
+                          className="w-8 h-8 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: esthetician !== 'any' ? '#FF502D' : '#FFF0ED' }}
+                        >
+                          <User className="w-4 h-4" style={{ color: esthetician !== 'any' ? '#FFFFFF' : '#FF502D' }} />
                         </div>
                         <div className="min-w-[160px]">
-                          <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-0.5">Esthetician</p>
+                          <p className={`text-xs font-medium uppercase tracking-wide mb-0.5 ${esthetician !== 'any' ? '' : 'text-gray-500'}`} style={esthetician !== 'any' ? { color: '#FF502D' } : {}}>Esthetician</p>
                           <Select value={esthetician} onValueChange={setEsthetician}>
                             <SelectTrigger className="border-0 bg-transparent p-0 h-auto text-sm font-semibold focus:ring-0" data-testid="select-esthetician">
                               <SelectValue placeholder="Any esthetician" />
