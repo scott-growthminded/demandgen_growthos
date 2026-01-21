@@ -3224,19 +3224,20 @@ export default function BookingWidget() {
                 <p className="text-sm text-gray-600">Based on 1,000+ reviews</p>
               </div>
 
-              {/* Testimonials */}
+              {/* Member Perks */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                <h4 className="font-bold mb-3">What Our Guests Say</h4>
-                <div className="space-y-4">
-                  {testimonials.map((testimonial, index) => (
-                    <div key={index} className="pb-3 border-b border-gray-100 last:border-0 last:pb-0">
-                      <div className="flex items-center gap-1 mb-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-700 italic">"{testimonial.text}"</p>
-                      <p className="text-xs text-gray-500 mt-1">— {testimonial.name}</p>
+                <h4 className="font-bold mb-4 text-center text-lg">Member Perks</h4>
+                <div className="space-y-3">
+                  {[
+                    'Up to 20% off product',
+                    'Access to loyalty rewards',
+                    'An annual guest pass',
+                    '3-month voucher rollovers',
+                    'Access to exclusive events'
+                  ].map((perk, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#FF502D' }} />
+                      <span className="text-sm text-gray-700">{perk}</span>
                     </div>
                   ))}
                 </div>
