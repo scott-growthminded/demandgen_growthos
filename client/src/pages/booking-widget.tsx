@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronDown, ChevronUp, ChevronRight, CheckCircle, User, MapPin, Tag, Search, Navigation, Clock, X, Lock, CreditCard, Star, Sparkles, Award, Shield } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp, ChevronRight, CheckCircle, User, MapPin, Tag, Search, Navigation, Clock, X, Lock, CreditCard, Star, Sparkles, Award, Shield, Gift, RotateCcw } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -3213,26 +3213,55 @@ export default function BookingWidget() {
 
             {/* Right Column - Social Proof */}
             <div className="space-y-4">
-              {/* Member Perks Header */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
-                <h3 className="font-bold text-xl">Member Perks</h3>
-              </div>
-
-              {/* Member Perks List */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              {/* Member Perks */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h3 className="font-bold text-lg text-center mb-4 pb-3 border-b border-gray-100">Member Perks</h3>
                 <div className="space-y-4">
-                  {[
-                    'Up to 20% off product',
-                    'Access to loyalty rewards',
-                    'An annual guest pass',
-                    '3-month voucher rollovers',
-                    'Access to exclusive events'
-                  ].map((perk, index) => (
-                    <div key={index} className="flex items-center gap-4 py-1">
-                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#FF502D' }} />
-                      <span className="text-base text-gray-700">{perk}</span>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
+                      <Tag className="w-4 h-4" style={{ color: '#FF502D' }} />
                     </div>
-                  ))}
+                    <div>
+                      <p className="font-semibold text-sm">Up to 20% off products</p>
+                      <p className="text-xs text-gray-500">Save on all skincare purchases</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
+                      <Gift className="w-4 h-4" style={{ color: '#FF502D' }} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Annual guest pass</p>
+                      <p className="text-xs text-gray-500">Bring a friend for free once a year</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
+                      <RotateCcw className="w-4 h-4" style={{ color: '#FF502D' }} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">3-month voucher rollover</p>
+                      <p className="text-xs text-gray-500">Flexibility for your schedule</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
+                      <Award className="w-4 h-4" style={{ color: '#FF502D' }} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Loyalty rewards</p>
+                      <p className="text-xs text-gray-500">The more you glow, the more you earn</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF0ED' }}>
+                      <Sparkles className="w-4 h-4" style={{ color: '#FF502D' }} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Exclusive events</p>
+                      <p className="text-xs text-gray-500">Join the Good Skin Society</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
