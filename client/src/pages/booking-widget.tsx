@@ -3213,21 +3213,14 @@ export default function BookingWidget() {
 
             {/* Right Column - Social Proof */}
             <div className="space-y-4">
-              {/* Rating Summary */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
-                <div className="flex justify-center mb-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <p className="font-bold text-2xl">4.8</p>
-                <p className="text-sm text-gray-600">Based on 1,000+ reviews</p>
+              {/* Member Perks Header */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
+                <h3 className="font-bold text-xl">Member Perks</h3>
               </div>
 
-              {/* Member Perks */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                <h4 className="font-bold mb-4 text-center text-lg">Member Perks</h4>
-                <div className="space-y-3">
+              {/* Member Perks List */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div className="space-y-4">
                   {[
                     'Up to 20% off product',
                     'Access to loyalty rewards',
@@ -3235,9 +3228,9 @@ export default function BookingWidget() {
                     '3-month voucher rollovers',
                     'Access to exclusive events'
                   ].map((perk, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#FF502D' }} />
-                      <span className="text-sm text-gray-700">{perk}</span>
+                    <div key={index} className="flex items-center gap-4 py-1">
+                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#FF502D' }} />
+                      <span className="text-base text-gray-700">{perk}</span>
                     </div>
                   ))}
                 </div>
