@@ -1,8 +1,10 @@
-# Glowbar Booking Widget
+# BLVD Availability Service Testing Tool
 
 ## Overview
 
-The Glowbar Booking Widget is a comprehensive system designed to streamline the booking of spa and facial treatment services. It integrates deeply with Boulevard (BLVD) Admin and Client GraphQL APIs to provide a seamless user experience. The project's vision is to offer a robust, user-friendly platform that caters to various customer segments—leads, non-members, and members—while supporting diverse functionalities like gift card purchases, membership sign-ups, and facial treatment bookings. Key capabilities include location-based search with mapping, phone verification, flexible date/time selection, esthetician filtering, and a complete checkout process with payment integration. The project aims to enhance Glowbar's market presence by simplifying access to its services and improving customer engagement through an intuitive digital booking journey.
+This is a web-based testing tool for the BLVD (Boulevard) Admin GraphQL API, designed to test and validate API connectivity for the Boulevard Availability Service. The application provides a comprehensive interface for testing GraphQL queries against the Boulevard Admin API, specifically focusing on location data retrieval and appointment metrics.
+
+The tool serves as both a validation utility and a development aid for building services that integrate with Boulevard's scheduling platform. It allows developers to test API credentials, query business locations, and validate GraphQL schema access before implementing production integrations.
 
 ## User Preferences
 
@@ -10,26 +12,62 @@ Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-The Glowbar Booking Widget is built as a single-page application using **React with TypeScript** and a **Vite build system**. It leverages **Wouter** for client-side routing, displaying the main booking widget on the `/` route. The UI/UX prioritizes the Glowbar brand, utilizing **Tailwind CSS** for utility-first styling combined with **shadcn/ui** components. A distinct color scheme features `#FF502D` (Glowbar coral/red) as the primary action color and `#FFF0ED` as an accent background, visible in elements like the progress bar and custom Leaflet map markers.
+### Frontend Architecture
+- **React with TypeScript**: Modern React application using functional components and hooks for state management
+- **Vite Build System**: Fast development server and optimized production builds with hot module replacement
+- **Wouter Routing**: Lightweight client-side routing solution for single-page application navigation
+- **Tailwind CSS + shadcn/ui**: Utility-first CSS framework combined with a comprehensive component library for consistent UI design
+- **TanStack Query**: Sophisticated data fetching and caching solution with automatic background refetching and error handling
 
-Data fetching is managed by **TanStack Query v5**, employing an object-form query approach for efficient caching and state management. Interactive location selection is powered by **Leaflet Maps** and `react-leaflet`, featuring custom coral-themed markers and address geocoding via **Nominatim (OpenStreetMap)**. Date and time manipulations are handled by `date-fns`.
+### Backend Architecture
+- **Express.js Server**: RESTful API server providing proxy endpoints for Boulevard GraphQL API communication
+- **TypeScript**: Full type safety across the entire backend codebase with shared type definitions
+- **Modular Service Layer**: Dedicated `BlvdService` class handling all Boulevard API interactions with proper error handling and response validation
 
-The backend is an **Express.js** server acting as a RESTful API proxy to the Boulevard GraphQL APIs. A dedicated `BlvdService` class centralizes all interactions with the Boulevard Admin and Client APIs. Booking carts and waitlist requests are managed using **in-memory storage** for runtime data, with `Zod` schemas defining shared type definitions for robust data validation across the frontend and backend. The architecture supports a multi-step booking flow with distinct states, conditional treatment logic based on location and user type, and a detailed checkout process including Member Perks.
+### Data Storage Solutions
+- **Drizzle ORM**: Type-safe database toolkit configured for PostgreSQL with schema-first approach
+- **PostgreSQL Database**: Primary database using Neon serverless PostgreSQL for scalability
+- **In-Memory Storage**: Runtime configuration storage for API testing sessions without persistence requirements
+
+### Authentication and Authorization
+- **Static API Key Authentication**: Simple bearer token authentication for Boulevard Admin API access
+- **Session-based Configuration**: Temporary storage of API credentials during testing sessions without long-term persistence
+- **Environment Variable Support**: Configuration via environment variables for deployment flexibility
+
+### API Design Patterns
+- **GraphQL Proxy Pattern**: Backend serves as a secure proxy to Boulevard's GraphQL API, handling authentication and request validation
+- **RESTful Endpoints**: Simple REST API for frontend-backend communication with clear resource-based URLs
+- **Validation Layer**: Zod schema validation for all API requests and responses ensuring type safety and data integrity
+- **Error Handling**: Comprehensive error handling with structured error responses and proper HTTP status codes
+
+### UI/UX Architecture
+- **Component-Driven Design**: Modular React components using shadcn/ui design system for consistency
+- **Responsive Layout**: Mobile-first responsive design with adaptive layouts for different screen sizes
+- **Real-time Feedback**: Live connection testing with visual status indicators and detailed error reporting
+- **Configuration Management**: User-friendly forms for API credential management with validation and testing capabilities
 
 ## External Dependencies
 
--   **Boulevard APIs**:
-    -   **Admin GraphQL API**: Used for fetching location data, staff shifts, appointments, and timeblocks.
-    -   **Client GraphQL API**: Handles cart management, availability lookups, and the core booking flow operations.
-    -   **Webhooks**: Supports HMAC-SHA256 signature verification for receiving appointment events.
--   **Mapping Services**:
-    -   **Leaflet** and `react-leaflet`: For interactive map functionalities and custom marker rendering.
-    -   **Nominatim (OpenStreetMap)**: Provides address geocoding capabilities for location search.
--   **Key Libraries**:
-    -   `@tanstack/react-query` v5: Essential for data fetching, caching, and state synchronization.
-    -   `wouter`: Manages client-side routing within the single-page application.
-    -   `date-fns`: Utilized for date formatting, parsing, and manipulation.
-    -   `zod`: Enforces runtime validation for data schemas.
-    -   `lucide-react`: Supplies a collection of icons used across the user interface.
--   **Database (Configured, Minimal Usage)**:
-    -   `drizzle-orm` with `@neondatabase/serverless`: Configured for potential future database interactions, though current booking data relies on in-memory storage.
+### Boulevard Integration
+- **Boulevard Admin GraphQL API**: Primary integration point for accessing business location data and appointment metrics
+- **GraphQL Schema Introspection**: Runtime schema validation and query structure verification
+- **Bearer Token Authentication**: API key-based authentication for secure Boulevard API access
+
+### Database Services
+- **Neon PostgreSQL**: Serverless PostgreSQL database hosting with connection pooling and automatic scaling
+- **Connection Pooling**: Efficient database connection management using `@neondatabase/serverless` driver
+
+### Development and Build Tools
+- **Vite Development Server**: Fast development experience with hot module replacement and optimized bundling
+- **TypeScript Compiler**: Static type checking across frontend, backend, and shared code
+- **Replit Integration**: Specialized Replit plugins for development environment integration and error handling
+
+### UI Component Libraries
+- **Radix UI Primitives**: Accessible, unstyled UI components for complex interactions (dialogs, dropdowns, forms)
+- **Lucide React Icons**: Comprehensive icon library for consistent visual elements
+- **React Hook Form**: Performant form handling with validation and error management
+
+### Utility Libraries
+- **Zod**: Runtime type validation and schema definition for API contracts and data validation
+- **date-fns**: Date manipulation and formatting utilities for appointment scheduling features
+- **clsx/tailwind-merge**: Conditional CSS class management for dynamic styling
