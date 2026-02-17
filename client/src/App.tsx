@@ -7,11 +7,13 @@ import NotFound from "@/pages/not-found";
 import BlvdApiTest from "@/pages/blvd-api-test";
 import BookingWidget from "@/pages/booking-widget";
 import BookingFlowPage from "@/pages/booking-flow";
+import DocsPage from "@/pages/docs";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={BookingWidget} />
+      <Route path="/docs" component={DocsPage} />
       <Route component={NotFound} />
     </Switch>
   );
