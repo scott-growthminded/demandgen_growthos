@@ -2392,6 +2392,7 @@ export default function BookingWidget() {
                             const isPast = day < today && format(day, 'yyyy-MM-dd') !== format(today, 'yyyy-MM-dd');
                             const isSelected = selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
                             const isToday = format(day, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+                            const isBonusDay = isMemberFlow && (i + 1) <= 15 && !isPast;
                             
                             if (isPast) {
                               return (
@@ -2413,9 +2414,19 @@ export default function BookingWidget() {
                                     ? 'text-white shadow-lg scale-110'
                                     : isToday
                                     ? 'ring-2 ring-offset-2 hover:bg-gray-100'
+                                    : isBonusDay
+                                    ? 'hover:bg-amber-100'
                                     : 'hover:bg-gray-100'
                                 }`}
-                                style={isSelected ? { backgroundColor: '#FF502D' } : isToday ? { '--tw-ring-color': '#FF502D' } as any : {}}
+                                style={
+                                  isSelected 
+                                    ? { backgroundColor: '#FF502D' } 
+                                    : isToday 
+                                    ? { '--tw-ring-color': '#FF502D', ...(isBonusDay ? { backgroundColor: '#FEF9C3' } : {}) } as any
+                                    : isBonusDay 
+                                    ? { backgroundColor: '#FEF9C3' } 
+                                    : {}
+                                }
                                 data-testid={`calendar-day-${format(day, 'yyyy-MM-dd')}`}
                               >
                                 {i + 1}
@@ -2450,7 +2461,7 @@ export default function BookingWidget() {
                         </div>
 
                         {/* Legend */}
-                        <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-gray-100">
+                        <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-gray-100 flex-wrap">
                           <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#FF502D' }}></div>
                             <span className="text-xs text-gray-500">Selected</span>
@@ -2459,7 +2470,30 @@ export default function BookingWidget() {
                             <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#FF502D' }}></div>
                             <span className="text-xs text-gray-500">Today</span>
                           </div>
+                          {isMemberFlow && (
+                            <div className="flex items-center gap-2">
+                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#FEF9C3', border: '1px solid #FDE68A' }}></div>
+                              <span className="text-xs text-gray-500">Bonus points</span>
+                            </div>
+                          )}
                         </div>
+
+                        {/* Member Bonus Description */}
+                        {isMemberFlow && (
+                          <div className="mt-4 rounded-lg px-4 py-3" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
+                            <div className="flex items-start gap-2">
+                              <Award className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#D97706' }} />
+                              <div>
+                                <p className="text-xs font-semibold text-amber-900 mb-1">Earn more loyalty points</p>
+                                <div className="space-y-0.5 text-xs text-amber-800">
+                                  <p>+100 pts — All member appointments</p>
+                                  <p>+150 pts — Off-peak hours or 1st–15th</p>
+                                  <p>+200 pts — Off-peak & 1st–15th combined</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
@@ -2538,16 +2572,6 @@ export default function BookingWidget() {
                   </div>
                 ) : hasAvailability ? (
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
-                    {/* Member Loyalty Points Banner */}
-                    {isMemberFlow && selectedDate && (
-                      <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
-                        <Award className="w-4 h-4 flex-shrink-0" style={{ color: '#D97706' }} />
-                        <span className="text-amber-800">
-                          Earn loyalty points on every booking! <span className="font-semibold">Off-peak</span> & <span className="font-semibold">early month (1st–15th)</span> times earn bonus points.
-                        </span>
-                      </div>
-                    )}
-
                     {/* Morning Slots */}
                     {morningSlots.length > 0 && (
                       <div>
