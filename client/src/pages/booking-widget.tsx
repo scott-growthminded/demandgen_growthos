@@ -2578,15 +2578,13 @@ export default function BookingWidget() {
                         <div className="flex items-center gap-2 mb-3">
                           <h4 className="font-semibold text-gray-900">Morning</h4>
                           <span className="text-xs text-gray-400">Before 12 PM</span>
-                          {isMemberFlow && selectedDate && morningSlots.some((s: any) => getLoyaltyPoints(s) >= 150) && (
+                          {isMemberFlow && (
                             <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FFF0ED', color: '#FF502D' }}>Bonus points</span>
                           )}
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {morningSlots.map((slot: any) => {
-                            const points = getLoyaltyPoints(slot);
                             const isSelected = selectedTimeSlot?.id === slot.id;
-                            const isBonus = points >= 150;
                             return (
                               <button
                                 key={slot.id}
@@ -2594,14 +2592,14 @@ export default function BookingWidget() {
                                 className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
                                   isSelected
                                     ? 'text-white shadow-lg'
-                                    : isBonus && isMemberFlow
+                                    : isMemberFlow
                                       ? 'text-gray-700'
                                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                                 style={
                                   isSelected 
                                     ? { backgroundColor: '#FF502D' } 
-                                    : isBonus && isMemberFlow 
+                                    : isMemberFlow 
                                       ? { backgroundColor: '#FFF0ED', border: '1px solid #FFD4CC' } 
                                       : {}
                                 }
@@ -2626,15 +2624,10 @@ export default function BookingWidget() {
                         <div className="flex items-center gap-2 mb-3">
                           <h4 className="font-semibold text-gray-900">Afternoon</h4>
                           <span className="text-xs text-gray-400">12 PM - 5 PM</span>
-                          {isMemberFlow && selectedDate && afternoonSlots.some((s: any) => getLoyaltyPoints(s) >= 150) && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FFF0ED', color: '#FF502D' }}>Bonus points</span>
-                          )}
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {afternoonSlots.map((slot: any) => {
-                            const points = getLoyaltyPoints(slot);
                             const isSelected = selectedTimeSlot?.id === slot.id;
-                            const isBonus = points >= 150;
                             return (
                               <button
                                 key={slot.id}
@@ -2642,16 +2635,12 @@ export default function BookingWidget() {
                                 className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
                                   isSelected
                                     ? 'text-white shadow-lg'
-                                    : isBonus && isMemberFlow
-                                      ? 'text-gray-700'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                                 style={
                                   isSelected 
                                     ? { backgroundColor: '#FF502D' } 
-                                    : isBonus && isMemberFlow 
-                                      ? { backgroundColor: '#FFF0ED', border: '1px solid #FFD4CC' } 
-                                      : {}
+                                    : {}
                                 }
                                 data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
                               >
@@ -2674,15 +2663,10 @@ export default function BookingWidget() {
                         <div className="flex items-center gap-2 mb-3">
                           <h4 className="font-semibold text-gray-900">Evening</h4>
                           <span className="text-xs text-gray-400">After 5 PM</span>
-                          {isMemberFlow && selectedDate && eveningSlots.some((s: any) => getLoyaltyPoints(s) >= 150) && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FFF0ED', color: '#FF502D' }}>Bonus points</span>
-                          )}
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {eveningSlots.map((slot: any) => {
-                            const points = getLoyaltyPoints(slot);
                             const isSelected = selectedTimeSlot?.id === slot.id;
-                            const isBonus = points >= 150;
                             return (
                               <button
                                 key={slot.id}
@@ -2690,16 +2674,12 @@ export default function BookingWidget() {
                                 className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
                                   isSelected
                                     ? 'text-white shadow-lg'
-                                    : isBonus && isMemberFlow
-                                      ? 'text-gray-700'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                                 style={
                                   isSelected 
                                     ? { backgroundColor: '#FF502D' } 
-                                    : isBonus && isMemberFlow 
-                                      ? { backgroundColor: '#FFF0ED', border: '1px solid #FFD4CC' } 
-                                      : {}
+                                    : {}
                                 }
                                 data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
                               >
