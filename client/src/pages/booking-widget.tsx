@@ -2369,7 +2369,6 @@ export default function BookingWidget() {
                             <ChevronRight className="w-5 h-5" />
                           </button>
                         </div>
-                        
                         {/* Day labels */}
                         <div className="grid grid-cols-7 gap-1 mb-2">
                           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
@@ -2378,7 +2377,6 @@ export default function BookingWidget() {
                             </div>
                           ))}
                         </div>
-                        
                         {/* Calendar grid */}
                         <div className="grid grid-cols-7 gap-1">
                           {/* Padding cells */}
@@ -2459,7 +2457,6 @@ export default function BookingWidget() {
                             );
                           })}
                         </div>
-
                         {/* Legend */}
                         <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t border-gray-100 flex-wrap">
                           <div className="flex items-center gap-2">
@@ -2473,11 +2470,10 @@ export default function BookingWidget() {
                           {isMemberFlow && (
                             <div className="flex items-center gap-2">
                               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#FFF0ED' }}></div>
-                              <span className="text-xs text-gray-500">Bonus points</span>
+                              <span className="text-xs text-gray-500">Bonus loyalty points</span>
                             </div>
                           )}
                         </div>
-
                         {/* Member Bonus Description */}
                         {isMemberFlow && (
                           <div className="mt-4 rounded-2xl px-3 py-2.5" style={{ backgroundColor: '#FFF0ED' }}>
@@ -2617,7 +2613,6 @@ export default function BookingWidget() {
                                     $10 OFF
                                   </span>
                                 )}
-
                               </button>
                             );
                           })}
@@ -2666,7 +2661,6 @@ export default function BookingWidget() {
                                     $10 OFF
                                   </span>
                                 )}
-
                               </button>
                             );
                           })}
@@ -2715,7 +2709,6 @@ export default function BookingWidget() {
                                     $10 OFF
                                   </span>
                                 )}
-
                               </button>
                             );
                           })}
