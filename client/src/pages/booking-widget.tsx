@@ -2485,7 +2485,7 @@ export default function BookingWidget() {
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-[11px] text-gray-600">Highlighted dates</span>
-                                <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+150</span>
+                                <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+50</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-[11px] text-gray-600">Highlighted times</span>
