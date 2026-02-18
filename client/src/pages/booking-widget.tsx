@@ -2481,7 +2481,7 @@ export default function BookingWidget() {
                             <div className="space-y-0.5">
                               <div className="flex justify-between">
                                 <span className="text-[11px] text-gray-600">All appointments</span>
-                                <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+100</span>
+                                <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>100</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-[11px] text-gray-600">Highlighted dates</span>
