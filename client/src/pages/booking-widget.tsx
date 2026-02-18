@@ -2407,27 +2407,26 @@ export default function BookingWidget() {
                                   setSelectedDate(day);
                                   setSelectedTimeSlot(undefined);
                                 }}
-                                className={`aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all ${
+                                className={`relative aspect-square flex items-center justify-center rounded-full text-sm font-medium transition-all ${
                                   isSelected
                                     ? 'text-white shadow-lg scale-110'
                                     : isToday
                                     ? 'ring-2 ring-offset-2'
-                                    : isBonusDay
-                                    ? ''
                                     : 'hover:bg-gray-100'
                                 }`}
                                 style={
                                   isSelected 
                                     ? { backgroundColor: '#FF502D' } 
                                     : isToday 
-                                    ? { '--tw-ring-color': '#FF502D', ...(isBonusDay ? { backgroundColor: '#FFF0ED' } : {}) } as any
-                                    : isBonusDay 
-                                    ? { backgroundColor: '#FFF0ED' } 
+                                    ? { '--tw-ring-color': '#FF502D' } as any
                                     : {}
                                 }
                                 data-testid={`calendar-day-${format(day, 'yyyy-MM-dd')}`}
                               >
                                 {i + 1}
+                                {isBonusDay && !isSelected && (
+                                  <Sparkles className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5" style={{ color: '#FF502D' }} />
+                                )}
                               </button>
                             );
                           })}
@@ -2468,8 +2467,8 @@ export default function BookingWidget() {
                             <span className="text-xs text-gray-500">Today</span>
                           </div>
                           {isMemberFlow && (
-                            <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#FFF0ED' }}></div>
+                            <div className="flex items-center gap-1.5">
+                              <Sparkles className="w-3 h-3" style={{ color: '#FF502D' }} />
                               <span className="text-xs text-gray-500">Bonus loyalty points</span>
                             </div>
                           )}
@@ -2580,7 +2579,7 @@ export default function BookingWidget() {
                           <span className="text-xs text-gray-400">Before 12 PM</span>
                           {isMemberFlow && (
                             <div className="flex items-center gap-1.5 ml-auto">
-                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#FFF0ED', border: '1px solid #FFD4CC' }}></div>
+                              <Sparkles className="w-3 h-3" style={{ color: '#FF502D' }} />
                               <span className="text-xs text-gray-500">Bonus loyalty points</span>
                             </div>
                           )}
@@ -2595,20 +2594,19 @@ export default function BookingWidget() {
                                 className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
                                   isSelected
                                     ? 'text-white shadow-lg'
-                                    : isMemberFlow
-                                      ? 'text-gray-700'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                                 style={
                                   isSelected 
                                     ? { backgroundColor: '#FF502D' } 
-                                    : isMemberFlow 
-                                      ? { backgroundColor: '#FFF0ED', border: '1px solid #FFD4CC' } 
-                                      : {}
+                                    : {}
                                 }
                                 data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
                               >
                                 {slot.time}
+                                {isMemberFlow && !isSelected && (
+                                  <Sparkles className="ml-1 w-3 h-3 inline-block" style={{ color: '#FF502D' }} />
+                                )}
                                 {slot.isDiscounted && (
                                   <span className="ml-1.5 text-xs" style={{ color: isSelected ? '#FFD4CC' : '#FF502D' }}>
                                     $10 OFF
