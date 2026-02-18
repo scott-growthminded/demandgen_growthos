@@ -2579,7 +2579,10 @@ export default function BookingWidget() {
                           <h4 className="font-semibold text-gray-900">Morning</h4>
                           <span className="text-xs text-gray-400">Before 12 PM</span>
                           {isMemberFlow && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FFF0ED', color: '#FF502D' }}>Bonus loyalty points</span>
+                            <div className="flex items-center gap-1.5 ml-auto">
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#FFF0ED', border: '1px solid #FFD4CC' }}></div>
+                              <span className="text-xs text-gray-500">Bonus loyalty points</span>
+                            </div>
                           )}
                         </div>
                         <div className="flex flex-wrap gap-2">
