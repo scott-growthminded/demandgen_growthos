@@ -2254,6 +2254,20 @@ export default function BookingWidget() {
     const afternoonSlots = timeSlots.filter((slot: any) => slot.hour >= 12 && slot.hour < 17);
     const eveningSlots = timeSlots.filter((slot: any) => slot.hour >= 17);
 
+    const isMemberFlow = bookingState.userFlow === 'member';
+
+    const isOffPeak = (hour: number) => hour < 11 || (hour >= 14 && hour < 17);
+
+    const getLoyaltyPoints = (slot: any) => {
+      if (!isMemberFlow || !selectedDate) return 0;
+      const dayOfMonth = selectedDate.getDate();
+      const isEarlyMonth = dayOfMonth <= 15;
+      const offPeak = isOffPeak(slot.hour);
+      if (isEarlyMonth && offPeak) return 200;
+      if (isEarlyMonth || offPeak) return 150;
+      return 100;
+    };
+
     const isValid = selectedDate && selectedTimeSlot;
 
     // Get selected esthetician name
@@ -2524,34 +2538,65 @@ export default function BookingWidget() {
                   </div>
                 ) : hasAvailability ? (
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+                    {/* Member Loyalty Points Banner */}
+                    {isMemberFlow && selectedDate && (
+                      <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
+                        <Award className="w-4 h-4 flex-shrink-0" style={{ color: '#D97706' }} />
+                        <span className="text-amber-800">
+                          Earn loyalty points on every booking! <span className="font-semibold">Off-peak</span> & <span className="font-semibold">early month (1st–15th)</span> times earn bonus points.
+                        </span>
+                      </div>
+                    )}
+
                     {/* Morning Slots */}
                     {morningSlots.length > 0 && (
                       <div>
                         <div className="flex items-center gap-2 mb-3">
                           <h4 className="font-semibold text-gray-900">Morning</h4>
                           <span className="text-xs text-gray-400">Before 12 PM</span>
+                          {isMemberFlow && selectedDate && morningSlots.some((s: any) => getLoyaltyPoints(s) >= 150) && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}>Bonus points</span>
+                          )}
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {morningSlots.map((slot: any) => (
-                            <button
-                              key={slot.id}
-                              onClick={() => setSelectedTimeSlot(slot)}
-                              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                selectedTimeSlot?.id === slot.id
-                                  ? 'text-white shadow-lg'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                              style={selectedTimeSlot?.id === slot.id ? { backgroundColor: '#FF502D' } : {}}
-                              data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
-                            >
-                              {slot.time}
-                              {slot.isDiscounted && (
-                                <span className="ml-1.5 text-xs" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFD4CC' : '#FF502D' }}>
-                                  $10 OFF
-                                </span>
-                              )}
-                            </button>
-                          ))}
+                          {morningSlots.map((slot: any) => {
+                            const points = getLoyaltyPoints(slot);
+                            const isSelected = selectedTimeSlot?.id === slot.id;
+                            const isBonus = points >= 150;
+                            return (
+                              <button
+                                key={slot.id}
+                                onClick={() => setSelectedTimeSlot(slot)}
+                                className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                  isSelected
+                                    ? 'text-white shadow-lg'
+                                    : isBonus && isMemberFlow
+                                      ? 'text-gray-700 hover:bg-amber-100'
+                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                                style={
+                                  isSelected 
+                                    ? { backgroundColor: '#FF502D' } 
+                                    : isBonus && isMemberFlow 
+                                      ? { backgroundColor: '#FEF9C3', border: '1px solid #FDE68A' } 
+                                      : {}
+                                }
+                                data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
+                              >
+                                {slot.time}
+                                {slot.isDiscounted && (
+                                  <span className="ml-1.5 text-xs" style={{ color: isSelected ? '#FFD4CC' : '#FF502D' }}>
+                                    $10 OFF
+                                  </span>
+                                )}
+                                {isMemberFlow && points > 0 && (
+                                  <span className="ml-1.5 text-xs font-semibold" style={{ color: isSelected ? '#FDE68A' : '#D97706' }}>
+                                    +{points}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -2562,28 +2607,49 @@ export default function BookingWidget() {
                         <div className="flex items-center gap-2 mb-3">
                           <h4 className="font-semibold text-gray-900">Afternoon</h4>
                           <span className="text-xs text-gray-400">12 PM - 5 PM</span>
+                          {isMemberFlow && selectedDate && afternoonSlots.some((s: any) => getLoyaltyPoints(s) >= 150) && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}>Bonus points</span>
+                          )}
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {afternoonSlots.map((slot: any) => (
-                            <button
-                              key={slot.id}
-                              onClick={() => setSelectedTimeSlot(slot)}
-                              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                selectedTimeSlot?.id === slot.id
-                                  ? 'text-white shadow-lg'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                              style={selectedTimeSlot?.id === slot.id ? { backgroundColor: '#FF502D' } : {}}
-                              data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
-                            >
-                              {slot.time}
-                              {slot.isDiscounted && (
-                                <span className="ml-1.5 text-xs" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFD4CC' : '#FF502D' }}>
-                                  $10 OFF
-                                </span>
-                              )}
-                            </button>
-                          ))}
+                          {afternoonSlots.map((slot: any) => {
+                            const points = getLoyaltyPoints(slot);
+                            const isSelected = selectedTimeSlot?.id === slot.id;
+                            const isBonus = points >= 150;
+                            return (
+                              <button
+                                key={slot.id}
+                                onClick={() => setSelectedTimeSlot(slot)}
+                                className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                  isSelected
+                                    ? 'text-white shadow-lg'
+                                    : isBonus && isMemberFlow
+                                      ? 'text-gray-700 hover:bg-amber-100'
+                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                                style={
+                                  isSelected 
+                                    ? { backgroundColor: '#FF502D' } 
+                                    : isBonus && isMemberFlow 
+                                      ? { backgroundColor: '#FEF9C3', border: '1px solid #FDE68A' } 
+                                      : {}
+                                }
+                                data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
+                              >
+                                {slot.time}
+                                {slot.isDiscounted && (
+                                  <span className="ml-1.5 text-xs" style={{ color: isSelected ? '#FFD4CC' : '#FF502D' }}>
+                                    $10 OFF
+                                  </span>
+                                )}
+                                {isMemberFlow && points > 0 && (
+                                  <span className="ml-1.5 text-xs font-semibold" style={{ color: isSelected ? '#FDE68A' : '#D97706' }}>
+                                    +{points}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -2594,28 +2660,49 @@ export default function BookingWidget() {
                         <div className="flex items-center gap-2 mb-3">
                           <h4 className="font-semibold text-gray-900">Evening</h4>
                           <span className="text-xs text-gray-400">After 5 PM</span>
+                          {isMemberFlow && selectedDate && eveningSlots.some((s: any) => getLoyaltyPoints(s) >= 150) && (
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}>Bonus points</span>
+                          )}
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {eveningSlots.map((slot: any) => (
-                            <button
-                              key={slot.id}
-                              onClick={() => setSelectedTimeSlot(slot)}
-                              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                selectedTimeSlot?.id === slot.id
-                                  ? 'text-white shadow-lg'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                              style={selectedTimeSlot?.id === slot.id ? { backgroundColor: '#FF502D' } : {}}
-                              data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
-                            >
-                              {slot.time}
-                              {slot.isDiscounted && (
-                                <span className="ml-1.5 text-xs" style={{ color: selectedTimeSlot?.id === slot.id ? '#FFD4CC' : '#FF502D' }}>
-                                  $10 OFF
-                                </span>
-                              )}
-                            </button>
-                          ))}
+                          {eveningSlots.map((slot: any) => {
+                            const points = getLoyaltyPoints(slot);
+                            const isSelected = selectedTimeSlot?.id === slot.id;
+                            const isBonus = points >= 150;
+                            return (
+                              <button
+                                key={slot.id}
+                                onClick={() => setSelectedTimeSlot(slot)}
+                                className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                  isSelected
+                                    ? 'text-white shadow-lg'
+                                    : isBonus && isMemberFlow
+                                      ? 'text-gray-700 hover:bg-amber-100'
+                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                                style={
+                                  isSelected 
+                                    ? { backgroundColor: '#FF502D' } 
+                                    : isBonus && isMemberFlow 
+                                      ? { backgroundColor: '#FEF9C3', border: '1px solid #FDE68A' } 
+                                      : {}
+                                }
+                                data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
+                              >
+                                {slot.time}
+                                {slot.isDiscounted && (
+                                  <span className="ml-1.5 text-xs" style={{ color: isSelected ? '#FFD4CC' : '#FF502D' }}>
+                                    $10 OFF
+                                  </span>
+                                )}
+                                {isMemberFlow && points > 0 && (
+                                  <span className="ml-1.5 text-xs font-semibold" style={{ color: isSelected ? '#FDE68A' : '#D97706' }}>
+                                    +{points}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
