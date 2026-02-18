@@ -2480,23 +2480,20 @@ export default function BookingWidget() {
 
                         {/* Member Bonus Description */}
                         {isMemberFlow && (
-                          <div className="mt-4 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-                            <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: '#FF502D' }}>
-                              <Award className="w-4 h-4 text-white" />
-                              <p className="text-sm font-semibold text-white">Loyalty Points</p>
-                            </div>
-                            <div className="divide-y divide-gray-100">
-                              <div className="flex items-center justify-between px-4 py-2.5">
-                                <span className="text-xs text-gray-600">All appointments</span>
-                                <span className="text-xs font-bold" style={{ color: '#FF502D' }}>+100 pts</span>
+                          <div className="mt-4 rounded-lg px-3 py-2.5" style={{ backgroundColor: '#FFF0ED' }}>
+                            <p className="text-xs font-semibold mb-1.5" style={{ color: '#FF502D' }}>Loyalty Points</p>
+                            <div className="space-y-0.5">
+                              <div className="flex justify-between">
+                                <span className="text-[11px] text-gray-600">All appointments</span>
+                                <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+100</span>
                               </div>
-                              <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: '#FFFBFB' }}>
-                                <span className="text-xs text-gray-600">Off-peak <span className="text-gray-400">or</span> 1st–15th</span>
-                                <span className="text-xs font-bold" style={{ color: '#FF502D' }}>+150 pts</span>
+                              <div className="flex justify-between">
+                                <span className="text-[11px] text-gray-600">Off-peak or 1st–15th</span>
+                                <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+150</span>
                               </div>
-                              <div className="flex items-center justify-between px-4 py-2.5">
-                                <span className="text-xs text-gray-600">Off-peak <span className="text-gray-400">&</span> 1st–15th</span>
-                                <span className="text-xs font-bold" style={{ color: '#FF502D' }}>+200 pts</span>
+                              <div className="flex justify-between">
+                                <span className="text-[11px] text-gray-600">Off-peak & 1st–15th</span>
+                                <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+200</span>
                               </div>
                             </div>
                           </div>
