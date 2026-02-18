@@ -2413,18 +2413,18 @@ export default function BookingWidget() {
                                   isSelected
                                     ? 'text-white shadow-lg scale-110'
                                     : isToday
-                                    ? 'ring-2 ring-offset-2 hover:bg-gray-100'
+                                    ? 'ring-2 ring-offset-2'
                                     : isBonusDay
-                                    ? 'hover:bg-amber-100'
+                                    ? ''
                                     : 'hover:bg-gray-100'
                                 }`}
                                 style={
                                   isSelected 
                                     ? { backgroundColor: '#FF502D' } 
                                     : isToday 
-                                    ? { '--tw-ring-color': '#FF502D', ...(isBonusDay ? { backgroundColor: '#FEF9C3' } : {}) } as any
+                                    ? { '--tw-ring-color': '#FF502D', ...(isBonusDay ? { backgroundColor: '#FFF0ED' } : {}) } as any
                                     : isBonusDay 
-                                    ? { backgroundColor: '#FEF9C3' } 
+                                    ? { backgroundColor: '#FFF0ED' } 
                                     : {}
                                 }
                                 data-testid={`calendar-day-${format(day, 'yyyy-MM-dd')}`}
@@ -2472,7 +2472,7 @@ export default function BookingWidget() {
                           </div>
                           {isMemberFlow && (
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#FEF9C3', border: '1px solid #FDE68A' }}></div>
+                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#FFF0ED' }}></div>
                               <span className="text-xs text-gray-500">Bonus points</span>
                             </div>
                           )}
@@ -2480,16 +2480,23 @@ export default function BookingWidget() {
 
                         {/* Member Bonus Description */}
                         {isMemberFlow && (
-                          <div className="mt-4 rounded-lg px-4 py-3" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
-                            <div className="flex items-start gap-2">
-                              <Award className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#D97706' }} />
-                              <div>
-                                <p className="text-xs font-semibold text-amber-900 mb-1">Earn more loyalty points</p>
-                                <div className="space-y-0.5 text-xs text-amber-800">
-                                  <p>+100 pts — All member appointments</p>
-                                  <p>+150 pts — Off-peak hours or 1st–15th</p>
-                                  <p>+200 pts — Off-peak & 1st–15th combined</p>
-                                </div>
+                          <div className="mt-4 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                            <div className="px-4 py-3 flex items-center gap-2" style={{ backgroundColor: '#FF502D' }}>
+                              <Award className="w-4 h-4 text-white" />
+                              <p className="text-sm font-semibold text-white">Loyalty Points</p>
+                            </div>
+                            <div className="divide-y divide-gray-100">
+                              <div className="flex items-center justify-between px-4 py-2.5">
+                                <span className="text-xs text-gray-600">All appointments</span>
+                                <span className="text-xs font-bold" style={{ color: '#FF502D' }}>+100 pts</span>
+                              </div>
+                              <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: '#FFFBFB' }}>
+                                <span className="text-xs text-gray-600">Off-peak <span className="text-gray-400">or</span> 1st–15th</span>
+                                <span className="text-xs font-bold" style={{ color: '#FF502D' }}>+150 pts</span>
+                              </div>
+                              <div className="flex items-center justify-between px-4 py-2.5">
+                                <span className="text-xs text-gray-600">Off-peak <span className="text-gray-400">&</span> 1st–15th</span>
+                                <span className="text-xs font-bold" style={{ color: '#FF502D' }}>+200 pts</span>
                               </div>
                             </div>
                           </div>
@@ -2579,7 +2586,7 @@ export default function BookingWidget() {
                           <h4 className="font-semibold text-gray-900">Morning</h4>
                           <span className="text-xs text-gray-400">Before 12 PM</span>
                           {isMemberFlow && selectedDate && morningSlots.some((s: any) => getLoyaltyPoints(s) >= 150) && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}>Bonus points</span>
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FFF0ED', color: '#FF502D' }}>Bonus points</span>
                           )}
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -2595,14 +2602,14 @@ export default function BookingWidget() {
                                   isSelected
                                     ? 'text-white shadow-lg'
                                     : isBonus && isMemberFlow
-                                      ? 'text-gray-700 hover:bg-amber-100'
+                                      ? 'text-gray-700'
                                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                                 style={
                                   isSelected 
                                     ? { backgroundColor: '#FF502D' } 
                                     : isBonus && isMemberFlow 
-                                      ? { backgroundColor: '#FEF9C3', border: '1px solid #FDE68A' } 
+                                      ? { backgroundColor: '#FFF0ED', border: '1px solid #FFD4CC' } 
                                       : {}
                                 }
                                 data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
@@ -2613,11 +2620,7 @@ export default function BookingWidget() {
                                     $10 OFF
                                   </span>
                                 )}
-                                {isMemberFlow && points > 0 && (
-                                  <span className="ml-1.5 text-xs font-semibold" style={{ color: isSelected ? '#FDE68A' : '#D97706' }}>
-                                    +{points}
-                                  </span>
-                                )}
+
                               </button>
                             );
                           })}
@@ -2632,7 +2635,7 @@ export default function BookingWidget() {
                           <h4 className="font-semibold text-gray-900">Afternoon</h4>
                           <span className="text-xs text-gray-400">12 PM - 5 PM</span>
                           {isMemberFlow && selectedDate && afternoonSlots.some((s: any) => getLoyaltyPoints(s) >= 150) && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}>Bonus points</span>
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FFF0ED', color: '#FF502D' }}>Bonus points</span>
                           )}
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -2648,14 +2651,14 @@ export default function BookingWidget() {
                                   isSelected
                                     ? 'text-white shadow-lg'
                                     : isBonus && isMemberFlow
-                                      ? 'text-gray-700 hover:bg-amber-100'
+                                      ? 'text-gray-700'
                                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                                 style={
                                   isSelected 
                                     ? { backgroundColor: '#FF502D' } 
                                     : isBonus && isMemberFlow 
-                                      ? { backgroundColor: '#FEF9C3', border: '1px solid #FDE68A' } 
+                                      ? { backgroundColor: '#FFF0ED', border: '1px solid #FFD4CC' } 
                                       : {}
                                 }
                                 data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
@@ -2666,11 +2669,7 @@ export default function BookingWidget() {
                                     $10 OFF
                                   </span>
                                 )}
-                                {isMemberFlow && points > 0 && (
-                                  <span className="ml-1.5 text-xs font-semibold" style={{ color: isSelected ? '#FDE68A' : '#D97706' }}>
-                                    +{points}
-                                  </span>
-                                )}
+
                               </button>
                             );
                           })}
@@ -2685,7 +2684,7 @@ export default function BookingWidget() {
                           <h4 className="font-semibold text-gray-900">Evening</h4>
                           <span className="text-xs text-gray-400">After 5 PM</span>
                           {isMemberFlow && selectedDate && eveningSlots.some((s: any) => getLoyaltyPoints(s) >= 150) && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}>Bonus points</span>
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full ml-auto" style={{ backgroundColor: '#FFF0ED', color: '#FF502D' }}>Bonus points</span>
                           )}
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -2701,14 +2700,14 @@ export default function BookingWidget() {
                                   isSelected
                                     ? 'text-white shadow-lg'
                                     : isBonus && isMemberFlow
-                                      ? 'text-gray-700 hover:bg-amber-100'
+                                      ? 'text-gray-700'
                                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                                 style={
                                   isSelected 
                                     ? { backgroundColor: '#FF502D' } 
                                     : isBonus && isMemberFlow 
-                                      ? { backgroundColor: '#FEF9C3', border: '1px solid #FDE68A' } 
+                                      ? { backgroundColor: '#FFF0ED', border: '1px solid #FFD4CC' } 
                                       : {}
                                 }
                                 data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
@@ -2719,11 +2718,7 @@ export default function BookingWidget() {
                                     $10 OFF
                                   </span>
                                 )}
-                                {isMemberFlow && points > 0 && (
-                                  <span className="ml-1.5 text-xs font-semibold" style={{ color: isSelected ? '#FDE68A' : '#D97706' }}>
-                                    +{points}
-                                  </span>
-                                )}
+
                               </button>
                             );
                           })}
