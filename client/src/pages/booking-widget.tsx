@@ -2480,7 +2480,7 @@ export default function BookingWidget() {
 
                         {/* Member Bonus Description */}
                         {isMemberFlow && (
-                          <div className="mt-4 rounded-lg px-3 py-2.5" style={{ backgroundColor: '#FFF0ED' }}>
+                          <div className="mt-4 rounded-2xl px-3 py-2.5" style={{ backgroundColor: '#FFF0ED' }}>
                             <p className="text-xs font-semibold mb-1.5" style={{ color: '#FF502D' }}>Loyalty Points</p>
                             <div className="space-y-0.5">
                               <div className="flex justify-between">
