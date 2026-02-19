@@ -2426,7 +2426,7 @@ export default function BookingWidget() {
                               >
                                 {i + 1}
                                 {isBonusDay && !isSelected && (
-                                  <Sparkles className="absolute -top-0.5 -right-0.5 w-3 h-3" style={{ color: '#FF502D' }} />
+                                  <Star className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 fill-current" style={{ color: '#FF502D' }} />
                                 )}
                               </button>
                             );
@@ -2469,7 +2469,7 @@ export default function BookingWidget() {
                           </div>
                           {isMemberFlow && (
                             <div className="flex items-center gap-1.5 relative">
-                              <Sparkles className="w-3 h-3" style={{ color: '#FF502D' }} />
+                              <Star className="w-3 h-3 fill-current" style={{ color: '#FF502D' }} />
                               <span className="text-xs text-gray-500">Bonus loyalty points</span>
                               <button
                                 onClick={() => setShowLoyaltyInfo(!showLoyaltyInfo)}
@@ -2614,7 +2614,7 @@ export default function BookingWidget() {
                                 data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
                               >
                                 {isMemberFlow && !isSelected && (
-                                  <Sparkles className="w-3 h-3 mr-1 inline-block" style={{ color: '#FF502D' }} />
+                                  <Star className="w-3 h-3 mr-1 inline-block fill-current" style={{ color: '#FF502D' }} />
                                 )}
                                 {slot.time}
                                 {slot.isDiscounted && (
