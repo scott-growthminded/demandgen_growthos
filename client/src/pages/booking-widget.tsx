@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronDown, ChevronUp, ChevronRight, CheckCircle, User, MapPin, Tag, Search, Navigation, Clock, X, Lock, CreditCard, Star, Sparkles, Award, Shield, Gift, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronUp, ChevronRight, CheckCircle, User, MapPin, Tag, Search, Navigation, Clock, X, Lock, CreditCard, Star, Sparkles, Award, Shield, Gift, RotateCcw, Info } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -170,6 +170,7 @@ export default function BookingWidget() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<any>(undefined); // Store full Boulevard slot object
   const [esthetician, setEsthetician] = useState('any');
+  const [showLoyaltyInfo, setShowLoyaltyInfo] = useState(false);
   const [expandedNearbyLocations, setExpandedNearbyLocations] = useState<Set<string>>(new Set());
   const [selectedNearbyLocation, setSelectedNearbyLocation] = useState<{locationId: string; locationName: string; time: string} | null>(null);
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState<Date>(new Date()); // Track current month being viewed
@@ -2474,23 +2475,40 @@ export default function BookingWidget() {
                             </div>
                           )}
                         </div>
-                        {/* Member Bonus Description */}
+                        {/* Member Bonus Description - Info Icon with Tooltip */}
                         {isMemberFlow && (
-                          <div className="mt-4 rounded-2xl px-3 py-2.5" style={{ backgroundColor: '#FFF0ED' }}>
-                            <p className="text-xs font-semibold mb-1.5" style={{ color: '#FF502D' }}>Loyalty Points</p>
-                            <div className="space-y-0.5">
-                              <div className="flex justify-between">
-                                <span className="text-[11px] text-gray-600">All appointments</span>
-                                <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>100</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-[11px] text-gray-600">Highlighted dates</span>
-                                <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+50</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-[11px] text-gray-600">Highlighted times</span>
-                                <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+50</span>
-                              </div>
+                          <div className="mt-4 flex items-center gap-2">
+                            <div className="relative">
+                              <button
+                                onClick={() => setShowLoyaltyInfo(!showLoyaltyInfo)}
+                                onMouseEnter={() => setShowLoyaltyInfo(true)}
+                                onMouseLeave={() => setShowLoyaltyInfo(false)}
+                                className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 transition-colors"
+                                data-testid="button-loyalty-info"
+                              >
+                                <Info className="w-4 h-4" style={{ color: '#FF502D' }} />
+                                <span className="text-xs text-gray-500">Loyalty Points</span>
+                              </button>
+                              {showLoyaltyInfo && (
+                                <div className="absolute bottom-full left-0 mb-2 z-50 rounded-xl px-3 py-2.5 shadow-lg border border-gray-100 w-52" style={{ backgroundColor: '#FFF0ED' }}>
+                                  <p className="text-xs font-semibold mb-1.5" style={{ color: '#FF502D' }}>Loyalty Points</p>
+                                  <div className="space-y-0.5">
+                                    <div className="flex justify-between">
+                                      <span className="text-[11px] text-gray-600">All appointments</span>
+                                      <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>100</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-[11px] text-gray-600">Highlighted dates</span>
+                                      <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+50</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-[11px] text-gray-600">Highlighted times</span>
+                                      <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+50</span>
+                                    </div>
+                                  </div>
+                                  <div className="absolute left-4 -bottom-1.5 w-3 h-3 rotate-45 border-r border-b border-gray-100" style={{ backgroundColor: '#FFF0ED' }}></div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
