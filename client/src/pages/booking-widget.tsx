@@ -2563,7 +2563,7 @@ export default function BookingWidget() {
                                 <Info className="w-3.5 h-3.5" style={{ color: '#FF502D' }} />
                               </button>
                               {showLoyaltyInfo && (
-                                <div className="absolute bottom-full right-0 mb-2 z-50 rounded-xl px-4 py-3.5 shadow-lg border border-gray-100 w-64" style={{ backgroundColor: '#FFF0ED' }}>
+                                <div className="absolute bottom-full right-0 mb-2 z-50 rounded-xl px-4 py-3.5 shadow-lg border border-gray-100 w-80" style={{ backgroundColor: '#FFF0ED' }}>
                                   <p className="text-sm font-semibold mb-2.5" style={{ color: '#FF502D' }}>Loyalty Points</p>
                                   <div className="space-y-1.5">
                                     <div className="flex items-center gap-4">
