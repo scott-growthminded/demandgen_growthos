@@ -2464,41 +2464,6 @@ export default function BookingWidget() {
                             <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: '#FF502D' }}></div>
                             <span className="text-xs text-gray-500">Today</span>
                           </div>
-                          {isMemberFlow && (
-                            <div className="flex items-center gap-1.5 relative">
-                              <Sparkles className="w-3 h-3" style={{ color: '#FF502D' }} />
-                              <span className="text-xs text-gray-500">Bonus loyalty points</span>
-                              <button
-                                onClick={() => setShowLoyaltyInfo(!showLoyaltyInfo)}
-                                onMouseEnter={() => setShowLoyaltyInfo(true)}
-                                onMouseLeave={() => setShowLoyaltyInfo(false)}
-                                className="cursor-pointer"
-                                data-testid="button-loyalty-info"
-                              >
-                                <Info className="w-3.5 h-3.5" style={{ color: '#FF502D' }} />
-                              </button>
-                              {showLoyaltyInfo && (
-                                <div className="absolute bottom-full right-0 mb-2 z-50 rounded-xl px-3 py-2.5 shadow-lg border border-gray-100 w-52" style={{ backgroundColor: '#FFF0ED' }}>
-                                  <p className="text-xs font-semibold mb-1.5" style={{ color: '#FF502D' }}>Loyalty Points</p>
-                                  <div className="space-y-0.5">
-                                    <div className="flex justify-between">
-                                      <span className="text-[11px] text-gray-600">All appointments</span>
-                                      <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>100</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-[11px] text-gray-600">Highlighted dates</span>
-                                      <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+50</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-[11px] text-gray-600">Highlighted times</span>
-                                      <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+50</span>
-                                    </div>
-                                  </div>
-                                  <div className="absolute right-4 -bottom-1.5 w-3 h-3 rotate-45 border-r border-b border-gray-100" style={{ backgroundColor: '#FFF0ED' }}></div>
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </div>
                       </div>
                     );
@@ -2585,9 +2550,38 @@ export default function BookingWidget() {
                           <h4 className="font-semibold text-gray-900">Morning</h4>
                           <span className="text-xs text-gray-400">Before 12 PM</span>
                           {isMemberFlow && (
-                            <div className="flex items-center gap-1.5 ml-auto">
-                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#FFF0ED', border: '1px solid #FFD4CC' }}></div>
+                            <div className="flex items-center gap-1.5 ml-auto relative">
+                              <Sparkles className="w-3 h-3" style={{ color: '#FF502D' }} />
                               <span className="text-xs text-gray-500">Bonus loyalty points</span>
+                              <button
+                                onClick={() => setShowLoyaltyInfo(!showLoyaltyInfo)}
+                                onMouseEnter={() => setShowLoyaltyInfo(true)}
+                                onMouseLeave={() => setShowLoyaltyInfo(false)}
+                                className="cursor-pointer"
+                                data-testid="button-loyalty-info"
+                              >
+                                <Info className="w-3.5 h-3.5" style={{ color: '#FF502D' }} />
+                              </button>
+                              {showLoyaltyInfo && (
+                                <div className="absolute bottom-full right-0 mb-2 z-50 rounded-xl px-3 py-2.5 shadow-lg border border-gray-100 w-52" style={{ backgroundColor: '#FFF0ED' }}>
+                                  <p className="text-xs font-semibold mb-1.5" style={{ color: '#FF502D' }}>Loyalty Points</p>
+                                  <div className="space-y-0.5">
+                                    <div className="flex justify-between">
+                                      <span className="text-[11px] text-gray-600">All appointments</span>
+                                      <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>100</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-[11px] text-gray-600">Highlighted dates</span>
+                                      <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+50</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-[11px] text-gray-600">Highlighted times</span>
+                                      <span className="text-[11px] font-semibold" style={{ color: '#FF502D' }}>+50</span>
+                                    </div>
+                                  </div>
+                                  <div className="absolute right-4 -bottom-1.5 w-3 h-3 rotate-45 border-r border-b border-gray-100" style={{ backgroundColor: '#FFF0ED' }}></div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
