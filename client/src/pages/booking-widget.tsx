@@ -2571,7 +2571,7 @@ export default function BookingWidget() {
                                       <span className="text-xs font-semibold whitespace-nowrap" style={{ color: '#FF502D' }}>+50 points</span>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                      <span className="text-xs text-gray-600 flex items-center gap-1 flex-1">Times marked with <Sparkles className="w-3 h-3 inline-block" style={{ color: '#FF502D' }} /></span>
+                                      <span className="text-xs text-gray-600 flex items-center gap-1 flex-1">Appointment times marked with <Sparkles className="w-3 h-3 inline-block" style={{ color: '#FF502D' }} /></span>
                                       <span className="text-xs font-semibold whitespace-nowrap" style={{ color: '#FF502D' }}>+50 points</span>
                                     </div>
                                   </div>
