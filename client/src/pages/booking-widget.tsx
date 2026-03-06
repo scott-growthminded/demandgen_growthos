@@ -177,6 +177,7 @@ export default function BookingWidget() {
   
   // Checkout state
   const [promoCode, setPromoCode] = useState('');
+  const [showPromoField, setShowPromoField] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   
   // Membership purchase state
@@ -3192,18 +3193,30 @@ export default function BookingWidget() {
                   </div>
                 )}
 
-                {/* Promo Code - Inline */}
-                <div className="flex gap-2 pt-4">
-                  <Input
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    placeholder="Promo code"
-                    className="flex-1"
-                    data-testid="input-promo"
-                  />
-                  <Button variant="outline" className="px-4" data-testid="button-apply-promo">
-                    Apply
-                  </Button>
+                {/* Promo Code - Collapsible */}
+                <div className="pt-4">
+                  <button
+                    onClick={() => setShowPromoField(!showPromoField)}
+                    className="text-xs text-gray-400 hover:text-gray-600 transition-colors underline underline-offset-2"
+                    data-testid="button-toggle-promo"
+                  >
+                    Have a promo code?
+                  </button>
+                  {showPromoField && (
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value)}
+                        placeholder="Enter promo code"
+                        className="flex-1"
+                        data-testid="input-promo"
+                        autoFocus
+                      />
+                      <Button variant="outline" className="px-4" data-testid="button-apply-promo">
+                        Apply
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Price Breakdown */}
