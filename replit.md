@@ -34,10 +34,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Key Features
 
-### Booking Widget (`client/src/pages/booking-widget.tsx`)
-- **Multi-step Booking Flow**: Location → Product → Date/Time → Checkout, with sub-pages in `client/src/pages/booking-flow/`
+### Booking Flow (Refactored) (`client/src/pages/booking-flow/`)
+- **Context-Driven Step Navigation**: `BookingFlowContext` manages state across the full flow: Customer Type → Login → Product → Location → Date/Time → Personal Info → Checkout → Confirmation
+- **User Type Awareness**: Conditional routing based on user type (new / member / non-member) — members skip personal info, new users go through it; member status shown via banner
+- **Step Pages**: Each step is a separate component (`CustomerTypePage`, `LoginPage`, `ProductSelectionPage`, `LocationPage`, `DateTimePage`, `PersonalInfoPage`, `CheckoutPage`, `ConfirmationPage`)
+- **Developer Controls**: `DeveloperControls` component overlaid on the flow for scenario testing
+- **Mock Data**: Date/time selection currently uses hardcoded time slots (no live availability or discount logic yet — this is where data-driven incentivization would plug in)
+
+### Legacy Booking Widget (`client/src/pages/booking-widget.tsx`)
+- **Monolithic Implementation**: Single large file (~3,700 lines) with an older booking flow
 - **Real-time Availability**: Live appointment slots fetched from Boulevard API
-- **Simple Discount Flagging**: Every 3rd slot is flagged as discounted (`isDiscounted`) with "$10 OFF" labels displayed in the UI; discounted slots are hidden when booking with credits or vouchers
+- **Simple Discount Flagging**: Every 3rd slot is flagged as discounted (`isDiscounted`) in `server/routes.ts` with "$10 OFF" labels in the UI; discounted slots are hidden when booking with credits or vouchers
 - **Map Integration**: Studio locations shown on a Leaflet map with distance calculations
 
 ### BLVD API Testing Tool (`client/src/pages/blvd-api-test.tsx`)
@@ -55,8 +62,10 @@ Preferred communication style: Simple, everyday language.
 | Path | Purpose |
 |------|---------|
 | `shared/schema.ts` | Shared types and Zod schemas for BLVD config, bookings, carts, waitlists |
-| `client/src/pages/booking-widget.tsx` | Primary booking experience (multi-step flow) |
-| `client/src/pages/booking-flow/` | Individual booking step pages (Location, Product, DateTime, Checkout, etc.) |
+| `client/src/pages/booking-flow/index.tsx` | Refactored booking flow entry point with step router |
+| `client/src/pages/booking-flow/*.tsx` | Individual booking step pages (CustomerType, Login, Product, Location, DateTime, PersonalInfo, Checkout, Confirmation) |
+| `client/src/contexts/BookingFlowContext.tsx` | Booking flow state management (user type, step navigation, selections) |
+| `client/src/pages/booking-widget.tsx` | Legacy monolithic booking widget (~3,700 lines) |
 | `client/src/pages/blvd-api-test.tsx` | Boulevard API testing and validation tool |
 | `client/src/components/DeveloperControls.tsx` | Developer/scenario testing controls |
 | `client/src/components/configuration-panel.tsx` | API configuration management UI |
