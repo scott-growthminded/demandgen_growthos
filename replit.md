@@ -1,10 +1,13 @@
-# BLVD Availability Service Testing Tool
+# Glowbar UtilizationOS — Booking & Incentivization Platform
 
 ## Overview
 
-This is a web-based testing tool for the BLVD (Boulevard) Admin GraphQL API, designed to test and validate API connectivity for the Boulevard Availability Service. The application provides a comprehensive interface for testing GraphQL queries against the Boulevard Admin API, specifically focusing on location data retrieval and appointment metrics.
+A full-stack booking platform integrated with the Boulevard (BLVD) API that implements **UtilizationOS**, a data-driven incentivization engine. The system shifts customer booking demand from peak to off-peak times by combining customer propensity scoring with real-time studio utilization analysis to deliver personalized "nudges" — targeted offers and provider-based incentives surfaced during the booking flow.
 
-The tool serves as both a validation utility and a development aid for building services that integrate with Boulevard's scheduling platform. It allows developers to test API credentials, query business locations, and validate GraphQL schema access before implementing production integrations.
+The application serves three purposes:
+1. **Personalized Booking Flow** — A multi-step customer booking experience with interstitial personalization
+2. **Administrative Dashboard** — Studio utilization monitoring and tactics configuration
+3. **BLVD API Testing Tool** — Credential validation and GraphQL connectivity testing
 
 ## User Preferences
 
@@ -13,61 +16,128 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Frontend Architecture
-- **React with TypeScript**: Modern React application using functional components and hooks for state management
-- **Vite Build System**: Fast development server and optimized production builds with hot module replacement
-- **Wouter Routing**: Lightweight client-side routing solution for single-page application navigation
-- **Tailwind CSS + shadcn/ui**: Utility-first CSS framework combined with a comprehensive component library for consistent UI design
-- **TanStack Query**: Sophisticated data fetching and caching solution with automatic background refetching and error handling
+- **React with TypeScript**: Functional components and hooks for state management
+- **Vite Build System**: Fast development server with hot module replacement
+- **Wouter Routing**: Lightweight client-side routing for SPA navigation
+- **Tailwind CSS + shadcn/ui**: Utility-first CSS with Radix UI component primitives
+- **TanStack Query**: Data fetching/caching with automatic background refetching
+- **Leaflet**: Map integration for studio location display and distance calculations
 
 ### Backend Architecture
-- **Express.js Server**: RESTful API server providing proxy endpoints for Boulevard GraphQL API communication
-- **TypeScript**: Full type safety across the entire backend codebase with shared type definitions
-- **Modular Service Layer**: Dedicated `BlvdService` class handling all Boulevard API interactions with proper error handling and response validation
+- **Express.js Server**: RESTful API proxying requests to the Boulevard GraphQL API
+- **TypeScript**: Full type safety with shared type definitions across frontend and backend
+- **BlvdService** (`server/services/blvd-service.ts`): Core Boulevard integration (~2,900 lines) handling Admin and Client API GraphQL requests, HMAC webhook verification, and timezone conversions
+- **RecommendationService** (`server/services/recommendation.ts`): Computes incentive factors from utilization data and maps customer segments to personalized nudges
+- **SegmentationService** (`server/services/segmentation.ts`): Resolves effective propensity tiers using NPS, visit recency, membership status, and configurable thresholds
 
-### Data Storage Solutions
-- **Drizzle ORM**: Type-safe database toolkit configured for PostgreSQL with schema-first approach
-- **PostgreSQL Database**: Primary database using Neon serverless PostgreSQL for scalability
-- **In-Memory Storage**: Runtime configuration storage for API testing sessions without persistence requirements
+### Data Access Layer (DAL)
+- **Factory Pattern** (`server/dal/factory.ts`): Switches between mock and live data sources via `DATA_MODE` environment variable
+- **Static Repositories** (`server/dal/static.ts`): Mock data from JSON files for POC development
+- **Repository Interfaces** (`server/dal/base.ts`): `CustomerRepository`, `AvailabilityRepository`, `TacticsRepository`, `DiscountCodeRepository`
+- **Live Boulevard Integration**: Planned but not yet implemented; factory falls back to mock
 
-### Authentication and Authorization
-- **Static API Key Authentication**: Simple bearer token authentication for Boulevard Admin API access
-- **Session-based Configuration**: Temporary storage of API credentials during testing sessions without long-term persistence
-- **Environment Variable Support**: Configuration via environment variables for deployment flexibility
+### Data Storage
+- **Static JSON Data** (`server/data/`): Pre-computed customer profiles, availability patterns, discount codes, and tactics configuration
+- **In-Memory Storage** (`server/storage.ts`): Runtime storage using `MemStorage` for booking carts and waitlist requests
+- **Drizzle ORM + Neon PostgreSQL**: Configured but not actively used for application data
 
-### API Design Patterns
-- **GraphQL Proxy Pattern**: Backend serves as a secure proxy to Boulevard's GraphQL API, handling authentication and request validation
-- **RESTful Endpoints**: Simple REST API for frontend-backend communication with clear resource-based URLs
-- **Validation Layer**: Zod schema validation for all API requests and responses ensuring type safety and data integrity
-- **Error Handling**: Comprehensive error handling with structured error responses and proper HTTP status codes
+### Authentication
+- **Static API Key Authentication**: Bearer token authentication for Boulevard Admin API access
+- **Session-based Configuration**: Temporary storage of API credentials during testing sessions
+- **Environment Variable Support**: Deployment configuration via environment variables
 
-### UI/UX Architecture
-- **Component-Driven Design**: Modular React components using shadcn/ui design system for consistency
-- **Responsive Layout**: Mobile-first responsive design with adaptive layouts for different screen sizes
-- **Real-time Feedback**: Live connection testing with visual status indicators and detailed error reporting
-- **Configuration Management**: User-friendly forms for API credential management with validation and testing capabilities
+## Data-Driven Incentivization (UtilizationOS)
+
+### Customer Segmentation (`server/services/segmentation.ts`)
+Customers are classified into propensity tiers based on configurable thresholds:
+- **High Tier (Loyalists)**: NPS ≥ 8 and visited within 60 days
+- **Mid Tier (At-Risk)**: NPS 6–7 or visited 60–90 days ago
+- **Low Tier (Lapsed)**: NPS < 6 or visited > 90 days ago
+- **Member Bonus**: Active members with NPS one point below high threshold still qualify as high tier
+- Lapsed status overrides NPS — a lapsed high-NPS customer still gets re-engagement treatment
+
+### Supply-Side Intelligence (`server/services/recommendation.ts`)
+Analyzes location-level utilization to identify demand gaps:
+- **Low-Demand Days**: Days where >70% of slots are under-utilized (configurable via `lowDemandDayThreshold`)
+- **Low-Demand Time Windows**: Persistent off-peak hours appearing across multiple days (configurable via `lowDemandTimeMinDays`)
+- **Provider Signal**: Checks if a customer's preferred provider is available at a given location
+
+### Incentive Tactics (`server/data/tactics_config.json`)
+Four configurable tactics map data signals to specific offers:
+
+| Tactic | Target | Incentive | Constraint |
+|--------|--------|-----------|------------|
+| Preferred Provider Nudge | High tier | Surfaces favorite staff availability (no discount) | Low-demand only |
+| Mid-Tier Time Shift | Mid tier | 10% off (`MID10` code) | Low-demand only |
+| Low-Tier Recovery | Low tier | $10 off (`BACK10` code) | Any time |
+| Membership CTA | Non-members (all tiers) | Membership sign-up prompt | Post-booking |
+
+### Frontend Personalization
+- **PersonalizationStep** (`client/src/pages/booking-flow/PersonalizationStep.tsx`): Interstitial screen after customer identification; calls recommendation API and surfaces the appropriate nudge or auto-advances
+- **IncentiveOffer** (`client/src/components/booking/IncentiveOffer.tsx`): Renders discount codes and suggested low-demand time slots
+- **ProviderNudge** (`client/src/components/booking/ProviderNudge.tsx`): Highlights preferred staff member availability during off-peak times
+
+## Key Features
+
+### Booking Flow (`client/src/pages/booking-flow/`)
+- **Context-Driven Step Navigation**: `BookingFlowContext` manages state across: Customer Type → Login → Product → Location → Date/Time → Personalization → Checkout → Confirmation
+- **User Type Awareness**: Conditional routing based on new / member / non-member status
+- **Personalization Interstitial**: Data-driven nudge surfaced between selection and checkout
+- **Scenario Selector** (`client/src/components/ScenarioSelector.tsx`): Developer tool to simulate different customer personas (Loyalist, Lapsed, New) and test personalization logic
+
+### Legacy Booking Widget (`client/src/pages/booking-widget.tsx`)
+- **Monolithic Implementation**: Older single-file booking flow (~3,700 lines)
+- **Real-time Availability**: Live appointment slots from Boulevard API
+- **Map Integration**: Studio locations on Leaflet map with distance calculations
+
+### BLVD API Testing Tool (`client/src/pages/blvd-api-test.tsx`)
+- **Connection Testing**: Validate API credentials and test GraphQL connectivity
+- **Location Data Retrieval**: Query business locations and appointment metrics
+- **Schema Introspection**: Runtime schema validation
+
+### Administrative Dashboard
+- **Utilization Tracking**: Studio capacity monitoring and low-demand period identification
+- **Tactics Configuration**: Thresholds and tactic parameters adjustable via `PUT /api/tactics/config`
+- **Webhook Handling**: Boulevard webhook endpoint with HMAC signature verification (`POST /api/blvd/webhook`)
+
+## Key Files
+
+| Path | Purpose |
+|------|---------|
+| `shared/schema.ts` | Shared Zod schemas: BLVD config, bookings, UtilizationOS types (CustomerProfile, IncentiveFactors, Nudge, Tactic, etc.) |
+| `server/services/recommendation.ts` | Recommendation engine: computes incentive factors and generates nudges |
+| `server/services/segmentation.ts` | Customer propensity tier classification |
+| `server/services/blvd-service.ts` | Core Boulevard API integration (GraphQL, webhooks) |
+| `server/dal/base.ts` | Repository interfaces for the data access layer |
+| `server/dal/factory.ts` | DAL factory: mock vs live data source switching |
+| `server/dal/static.ts` | Static JSON-backed repository implementations |
+| `server/data/tactics_config.json` | Tactic definitions, thresholds, and offer parameters |
+| `server/data/customers.json` | Pre-computed customer profiles (NPS, CLV, visit history) |
+| `server/data/availability.json` | Historical utilization data for off-peak detection |
+| `server/data/discount_codes.json` | Active promo codes linked to tactics |
+| `server/routes.ts` | Express API routes (booking, personalization, tactics, webhooks) |
+| `server/storage.ts` | In-memory storage for carts and waitlist requests |
+| `client/src/pages/booking-flow/index.tsx` | Refactored booking flow entry point with step router |
+| `client/src/pages/booking-flow/PersonalizationStep.tsx` | Nudge interstitial in the booking flow |
+| `client/src/components/booking/IncentiveOffer.tsx` | Discount-based nudge UI component |
+| `client/src/components/booking/ProviderNudge.tsx` | Staff-focused nudge UI component |
+| `client/src/components/ScenarioSelector.tsx` | Developer tool for simulating customer personas |
+| `client/src/contexts/BookingFlowContext.tsx` | Booking flow state management |
+| `client/src/pages/booking-widget.tsx` | Legacy monolithic booking widget |
 
 ## External Dependencies
 
 ### Boulevard Integration
-- **Boulevard Admin GraphQL API**: Primary integration point for accessing business location data and appointment metrics
-- **GraphQL Schema Introspection**: Runtime schema validation and query structure verification
-- **Bearer Token Authentication**: API key-based authentication for secure Boulevard API access
+- **Boulevard Admin GraphQL API**: Business location data, appointment metrics, provider schedules
+- **Boulevard Client API**: Customer-facing booking operations
+- **HMAC Webhook Verification**: Secure webhook handling for Boulevard events
 
-### Database Services
-- **Neon PostgreSQL**: Serverless PostgreSQL database hosting with connection pooling and automatic scaling
-- **Connection Pooling**: Efficient database connection management using `@neondatabase/serverless` driver
-
-### Development and Build Tools
-- **Vite Development Server**: Fast development experience with hot module replacement and optimized bundling
-- **TypeScript Compiler**: Static type checking across frontend, backend, and shared code
-- **Replit Integration**: Specialized Replit plugins for development environment integration and error handling
-
-### UI Component Libraries
-- **Radix UI Primitives**: Accessible, unstyled UI components for complex interactions (dialogs, dropdowns, forms)
-- **Lucide React Icons**: Comprehensive icon library for consistent visual elements
-- **React Hook Form**: Performant form handling with validation and error management
+### UI Libraries
+- **Radix UI Primitives**: Accessible UI components (dialogs, dropdowns, forms)
+- **Lucide React Icons**: Icon library for visual elements
+- **React Hook Form**: Form handling with validation
 
 ### Utility Libraries
-- **Zod**: Runtime type validation and schema definition for API contracts and data validation
-- **date-fns**: Date manipulation and formatting utilities for appointment scheduling features
-- **clsx/tailwind-merge**: Conditional CSS class management for dynamic styling
+- **Zod**: Runtime type validation and schema definition
+- **date-fns**: Date manipulation and formatting for scheduling
+- **clsx/tailwind-merge**: Conditional CSS class management
