@@ -12,6 +12,28 @@ import type {
   TacticsConfig,
 } from "@shared/schema";
 
+export interface LocationNode {
+  id: string;
+  name: string;
+  isRemote: boolean;
+  address: { city: string; state: string; line1: string; line2: string | null };
+  coordinates: { latitude: number; longitude: number } | null;
+  subtext?: string;
+}
+
+export interface LocationsGraphqlResponse {
+  data: {
+    locations: {
+      edges: { node: LocationNode }[];
+      pageInfo: { hasNextPage: boolean; endCursor: string | null };
+    };
+  } | null;
+}
+
+export interface LocationRepository {
+  getAll(): Promise<LocationsGraphqlResponse>;
+}
+
 export interface CustomerRepository {
   /** Look up a single customer by email address (case-insensitive). */
   findByEmail(email: string): Promise<CustomerProfile | null>;

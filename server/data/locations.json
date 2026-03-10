@@ -1,0 +1,218 @@
+{
+  "generatedAt": "2026-03-10T00:00:00.000Z",
+  "locations": {
+    "edges": [
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-tribeca",
+          "name": "Tribeca",
+          "isRemote": false,
+          "address": { "city": "New York", "state": "NY", "line1": "147 Duane Street", "line2": null },
+          "coordinates": { "latitude": 40.7163, "longitude": -74.0072 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-union-square",
+          "name": "Union Square",
+          "isRemote": false,
+          "address": { "city": "New York", "state": "NY", "line1": "77 5th Ave", "line2": null },
+          "coordinates": { "latitude": 40.7376, "longitude": -73.9932 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-williamsburg-wythe",
+          "name": "Williamsburg Wythe Ave.",
+          "isRemote": false,
+          "address": { "city": "Brooklyn", "state": "NY", "line1": "157 Wythe Ave", "line2": null },
+          "coordinates": { "latitude": 40.7198, "longitude": -73.9625 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-upper-east-side",
+          "name": "Upper East Side",
+          "isRemote": false,
+          "address": { "city": "New York", "state": "NY", "line1": "1230 3rd Ave", "line2": null },
+          "coordinates": { "latitude": 40.7686, "longitude": -73.9589 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-roslyn",
+          "name": "Roslyn",
+          "isRemote": false,
+          "address": { "city": "Roslyn Heights", "state": "NY", "line1": "441 Glen Cove Rd", "line2": null },
+          "coordinates": { "latitude": 40.7813, "longitude": -73.6374 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-cobble-hill",
+          "name": "Cobble Hill",
+          "isRemote": false,
+          "address": { "city": "Brooklyn", "state": "NY", "line1": "166 Smith Street", "line2": null },
+          "coordinates": { "latitude": 40.6862, "longitude": -73.9932 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-w100th",
+          "name": "W100th",
+          "isRemote": false,
+          "address": { "city": "New York", "state": "NY", "line1": "805 Columbus Ave", "line2": null },
+          "coordinates": { "latitude": 40.7968, "longitude": -73.9614 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-murray-hill",
+          "name": "Murray Hill",
+          "isRemote": false,
+          "address": { "city": "New York", "state": "NY", "line1": "359 3rd Ave", "line2": null },
+          "coordinates": { "latitude": 40.7434, "longitude": -73.9795 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-prospect-heights",
+          "name": "Prospect Heights",
+          "isRemote": false,
+          "address": { "city": "Brooklyn", "state": "NY", "line1": "18 6th Ave", "line2": null },
+          "coordinates": { "latitude": 40.6851, "longitude": -73.9772 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-long-island-city",
+          "name": "Long Island City",
+          "isRemote": false,
+          "address": { "city": "Long Island City", "state": "NY", "line1": "2-33 50th Avenue", "line2": null },
+          "coordinates": { "latitude": 40.7425, "longitude": -73.9566 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-williamsburg-kent",
+          "name": "Williamsburg Kent Ave.",
+          "isRemote": false,
+          "address": { "city": "Brooklyn", "state": "NY", "line1": "25 Kent Ave", "line2": null },
+          "coordinates": { "latitude": 40.7222, "longitude": -73.9618 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-hoboken",
+          "name": "Hoboken",
+          "isRemote": false,
+          "address": { "city": "Hoboken", "state": "NJ", "line1": "612 Washington Street", "line2": null },
+          "coordinates": { "latitude": 40.7440, "longitude": -74.0288 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-jersey-city",
+          "name": "Jersey City",
+          "isRemote": false,
+          "address": { "city": "Jersey City", "state": "NJ", "line1": "200 Greene Street", "line2": null },
+          "coordinates": { "latitude": 40.7178, "longitude": -74.0431 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-westport",
+          "name": "Westport",
+          "isRemote": false,
+          "address": { "city": "Westport", "state": "CT", "line1": "33 Elm Street", "line2": null },
+          "coordinates": { "latitude": 41.1415, "longitude": -73.3579 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-rittenhouse",
+          "name": "Rittenhouse Square",
+          "isRemote": false,
+          "address": { "city": "Philadelphia", "state": "PA", "line1": "42 South 17th Street", "line2": null },
+          "coordinates": { "latitude": 39.9509, "longitude": -75.1682 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-bryn-mawr",
+          "name": "Bryn Mawr",
+          "isRemote": false,
+          "address": { "city": "Bryn Mawr", "state": "PA", "line1": "925 West Lancaster Ave", "line2": null },
+          "coordinates": { "latitude": 40.0244, "longitude": -75.3238 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-back-bay",
+          "name": "Back Bay",
+          "isRemote": false,
+          "address": { "city": "Boston", "state": "MA", "line1": "177 Newbury Street", "line2": null },
+          "coordinates": { "latitude": 42.3504, "longitude": -71.0779 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-chestnut-hill",
+          "name": "Chestnut Hill",
+          "isRemote": false,
+          "address": { "city": "Chestnut Hill", "state": "MA", "line1": "200 Boylston Street", "line2": null },
+          "coordinates": { "latitude": 42.3226, "longitude": -71.1658 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-lynnfield",
+          "name": "Lynnfield",
+          "isRemote": false,
+          "address": { "city": "Lynnfield", "state": "MA", "line1": "1140 Market St", "line2": null },
+          "coordinates": { "latitude": 42.5332, "longitude": -71.0351 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-hingham",
+          "name": "Hingham",
+          "isRemote": false,
+          "address": { "city": "Hingham", "state": "MA", "line1": "92 Derby Street, Suite 111", "line2": null },
+          "coordinates": { "latitude": 42.2076, "longitude": -70.9111 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-logan-circle",
+          "name": "Logan Circle",
+          "isRemote": false,
+          "address": { "city": "Washington", "state": "DC", "line1": "1450 P St NW", "line2": null },
+          "coordinates": { "latitude": 38.9096, "longitude": -77.0325 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-georgetown",
+          "name": "Georgetown",
+          "isRemote": false,
+          "address": { "city": "Washington", "state": "DC", "line1": "1533 Wisconsin Ave NW", "line2": null },
+          "coordinates": { "latitude": 38.9112, "longitude": -77.0626 }
+        }
+      },
+      {
+        "node": {
+          "id": "urn:blvd:Location:glowbar-clarendon",
+          "name": "Clarendon",
+          "isRemote": false,
+          "address": { "city": "Arlington", "state": "VA", "line1": "2930 Clarendon Blvd", "line2": null },
+          "coordinates": { "latitude": 38.8862, "longitude": -77.0955 }
+        }
+      }
+    ],
+    "pageInfo": {
+      "hasNextPage": false,
+      "endCursor": null
+    }
+  }
+}

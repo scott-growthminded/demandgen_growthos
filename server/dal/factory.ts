@@ -10,12 +10,14 @@
  */
 
 import {
+  StaticLocationRepo,
   StaticCustomerRepo,
   StaticAvailabilityRepo,
   StaticTacticsRepo,
   StaticDiscountCodeRepo,
 } from "./static";
 import type {
+  LocationRepository,
   CustomerRepository,
   AvailabilityRepository,
   TacticsRepository,
@@ -32,6 +34,10 @@ if (DATA_MODE === "live") {
   console.warn(
     "[DAL] DATA_MODE=live — Boulevard live repo is not yet implemented. Falling back to mock."
   );
+}
+
+export function createLocationRepo(): LocationRepository {
+  return new StaticLocationRepo();
 }
 
 export function createCustomerRepo(): CustomerRepository {

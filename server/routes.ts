@@ -4,6 +4,7 @@ import { BlvdService } from "./services/blvd-service";
 import { blvdConfigSchema, insertBookingCartSchema, insertWaitlistRequestSchema, tacticsConfigSchema } from "@shared/schema";
 import { storage } from "./storage";
 import {
+  createLocationRepo,
   createCustomerRepo,
   createAvailabilityRepo,
   createTacticsRepo,
@@ -13,6 +14,7 @@ import {
 import { buildRecommendation, computeIncentiveFactors } from "./services/recommendation";
 
 // Initialize DAL repos once at server startup
+const locationRepo = createLocationRepo();
 const customerRepo = createCustomerRepo();
 const availabilityRepo = createAvailabilityRepo();
 const tacticsRepo = createTacticsRepo();
@@ -497,34 +499,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all locations grouped by state and city
   app.get("/api/booking/locations", async (req, res) => {
     try {
+      let allLocations: any[] = [];
+
       const serverConfig = getServerConfig();
-      const config = blvdConfigSchema.parse(serverConfig);
-      const blvdService = new BlvdService(config);
-      
-      const locationsResponse = await blvdService.executeLocationsQuery();
-      const allLocations = (locationsResponse.data as any)?.locations?.edges?.map((edge: any) => edge.node) || [];
-      
-      // Filter out remote locations and excluded locations, then group by state and city
-      const excludedLocationNames = ['Williamsburg Kent', 'Training Studio'];
+      const hasLiveCredentials = serverConfig.apiKey && serverConfig.secretKey && serverConfig.businessId;
+
+      if (hasLiveCredentials) {
+        const config = blvdConfigSchema.parse(serverConfig);
+        const blvdService = new BlvdService(config);
+        const locationsResponse = await blvdService.executeLocationsQuery();
+        allLocations = (locationsResponse.data as any)?.locations?.edges?.map((edge: any) => edge.node) || [];
+      } else {
+        const mockResponse = await locationRepo.getAll();
+        allLocations = mockResponse.data?.locations?.edges?.map((edge) => edge.node) || [];
+      }
+
+      const excludedLocationNames = ['Training Studio'];
       const physicalLocations = allLocations.filter((loc: any) => 
         !loc.isRemote && !excludedLocationNames.includes(loc.name)
       );
       
-      // Don't pre-load staff - we'll fetch them when checking availability for a specific date
-      // This ensures we only show staff who are actually available
       const locationsData = physicalLocations.map((loc: any) => ({
         id: loc.id,
         name: loc.name,
         address: loc.address,
-        subtext: loc.subtext, // Pass subtext through to the frontend
+        subtext: loc.subtext,
         coordinates: loc.coordinates ? {
           lat: loc.coordinates.latitude,
           lng: loc.coordinates.longitude
         } : undefined,
-        staff: [] // Staff will be loaded per date in availability endpoint
+        staff: []
       }));
       
-      // Group by state and city
       const grouped = locationsData.reduce((acc: any, loc: any) => {
         const state = loc.address?.state || 'Other';
         const city = loc.address?.city || 'Unknown';

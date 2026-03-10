@@ -14,6 +14,9 @@ import type {
   AvailabilityRepository,
   TacticsRepository,
   DiscountCodeRepository,
+  LocationRepository,
+  LocationsGraphqlResponse,
+  LocationNode,
 } from "./base";
 import type { CustomerProfile, LocationAvailability, TacticsConfig } from "@shared/schema";
 import { tacticsConfigSchema } from "@shared/schema";
@@ -21,6 +24,53 @@ import { tacticsConfigSchema } from "@shared/schema";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, "../data");
+
+// ── Locations ────────────────────────────────────────────────────────────────
+
+interface LocationsFile {
+  generatedAt: string;
+  locations: {
+    edges: { node: LocationNode }[];
+    pageInfo: { hasNextPage: boolean; endCursor: string | null };
+  };
+}
+
+function loadLocations(): LocationsFile {
+  const filePath = path.join(DATA_DIR, "locations.json");
+  const raw = fs.readFileSync(filePath, "utf-8");
+  return JSON.parse(raw) as LocationsFile;
+}
+
+const locationsFileData = loadLocations();
+
+const subtextMapping: Record<string, string> = {
+  'Murray Hill': 'At the corner of East 26th Street',
+  'W100th': 'At the corner of West 100th Street, next to Starbucks',
+  'Bryn Mawr': 'Bryn Mawr Village Shopping Center, next to [Solidcore]',
+  'Rittenhouse Square': 'Between Chestnut and Ranstead Streets',
+  'Prospect Heights': 'Entrance on Atlantic Avenue',
+  'Chestnut Hill': 'Chestnut Hill Square, next to sweetgreen',
+  'Back Bay': 'Lower level, below Credo',
+  'Georgetown': 'Next to Tatte, between P and Q Streets',
+  'Jersey City': 'At the corner of Bay Street',
+  'Lynnfield': 'MarketStreet, between The Escape Game and Eddie Bauer',
+  'Hingham': 'Derby Street Shops, next to Ben & Jerry\'s',
+};
+
+locationsFileData.locations.edges.forEach((edge) => {
+  for (const [key, value] of Object.entries(subtextMapping)) {
+    if (edge.node.name.toLowerCase().includes(key.toLowerCase())) {
+      edge.node.subtext = value;
+      break;
+    }
+  }
+});
+
+export class StaticLocationRepo implements LocationRepository {
+  async getAll(): Promise<LocationsGraphqlResponse> {
+    return { data: { locations: locationsFileData.locations } };
+  }
+}
 
 // ── Customers ───────────────────────────────────────────────────────────────
 

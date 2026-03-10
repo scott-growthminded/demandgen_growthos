@@ -33,7 +33,7 @@ Preferred communication style: Simple, everyday language.
 ### Data Access Layer (DAL)
 - **Factory Pattern** (`server/dal/factory.ts`): Switches between mock and live data sources via `DATA_MODE` environment variable
 - **Static Repositories** (`server/dal/static.ts`): Mock data from JSON files for POC development
-- **Repository Interfaces** (`server/dal/base.ts`): `CustomerRepository`, `AvailabilityRepository`, `TacticsRepository`, `DiscountCodeRepository`
+- **Repository Interfaces** (`server/dal/base.ts`): `LocationRepository`, `CustomerRepository`, `AvailabilityRepository`, `TacticsRepository`, `DiscountCodeRepository`
 - **Live Boulevard Integration**: Planned but not yet implemented; factory falls back to mock
 
 ### Data Storage
@@ -113,6 +113,7 @@ Four configurable tactics map data signals to specific offers:
 | `server/dal/static.ts` | Static JSON-backed repository implementations |
 | `server/data/tactics_config.json` | Tactic definitions, thresholds, and offer parameters |
 | `server/data/customers.json` | Pre-computed customer profiles (NPS, CLV, visit history) |
+| `server/data/locations.json` | Mock location data (23 Glowbar studios) matching Boulevard GraphQL structure |
 | `server/data/availability.json` | Historical utilization data for off-peak detection |
 | `server/data/discount_codes.json` | Active promo codes linked to tactics |
 | `server/routes.ts` | Express API routes (booking, personalization, tactics, webhooks) |
