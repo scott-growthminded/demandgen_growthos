@@ -1,13 +1,14 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 
 export type UserType = 'new' | 'member' | 'non-member';
-export type FlowStep = 
-  | 'customer-type'
-  | 'login'
+export type FlowStep =
   | 'product'
   | 'location'
   | 'datetime'
+  | 'customer-type'
+  | 'login'
   | 'personal-info'
+  | 'personalization'
   | 'checkout'
   | 'confirmation';
 
@@ -18,19 +19,52 @@ interface Product {
   description?: string;
 }
 
+export interface NudgeSlot {
+  dayOfWeek: string;
+  displayTime: string;
+  isLowDemand: boolean;
+}
+
+export interface NudgeOffer {
+  type: string;
+  value: number;
+  displayLabel: string;
+  discountCode: string;
+  constraint?: string;
+}
+
+export interface Recommendation {
+  customerId: string;
+  propensityTier: 'high' | 'mid' | 'low';
+  propensityScore: number;
+  preferredProvider: string | null;
+  nudge: {
+    type: 'provider' | 'incentive' | 'none';
+    message?: string;
+    offer?: NudgeOffer;
+    suggestedSlots?: NudgeSlot[];
+  };
+  membershipCta: boolean;
+}
+
+export interface AppliedOffer {
+  displayLabel: string;
+  discountCode: string;
+}
+
 interface BookingFlowState {
   userType: UserType | null;
   currentStep: FlowStep;
   isAuthenticated: boolean;
   isMemberPastDue: boolean;
-  
+
   // User data
   email?: string;
   password?: string;
   firstName?: string;
   lastName?: string;
   phone?: string;
-  
+
   // Booking selections
   selectedProduct?: Product;
   selectedLocation?: {
@@ -42,7 +76,11 @@ interface BookingFlowState {
   selectedDate?: Date;
   selectedTime?: string;
   selectedEsthetician?: string;
-  
+
+  // Personalization
+  recommendation?: Recommendation;
+  appliedOffer?: AppliedOffer;
+
   // Cart/Payment
   cartId?: string;
   paymentProcessed?: boolean;
@@ -62,7 +100,7 @@ const BookingFlowContext = createContext<BookingFlowContextType | undefined>(und
 
 const initialState: BookingFlowState = {
   userType: null,
-  currentStep: 'customer-type',
+  currentStep: 'product',
   isAuthenticated: false,
   isMemberPastDue: false,
 };

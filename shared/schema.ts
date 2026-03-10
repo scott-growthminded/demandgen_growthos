@@ -168,3 +168,204 @@ export const insertWaitlistRequestSchema = waitlistRequestSchema.omit({ id: true
 
 export type WaitlistRequest = z.infer<typeof waitlistRequestSchema>;
 export type InsertWaitlistRequest = z.infer<typeof insertWaitlistRequestSchema>;
+
+// ─── UtilizationOS: Customer Profile ────────────────────────────────────────
+
+export const propensityTierSchema = z.enum(['high', 'mid', 'low']);
+
+export const customerProfileSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  name: z.string(),
+  studio: z.string(),
+  studioRef: z.string(),
+  npsRating: z.number().int().min(0).max(10),
+  npsLabel: z.string(),
+  memberStatus: z.string(),
+  isMember: z.boolean(),
+  preferredProvider: z.string(),
+  clv: z.string(),
+  clvNumeric: z.number(),
+  spent: z.number(),
+  appointmentCount: z.number(),
+  latestResponseDate: z.string().nullable(),
+  daysSinceLastVisit: z.number(),
+  lapsed: z.boolean(),
+  propensityTier: propensityTierSchema,
+  propensityScore: z.number(),
+});
+
+export type PropensityTier = z.infer<typeof propensityTierSchema>;
+export type CustomerProfile = z.infer<typeof customerProfileSchema>;
+
+// ─── UtilizationOS: Availability ─────────────────────────────────────────────
+
+export const availabilitySlotSchema = z.object({
+  dayOfWeek: z.string(),
+  hour: z.number(),
+  minute: z.number().default(0),
+  displayTime: z.string(),
+  utilizationRate: z.number(),
+  isLowDemand: z.boolean(),
+  rawCount: z.number(),
+});
+
+export const locationAvailabilitySchema = z.object({
+  name: z.string(),
+  totalAppointments: z.number(),
+  /** Per-day-of-week peak slot counts used for within-day normalization. */
+  dayPeaks: z.record(z.string(), z.number()).optional(),
+  /** Business hours derived from earliest/latest slot start times. */
+  businessHours: z.object({ open: z.number(), close: z.number() }).optional(),
+  /** Provider roster — available when loaded from mock data; absent from real CSV data. */
+  providers: z.array(z.string()).optional().default([]),
+  slots: z.array(availabilitySlotSchema),
+});
+
+export type AvailabilitySlot = z.infer<typeof availabilitySlotSchema>;
+export type LocationAvailability = z.infer<typeof locationAvailabilitySchema>;
+
+// ─── UtilizationOS: Tactics Config ───────────────────────────────────────────
+
+export const tacticOfferSchema = z.object({
+  type: z.enum(['percent_off', 'dollar_off']),
+  value: z.number(),
+  displayLabel: z.string(),
+  discountCodePrefix: z.string(),
+});
+
+export const tacticSchema = z.object({
+  enabled: z.boolean(),
+  label: z.string(),
+  description: z.string(),
+  targetTiers: z.array(propensityTierSchema),
+  memberFilter: z.enum(['all', 'member', 'non_member']),
+  constraint: z.enum(['low_demand_only', 'any_time', 'none']),
+  offer: tacticOfferSchema.nullable(),
+});
+
+export const tacticsConfigSchema = z.object({
+  updatedAt: z.string(),
+  updatedBy: z.string(),
+  thresholds: z.object({
+    // Propensity thresholds
+    lowDemandUtilization: z.number(),
+    lapsedMidDays: z.number(),
+    lapsedLowDays: z.number(),
+    highPropensityNps: z.number(),
+    midPropensityNps: z.number(),
+    // Supply signal thresholds (adjustable by business)
+    lowDemandDayThreshold: z.number().default(0.7), // fraction of a day's slots that must be isLowDemand for the day to qualify
+    lowDemandTimeMinDays: z.number().int().default(2), // min distinct days an hour must be low-demand to qualify as an off-peak window
+  }),
+  tactics: z.object({
+    preferredProviderNudge: tacticSchema,
+    incentiveMidTier: tacticSchema,
+    incentiveLowTier: tacticSchema,
+    membershipCta: tacticSchema,
+  }),
+});
+
+export type TacticOffer = z.infer<typeof tacticOfferSchema>;
+export type Tactic = z.infer<typeof tacticSchema>;
+export type TacticsConfig = z.infer<typeof tacticsConfigSchema>;
+
+// ─── UtilizationOS: Recommendation Response ──────────────────────────────────
+
+// ─── Propensity signals (raw drivers behind the tier) ────────────────────────
+
+export const propensitySignalsSchema = z.object({
+  tier: propensityTierSchema,
+  score: z.number(),
+  npsRating: z.number(),
+  daysSinceLastVisit: z.number(),
+  isMember: z.boolean(),
+  lapsed: z.boolean(),
+});
+
+// ─── Supply signals (location-level demand factors) ───────────────────────────
+
+export const lowDemandDayFactorSchema = z.object({
+  day: z.string(),                  // e.g. "Friday"
+  lowDemandSlotCount: z.number(),   // slots on this day with isLowDemand: true
+  totalSlots: z.number(),           // total slots on this day in the dataset
+  avgUtilization: z.number(),       // mean utilizationRate across all of this day's slots
+});
+
+export const lowDemandTimeWindowSchema = z.object({
+  hour: z.number(),
+  displayTime: z.string(),          // e.g. "4:00 PM"
+  daysWithLowDemand: z.number(),    // how many distinct days this hour is low-demand
+  avgUtilization: z.number(),       // mean utilizationRate for this hour across low-demand days
+});
+
+export const providerSignalSchema = z.object({
+  providerName: z.string().nullable(),    // customer's preferredProvider (or null)
+  locationHasProvider: z.boolean(),       // is preferredProvider in location.providers[]?
+  totalLowDemandSlots: z.number(),        // total low-demand slots at location (availability proxy)
+});
+
+export const dayTimeSlotSchema = z.object({
+  hour: z.number(),
+  displayTime: z.string(),
+  avgUtilization: z.number(),
+});
+
+export const lowDemandTimeByDaySchema = z.object({
+  dayOfWeek: z.string(),
+  lowDemandHours: z.array(dayTimeSlotSchema),
+});
+
+export const incentiveFactorsSchema = z.object({
+  lowDemandDays: z.array(lowDemandDayFactorSchema),
+  lowDemandTimeWindows: z.array(lowDemandTimeWindowSchema),
+  lowDemandTimesByDay: z.array(lowDemandTimeByDaySchema),
+  providerSignal: providerSignalSchema,
+});
+
+export type PropensitySignals = z.infer<typeof propensitySignalsSchema>;
+export type LowDemandDayFactor = z.infer<typeof lowDemandDayFactorSchema>;
+export type LowDemandTimeWindow = z.infer<typeof lowDemandTimeWindowSchema>;
+export type DayTimeSlot = z.infer<typeof dayTimeSlotSchema>;
+export type LowDemandTimeByDay = z.infer<typeof lowDemandTimeByDaySchema>;
+export type ProviderSignal = z.infer<typeof providerSignalSchema>;
+export type IncentiveFactors = z.infer<typeof incentiveFactorsSchema>;
+
+// ─── Nudge ────────────────────────────────────────────────────────────────────
+
+export const nudgeSlotSchema = z.object({
+  dayOfWeek: z.string(),
+  displayTime: z.string(),
+  isLowDemand: z.boolean(),
+});
+
+export const incentiveOfferResultSchema = z.object({
+  type: z.enum(['percent_off', 'dollar_off']),
+  value: z.number(),
+  displayLabel: z.string(),
+  discountCode: z.string(),
+  constraint: z.string(),
+});
+
+export const nudgeSchema = z.object({
+  type: z.enum(['provider', 'incentive', 'none']),
+  message: z.string().optional(),
+  offer: incentiveOfferResultSchema.optional(),
+  suggestedSlots: z.array(nudgeSlotSchema).optional(),
+});
+
+export const recommendationResponseSchema = z.object({
+  customerId: z.string(),
+  propensityTier: propensityTierSchema,
+  propensityScore: z.number(),
+  preferredProvider: z.string().nullable(),
+  nudge: nudgeSchema,
+  membershipCta: z.boolean(),
+  propensitySignals: propensitySignalsSchema,   // raw drivers behind the tier (for Incentive Logic bar)
+  incentiveFactors: incentiveFactorsSchema,      // supply-side signals (for Incentive Logic bar)
+});
+
+export type NudgeSlot = z.infer<typeof nudgeSlotSchema>;
+export type IncentiveOfferResult = z.infer<typeof incentiveOfferResultSchema>;
+export type Nudge = z.infer<typeof nudgeSchema>;
+export type RecommendationResponse = z.infer<typeof recommendationResponseSchema>;

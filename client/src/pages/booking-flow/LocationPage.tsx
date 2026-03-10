@@ -39,25 +39,41 @@ interface Location {
   };
 }
 
+// Location names must match the keys in availability.json for low-demand slot lookup
 const MOCK_LOCATIONS: Location[] = [
   {
     id: '1',
-    name: 'Glowbar NYC - SoHo',
-    address: { city: 'New York', state: 'NY', line1: '123 Broadway' }
+    name: 'Union Square',
+    address: { city: 'New York', state: 'NY', line1: '4 Union Square South' }
   },
   {
     id: '2',
-    name: 'Glowbar NYC - UES',
-    address: { city: 'New York', state: 'NY', line1: '456 Madison Ave' }
+    name: 'Upper East Side',
+    address: { city: 'New York', state: 'NY', line1: '1049 Lexington Ave' }
   },
   {
     id: '3',
-    name: 'Glowbar LA - WeHo',
-    address: { city: 'Los Angeles', state: 'CA', line1: '789 Santa Monica Blvd' }
+    name: 'Tribeca',
+    address: { city: 'New York', state: 'NY', line1: '56 Thomas St' }
+  },
+  {
+    id: '4',
+    name: 'Williamsburg Wythe',
+    address: { city: 'New York', state: 'NY', line1: '218 Wythe Ave' }
+  },
+  {
+    id: '5',
+    name: 'Georgetown',
+    address: { city: 'Washington', state: 'DC', line1: '1234 Wisconsin Ave NW' }
+  },
+  {
+    id: '6',
+    name: 'Logan Circle',
+    address: { city: 'Washington', state: 'DC', line1: '1319 14th St NW' }
   },
 ];
 
-const CITIES = ['New York', 'Los Angeles', 'Miami'];
+const CITIES = ['New York', 'Washington'];
 
 export function LocationPage() {
   const { state, setCurrentStep, updateUserData } = useBookingFlow();

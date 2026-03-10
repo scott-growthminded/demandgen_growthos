@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearch } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -196,6 +197,10 @@ export default function BookingWidget() {
   // Phone verification state
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otpCode, setOtpCode] = useState('');
+
+  // Personalization state — recommendation fetched once when entering datetime step
+  const [personalization, setPersonalization] = useState<any>(null);
+  const [personalizationEmail, setPersonalizationEmail] = useState<string | null>(null);
   
   // Card details state
   const [cardNumber, setCardNumber] = useState('');
@@ -224,6 +229,64 @@ export default function BookingWidget() {
   const [userCoordinates, setUserCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [showNearbyResults, setShowNearbyResults] = useState(false);
   
+  // Demo mode: watch URL params — jump to datetime step when a demo scenario is loaded
+  const search = useSearch();
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const params = new URLSearchParams(search);
+    const demoEmail = params.get('e');
+    const demoUserType = params.get('u') as 'member' | 'non-member' | 'new' | null;
+    if (demoEmail && demoEmail !== bookingState.userEmail) {
+      setPersonalization(null);
+      setPersonalizationEmail(null);
+      setSelectedDate(undefined);
+      setSelectedTimeSlot(undefined);
+      setBookingState({
+        step: 'datetime',
+        userEmail: demoEmail,
+        userFlow: demoUserType === 'member' ? 'member' : demoUserType === 'non-member' ? 'non-member' : 'lead',
+        isMember: demoUserType === 'member',
+        selectedLocation: {
+          id: 'demo-union-square',
+          name: 'Union Square',
+          city: 'New York',
+          state: 'NY',
+        },
+        selectedProduct: {
+          id: 'first-time-treatment',
+          name: 'First Time Treatment',
+          price: 80,
+          description: 'A full-face treatment for first-time Glowbar guests.',
+        },
+      });
+    }
+    if (!demoEmail && bookingState.userEmail?.endsWith('@glowbar.com') === false && bookingState.step === 'datetime' && params.toString() === '') {
+      // Reset triggered — go back to location step
+      setBookingState({ step: 'location' });
+      setPersonalization(null);
+      setPersonalizationEmail(null);
+    }
+  }, [search]);
+
+  // Fetch personalization recommendation when entering the datetime step
+  useEffect(() => {
+    if (bookingState.step !== 'datetime') return;
+    const email = bookingState.userEmail ?? null;
+    if (!email || email === personalizationEmail) return;
+    setPersonalizationEmail(email);
+    fetch('/api/personalization/recommendation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        location: bookingState.selectedLocation?.name ?? null,
+      }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setPersonalization(data ?? null))
+      .catch(() => setPersonalization(null));
+  }, [bookingState.step, bookingState.userEmail, bookingState.selectedLocation?.name]);
+
   // Pre-fill phone number from verification when reaching personal info
   useEffect(() => {
     if (phoneNumber && !authPhone) {
@@ -2272,8 +2335,49 @@ export default function BookingWidget() {
 
     const isValid = selectedDate && selectedTimeSlot;
 
+    // ── Personalization slot annotation helpers ────────────────────────────
+
+    /** Parse "8:00 AM" / "2:00 PM" to a 24h hour integer */
+    const parseHour = (displayTime: string): number => {
+      const [timePart, period] = displayTime.split(' ');
+      const hours = parseInt(timePart.split(':')[0], 10);
+      if (period === 'PM' && hours !== 12) return hours + 12;
+      if (period === 'AM' && hours === 12) return 0;
+      return hours;
+    };
+
+    /**
+     * Return a badge annotation for a given slot hour, or null if none applies.
+     *   - Provider nudge → amber "★ FirstName" on suggested slots
+     *   - Incentive (low-demand) → green "10% off" on suggested slots
+     *   - Incentive (any-time) → green "$10 off" on every slot
+     */
+    const getSlotAnnotation = (slotHour: number): { type: 'provider' | 'incentive'; label: string } | null => {
+      if (!personalization?.nudge || personalization.nudge.type === 'none') return null;
+      const { nudge } = personalization;
+
+      // Low-tier: valid any time — annotate every slot
+      if (nudge.type === 'incentive' && nudge.offer?.constraint === 'any_time') {
+        return { type: 'incentive', label: nudge.offer.displayLabel };
+      }
+
+      // Mid/High: only annotate suggested low-demand hours
+      const suggested: any[] = nudge.suggestedSlots ?? [];
+      const matches = suggested.some((s: any) => parseHour(s.displayTime) === slotHour);
+      if (!matches) return null;
+
+      if (nudge.type === 'provider') {
+        const firstName = personalization.preferredProvider?.split(' ')[0] ?? 'Your provider';
+        return { type: 'provider', label: `★ ${firstName}` };
+      }
+      if (nudge.type === 'incentive' && nudge.offer) {
+        return { type: 'incentive', label: nudge.offer.displayLabel };
+      }
+      return null;
+    };
+
     // Get selected esthetician name
-    const selectedEstheticianName = esthetician === 'any' 
+    const selectedEstheticianName = esthetician === 'any'
       ? 'Any Esthetician' 
       : staffData?.staff?.find((s) => s.id === esthetician)?.displayName || 'Selected Esthetician';
 
@@ -2314,6 +2418,87 @@ export default function BookingWidget() {
             </div>
           </div>
         </div>
+
+        {/* ── Incentive Logic bar (DEV-only) ─────────────────────────────────── */}
+        {import.meta.env.DEV && personalization && (() => {
+          const ps = personalization.propensitySignals;
+          const inf = personalization.incentiveFactors;
+          if (!ps && !inf) return null;
+
+          // Propensity row label
+          const tierLabel = ps
+            ? `${ps.tier.toUpperCase()} · NPS ${ps.npsRating} · ${ps.daysSinceLastVisit}d since visit · ${ps.isMember ? 'Member' : 'Non-member'}${ps.lapsed ? ' · Lapsed' : ''}`
+            : '—';
+
+          // Supply: low-demand days
+          const ldDaysLabel = inf && inf.lowDemandDays.length > 0
+            ? inf.lowDemandDays.map(d => `${d.day} (${Math.round(d.avgUtilization * 100)}% avg util)`).join(' · ')
+            : '—';
+
+          // Supply: off-peak windows — compress consecutive hours into ranges
+          const ldTimesLabel = (() => {
+            if (!inf || inf.lowDemandTimeWindows.length === 0) return '—';
+            const windows = inf.lowDemandTimeWindows;
+            const ranges: string[] = [];
+            let rangeStart = windows[0];
+            let prev = windows[0];
+            for (let i = 1; i <= windows.length; i++) {
+              const curr = windows[i];
+              if (curr && curr.hour === prev.hour + 1) {
+                prev = curr;
+              } else {
+                ranges.push(rangeStart.displayTime === prev.displayTime
+                  ? rangeStart.displayTime
+                  : `${rangeStart.displayTime}–${prev.displayTime}`);
+                if (curr) { rangeStart = curr; prev = curr; }
+              }
+            }
+            const maxDays = Math.max(...windows.map(w => w.daysWithLowDemand));
+            return `${ranges.join(' · ')} (${maxDays}+ days each)`;
+          })();
+
+          // Supply: provider signal
+          const pvLabel = inf?.providerSignal.providerName
+            ? inf.providerSignal.locationHasProvider
+              ? `${inf.providerSignal.providerName} · ${inf.providerSignal.totalLowDemandSlots} low-demand slots`
+              : `${inf.providerSignal.providerName} (not at this location)`
+            : '—';
+
+          return (
+            <div className="bg-gray-50 border-b border-gray-100 px-6 py-3">
+              <p className="text-[10px] uppercase tracking-widest text-gray-400 font-medium mb-2">
+                Incentive logic
+              </p>
+              <div className="space-y-1">
+                {/* Propensity signal */}
+                <div className="flex items-baseline gap-2 text-xs">
+                  <span className="text-gray-400 w-32 shrink-0">Propensity</span>
+                  <span className="text-gray-700">{tierLabel}</span>
+                </div>
+                {/* Supply signal */}
+                <div className="flex items-baseline gap-2 text-xs">
+                  <span className="text-gray-400 w-32 shrink-0">Supply · Days</span>
+                  <span className="text-gray-700">{ldDaysLabel}</span>
+                </div>
+                <div className="flex items-baseline gap-2 text-xs">
+                  <span className="text-gray-400 w-32 shrink-0">Supply · Times</span>
+                  <span className="text-gray-700">{ldTimesLabel}</span>
+                </div>
+                <div className="flex items-baseline gap-2 text-xs">
+                  <span className="text-gray-400 w-32 shrink-0">Supply · Provider</span>
+                  <span className="text-gray-700">{pvLabel}</span>
+                </div>
+                {/* BLVD offers — placeholder until BLVD offers API is integrated */}
+                <div className="flex items-baseline gap-2 text-xs">
+                  <span className="text-gray-400 w-32 shrink-0">BLVD offers</span>
+                  <span className="text-gray-400 italic">— (not yet integrated)</span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+        {/* ── End Incentive Logic bar ──────────────────────────────────────── */}
+
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-5xl mx-auto px-6 py-8">
             <Button
@@ -2585,6 +2770,7 @@ export default function BookingWidget() {
                         <div className="flex flex-wrap gap-2">
                           {morningSlots.map((slot: any) => {
                             const isSelected = selectedTimeSlot?.id === slot.id;
+                            const annotation = getSlotAnnotation(slot.hour);
                             return (
                               <button
                                 key={slot.id}
@@ -2595,8 +2781,8 @@ export default function BookingWidget() {
                                     : ''
                                 }`}
                                 style={
-                                  isSelected 
-                                    ? { backgroundColor: '#FF502D' } 
+                                  isSelected
+                                    ? { backgroundColor: '#FF502D' }
                                     : {}
                                 }
                                 data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
@@ -2609,6 +2795,17 @@ export default function BookingWidget() {
                                   <span className="ml-1.5 text-xs" style={{ color: isSelected ? '#FFD4CC' : '#FF502D' }}>
                                     $10 OFF
                                   </span>
+                                )}
+                                {annotation && !isSelected && (
+                                  annotation.type === 'provider' ? (
+                                    <span className="ml-1.5 text-xs font-semibold" style={{ color: '#D97706' }}>
+                                      {annotation.label}
+                                    </span>
+                                  ) : (
+                                    <span className="ml-1.5 text-xs font-semibold text-emerald-600">
+                                      {annotation.label}
+                                    </span>
+                                  )
                                 )}
                               </button>
                             );
@@ -2627,6 +2824,7 @@ export default function BookingWidget() {
                         <div className="flex flex-wrap gap-2">
                           {afternoonSlots.map((slot: any) => {
                             const isSelected = selectedTimeSlot?.id === slot.id;
+                            const annotation = getSlotAnnotation(slot.hour);
                             return (
                               <button
                                 key={slot.id}
@@ -2637,8 +2835,8 @@ export default function BookingWidget() {
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                                 style={
-                                  isSelected 
-                                    ? { backgroundColor: '#FF502D' } 
+                                  isSelected
+                                    ? { backgroundColor: '#FF502D' }
                                     : {}
                                 }
                                 data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
@@ -2648,6 +2846,17 @@ export default function BookingWidget() {
                                   <span className="ml-1.5 text-xs" style={{ color: isSelected ? '#FFD4CC' : '#FF502D' }}>
                                     $10 OFF
                                   </span>
+                                )}
+                                {annotation && !isSelected && (
+                                  annotation.type === 'provider' ? (
+                                    <span className="ml-1.5 text-xs font-semibold" style={{ color: '#D97706' }}>
+                                      {annotation.label}
+                                    </span>
+                                  ) : (
+                                    <span className="ml-1.5 text-xs font-semibold text-emerald-600">
+                                      {annotation.label}
+                                    </span>
+                                  )
                                 )}
                               </button>
                             );
@@ -2666,6 +2875,7 @@ export default function BookingWidget() {
                         <div className="flex flex-wrap gap-2">
                           {eveningSlots.map((slot: any) => {
                             const isSelected = selectedTimeSlot?.id === slot.id;
+                            const annotation = getSlotAnnotation(slot.hour);
                             return (
                               <button
                                 key={slot.id}
@@ -2676,8 +2886,8 @@ export default function BookingWidget() {
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                                 style={
-                                  isSelected 
-                                    ? { backgroundColor: '#FF502D' } 
+                                  isSelected
+                                    ? { backgroundColor: '#FF502D' }
                                     : {}
                                 }
                                 data-testid={`button-time-${slot.time.replace(/[:\s]/g, '-')}`}
@@ -2687,6 +2897,17 @@ export default function BookingWidget() {
                                   <span className="ml-1.5 text-xs" style={{ color: isSelected ? '#FFD4CC' : '#FF502D' }}>
                                     $10 OFF
                                   </span>
+                                )}
+                                {annotation && !isSelected && (
+                                  annotation.type === 'provider' ? (
+                                    <span className="ml-1.5 text-xs font-semibold" style={{ color: '#D97706' }}>
+                                      {annotation.label}
+                                    </span>
+                                  ) : (
+                                    <span className="ml-1.5 text-xs font-semibold text-emerald-600">
+                                      {annotation.label}
+                                    </span>
+                                  )
                                 )}
                               </button>
                             );
