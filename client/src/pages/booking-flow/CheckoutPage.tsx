@@ -61,8 +61,26 @@ export function CheckoutPage() {
                     {state.selectedDate.toLocaleDateString()} at {state.selectedTime}
                   </div>
                 )}
+
+                {/* Applied discount from personalization */}
+                {state.appliedOffer && (
+                  <div
+                    className="flex items-center justify-between bg-green-50 border border-green-200 rounded px-3 py-2 mt-2"
+                    data-testid="section-applied-discount"
+                  >
+                    <div>
+                      <span className="text-green-700 font-medium">
+                        {state.appliedOffer.displayLabel}
+                      </span>
+                      <span className="text-green-600 text-xs ml-2">applied</span>
+                    </div>
+                    <span className="font-mono text-xs text-green-600 font-semibold">
+                      {state.appliedOffer.discountCode}
+                    </span>
+                  </div>
+                )}
               </div>
-              
+
               {isMember && (
                 <div className="mt-4 pt-4 border-t border-gray-400">
                   <div className="flex justify-between font-semibold">

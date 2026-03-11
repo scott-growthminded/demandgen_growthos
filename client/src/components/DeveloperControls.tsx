@@ -13,13 +13,8 @@ export function DeveloperControls() {
 
   const handleUserTypeChange = (type: UserType) => {
     setUserType(type);
-    if (type === 'new') {
-      setAuthenticated(false);
-      setCurrentStep('customer-type');
-    } else {
-      setAuthenticated(false);
-      setCurrentStep('customer-type');
-    }
+    setAuthenticated(false);
+    setCurrentStep('product');
   };
 
   return (
@@ -70,12 +65,13 @@ export function DeveloperControls() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="customer-type">Customer Type</SelectItem>
-                <SelectItem value="login">Login</SelectItem>
                 <SelectItem value="product">Product Selection</SelectItem>
                 <SelectItem value="location">Location</SelectItem>
                 <SelectItem value="datetime">Date & Time</SelectItem>
+                <SelectItem value="customer-type">Customer Type</SelectItem>
+                <SelectItem value="login">Login</SelectItem>
                 <SelectItem value="personal-info">Personal Info</SelectItem>
+                <SelectItem value="personalization">Personalization</SelectItem>
                 <SelectItem value="checkout">Checkout</SelectItem>
                 <SelectItem value="confirmation">Confirmation</SelectItem>
               </SelectContent>
@@ -112,6 +108,16 @@ export function DeveloperControls() {
               <div data-testid="text-step-state">Step: {state.currentStep}</div>
               {state.firstName && <div>Name: {state.firstName} {state.lastName}</div>}
               {state.email && <div>Email: {state.email}</div>}
+              {state.recommendation && (
+                <div className="font-mono">
+                  Tier: {state.recommendation.propensityTier} · nudge: {state.recommendation.nudge.type}
+                </div>
+              )}
+              {state.appliedOffer && (
+                <div className="text-green-600">
+                  Offer: {state.appliedOffer.displayLabel} ({state.appliedOffer.discountCode})
+                </div>
+              )}
             </div>
             <Button
               variant="outline"

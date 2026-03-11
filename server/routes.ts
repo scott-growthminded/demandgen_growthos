@@ -1,8 +1,24 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { BlvdService } from "./services/blvd-service";
-import { blvdConfigSchema, insertBookingCartSchema, insertWaitlistRequestSchema } from "@shared/schema";
+import { blvdConfigSchema, insertBookingCartSchema, insertWaitlistRequestSchema, tacticsConfigSchema } from "@shared/schema";
 import { storage } from "./storage";
+import {
+  createLocationRepo,
+  createCustomerRepo,
+  createAvailabilityRepo,
+  createTacticsRepo,
+  createDiscountCodeRepo,
+  dataMode,
+} from "./dal/factory";
+import { buildRecommendation, computeIncentiveFactors } from "./services/recommendation";
+
+// Initialize DAL repos once at server startup
+const locationRepo = createLocationRepo();
+const customerRepo = createCustomerRepo();
+const availabilityRepo = createAvailabilityRepo();
+const tacticsRepo = createTacticsRepo();
+const discountCodeRepo = createDiscountCodeRepo();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get server-side BLVD configuration
@@ -483,34 +499,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all locations grouped by state and city
   app.get("/api/booking/locations", async (req, res) => {
     try {
+      let allLocations: any[] = [];
+
       const serverConfig = getServerConfig();
-      const config = blvdConfigSchema.parse(serverConfig);
-      const blvdService = new BlvdService(config);
-      
-      const locationsResponse = await blvdService.executeLocationsQuery();
-      const allLocations = (locationsResponse.data as any)?.locations?.edges?.map((edge: any) => edge.node) || [];
-      
-      // Filter out remote locations and excluded locations, then group by state and city
-      const excludedLocationNames = ['Williamsburg Kent', 'Training Studio'];
+      const hasLiveCredentials = serverConfig.apiKey && serverConfig.secretKey && serverConfig.businessId;
+
+      if (hasLiveCredentials) {
+        const config = blvdConfigSchema.parse(serverConfig);
+        const blvdService = new BlvdService(config);
+        const locationsResponse = await blvdService.executeLocationsQuery();
+        allLocations = (locationsResponse.data as any)?.locations?.edges?.map((edge: any) => edge.node) || [];
+      } else {
+        const mockResponse = await locationRepo.getAll();
+        allLocations = mockResponse.data?.locations?.edges?.map((edge) => edge.node) || [];
+      }
+
+      const excludedLocationNames = ['Training Studio'];
       const physicalLocations = allLocations.filter((loc: any) => 
         !loc.isRemote && !excludedLocationNames.includes(loc.name)
       );
       
-      // Don't pre-load staff - we'll fetch them when checking availability for a specific date
-      // This ensures we only show staff who are actually available
       const locationsData = physicalLocations.map((loc: any) => ({
         id: loc.id,
         name: loc.name,
         address: loc.address,
-        subtext: loc.subtext, // Pass subtext through to the frontend
+        subtext: loc.subtext,
         coordinates: loc.coordinates ? {
           lat: loc.coordinates.latitude,
           lng: loc.coordinates.longitude
         } : undefined,
-        staff: [] // Staff will be loaded per date in availability endpoint
+        staff: []
       }));
       
-      // Group by state and city
       const grouped = locationsData.reduce((acc: any, loc: any) => {
         const state = loc.address?.state || 'Other';
         const city = loc.address?.city || 'Unknown';
@@ -537,13 +557,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get availability for a location on a specific date
   app.get("/api/booking/availability/:locationId/:date", async (req, res) => {
+    const { locationId, date } = req.params;
+
+    // ── Demo mock availability (no BLVD credentials required) ────────────────
+    //
+    // Real BLVD cartBookableTimes fields: id (ID!), startTime (DateTime!), score (Float!)
+    // Derived field added by this routes layer (NOT from BLVD): isDiscounted
+    //
+    if (locationId === 'demo-union-square') {
+      // Generate 40-minute-cadence slots from 8:00 AM to 8:00 PM
+      // 40-min cadence matches real Boulevard appointment scheduling data for this location.
+      const slots: any[] = [];
+      let minuteOffset = 0;
+      const START_HOUR = 8;
+      const END_HOUR = 20;
+      while (true) {
+        const totalMin = START_HOUR * 60 + minuteOffset;
+        const h = Math.floor(totalMin / 60);
+        const m = totalMin % 60;
+        if (h >= END_HOUR) break;
+        const hh = String(h).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        slots.push({
+          // Real BLVD cartBookableTimes fields:
+          id: `demo-slot-${hh}${mm}-${date}`,
+          startTime: `${date}T${hh}:${mm}:00`,   // Local-time ISO string (no tz offset), matches BLVD format
+          score: 1.0,                              // BLVD Float 0–1; placeholder (real values reflect booking pressure)
+          // Derived field (added by routes layer, not present in BLVD response):
+          isDiscounted: false,
+        });
+        minuteOffset += 40;
+      }
+      return res.json({ success: true, availableSlots: slots, totalSlots: slots.length });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     try {
       const serverConfig = getServerConfig();
       const config = blvdConfigSchema.parse(serverConfig);
       const blvdService = new BlvdService(config);
-      
-      const { locationId, date } = req.params;
-      
+
       // Get real availability from Boulevard Client API
       const availability = await blvdService.getLocationAvailabilityFromClientAPI(locationId, date);
       
@@ -577,12 +630,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get staff/estheticians for a location
   app.get("/api/booking/staff/:locationId", async (req, res) => {
+    const { locationId } = req.params;
+
+    // ── Demo mock staff ───────────────────────────────────────────────────────
+    if (locationId === 'demo-union-square') {
+      return res.json({
+        success: true,
+        staff: [
+          { id: 'demo-staff-aleczandra', firstName: 'Aleczandra', lastName: 'Almodovar', displayName: 'Aleczandra Almodovar', avatar: null },
+          { id: 'demo-staff-alex',       firstName: 'Alex',       lastName: 'D',         displayName: 'Alex D',               avatar: null },
+          { id: 'demo-staff-lynette',    firstName: 'Lynette',    lastName: 'C',         displayName: 'Lynette C',            avatar: null },
+          { id: 'demo-staff-sofia',      firstName: 'Sofia',      lastName: 'D',         displayName: 'Sofia D',              avatar: null },
+          { id: 'demo-staff-tatyana',    firstName: 'Tatyana',    lastName: 'L',         displayName: 'Tatyana L',            avatar: null },
+        ],
+      });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     try {
       const serverConfig = getServerConfig();
       const config = blvdConfigSchema.parse(serverConfig);
       const blvdService = new BlvdService(config);
-      
-      const { locationId } = req.params;
+
       
       // Get all staff
       const allStaff = await blvdService.getLocationStaff(locationId);
@@ -1307,6 +1376,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         error: error instanceof Error ? error.message : "Failed to get waitlist requests"
       });
+    }
+  });
+
+  // ── UtilizationOS: Personalization & Tactics API ──────────────────────────
+
+  // System info — confirms data mode
+  app.get("/api/personalization/status", (_req, res) => {
+    res.json({ dataMode, status: "ok" });
+  });
+
+  // Look up a customer profile by email
+  // GET /api/personalization/profile?email=...
+  app.get("/api/personalization/profile", async (req, res) => {
+    const email = (req.query.email as string ?? "").trim().toLowerCase();
+    if (!email) {
+      return res.status(400).json({ error: "email query parameter is required" });
+    }
+    try {
+      const customer = await customerRepo.findByEmail(email);
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+      res.json(customer);
+    } catch (err) {
+      console.error("Profile lookup error:", err);
+      res.status(500).json({ error: "Failed to look up customer profile" });
+    }
+  });
+
+  // Build a personalized recommendation for a customer at a given location
+  // POST /api/personalization/recommendation
+  // Body: { email: string, location: string }
+  app.post("/api/personalization/recommendation", async (req, res) => {
+    const { email, location } = req.body ?? {};
+    if (!email) {
+      return res.status(400).json({ error: "email is required" });
+    }
+    try {
+      const [customer, availability, tactics] = await Promise.all([
+        customerRepo.findByEmail((email as string).toLowerCase()),
+        location ? availabilityRepo.getByLocation(location as string) : Promise.resolve(null),
+        tacticsRepo.getConfig(),
+      ]);
+
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+
+      const recommendation = buildRecommendation(
+        customer,
+        availability,
+        tactics,
+        discountCodeRepo
+      );
+
+      res.json(recommendation);
+    } catch (err) {
+      console.error("Recommendation error:", err);
+      res.status(500).json({ error: "Failed to build recommendation" });
+    }
+  });
+
+  // Get all customer profiles (used by dashboard monitoring view)
+  // GET /api/personalization/customers
+  app.get("/api/personalization/customers", async (_req, res) => {
+    try {
+      const customers = await customerRepo.findAll();
+      res.json(customers);
+    } catch (err) {
+      console.error("Customers list error:", err);
+      res.status(500).json({ error: "Failed to load customers" });
+    }
+  });
+
+  // Get availability for a location
+  // GET /api/availability/:location (location name, URL-encoded)
+  app.get("/api/availability/:location", async (req, res) => {
+    const location = decodeURIComponent(req.params.location);
+    try {
+      const availability = await availabilityRepo.getByLocation(location);
+      if (!availability) {
+        return res.status(404).json({ error: `Location not found: ${location}` });
+      }
+      res.json(availability);
+    } catch (err) {
+      console.error("Availability error:", err);
+      res.status(500).json({ error: "Failed to load availability" });
+    }
+  });
+
+  // Get all location names
+  // GET /api/availability
+  app.get("/api/availability", async (_req, res) => {
+    try {
+      const locations = await availabilityRepo.getAllLocations();
+      res.json({ locations });
+    } catch (err) {
+      console.error("Locations error:", err);
+      res.status(500).json({ error: "Failed to load locations" });
+    }
+  });
+
+  // Get the current tactics configuration
+  // GET /api/tactics/config
+  app.get("/api/tactics/config", async (_req, res) => {
+    try {
+      const config = await tacticsRepo.getConfig();
+      res.json(config);
+    } catch (err) {
+      console.error("Tactics config GET error:", err);
+      res.status(500).json({ error: "Failed to load tactics config" });
+    }
+  });
+
+  // Update the tactics configuration (called by dashboard control panel)
+  // PUT /api/tactics/config
+  app.put("/api/tactics/config", async (req, res) => {
+    try {
+      const parsed = tacticsConfigSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({
+          error: "Invalid tactics config",
+          details: parsed.error.flatten(),
+        });
+      }
+      await tacticsRepo.updateConfig(parsed.data);
+      const updated = await tacticsRepo.getConfig();
+      res.json(updated);
+    } catch (err) {
+      console.error("Tactics config PUT error:", err);
+      res.status(500).json({ error: "Failed to update tactics config" });
+    }
+  });
+
+  // Compute supply signals for a location (used by dashboard Signal Output card)
+  // GET /api/supply-signals?location=<name>
+  app.get("/api/supply-signals", async (req, res) => {
+    try {
+      const location = (req.query.location as string) || "";
+      const [availability, config] = await Promise.all([
+        location ? availabilityRepo.getByLocation(location) : Promise.resolve(null),
+        tacticsRepo.getConfig(),
+      ]);
+      const signals = computeIncentiveFactors(availability, null, config);
+      res.json({ location, signals });
+    } catch (err) {
+      console.error("Supply signals error:", err);
+      res.status(500).json({ error: "Failed to compute supply signals" });
     }
   });
 

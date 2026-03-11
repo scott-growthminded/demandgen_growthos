@@ -1,0 +1,71 @@
+{
+  "updatedAt": "2026-03-10T00:06:49.076Z",
+  "updatedBy": "dashboard",
+  "thresholds": {
+    "lowDemandUtilization": 0.6,
+    "lapsedMidDays": 60,
+    "lapsedLowDays": 90,
+    "highPropensityNps": 8,
+    "midPropensityNps": 6,
+    "lowDemandDayThreshold": 0.7,
+    "lowDemandTimeMinDays": 2
+  },
+  "tactics": {
+    "preferredProviderNudge": {
+      "enabled": true,
+      "label": "Preferred Provider Nudge",
+      "description": "Surface preferred provider availability at low-demand times for high-propensity loyalist customers. Provider availability acts as the incentive — no discount required.",
+      "targetTiers": [
+        "high"
+      ],
+      "memberFilter": "all",
+      "constraint": "low_demand_only",
+      "offer": null
+    },
+    "incentiveMidTier": {
+      "enabled": true,
+      "label": "Mid-Tier Time Shift Offer",
+      "description": "Offer 10% off for booking at a low-demand time slot. Targets mid-propensity customers (NPS 6–7 or lapsed 60–90 days). Combines with preferred provider surfacing where available.",
+      "targetTiers": [
+        "mid"
+      ],
+      "memberFilter": "all",
+      "constraint": "low_demand_only",
+      "offer": {
+        "type": "percent_off",
+        "value": 10,
+        "displayLabel": "10% off",
+        "discountCodePrefix": "MID10"
+      }
+    },
+    "incentiveLowTier": {
+      "enabled": true,
+      "label": "Low-Tier Recovery Offer",
+      "description": "Offer $10 off any time slot. Targets low-propensity customers (NPS ≤5 or lapsed 90+ days). Simplified booking flow, social proof surfaced.",
+      "targetTiers": [
+        "low"
+      ],
+      "memberFilter": "all",
+      "constraint": "any_time",
+      "offer": {
+        "type": "dollar_off",
+        "value": 10,
+        "displayLabel": "$10 off",
+        "discountCodePrefix": "BACK10"
+      }
+    },
+    "membershipCta": {
+      "enabled": true,
+      "label": "Membership CTA (Post-Appointment)",
+      "description": "Surface a membership sign-up call-to-action in the booking confirmation screen for non-members. Fires for all propensity tiers.",
+      "targetTiers": [
+        "high",
+        "mid",
+        "low"
+      ],
+      "memberFilter": "non_member",
+      "constraint": "none",
+      "offer": null
+    }
+  }
+}

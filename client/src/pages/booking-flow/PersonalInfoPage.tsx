@@ -14,7 +14,8 @@ export function PersonalInfoPage() {
 
   const handleContinue = () => {
     updateUserData({ firstName, lastName, email, phone });
-    setCurrentStep('checkout');
+    // Route through personalization before checkout
+    setCurrentStep("personalization");
   };
 
   const isValid = firstName && lastName && email && phone;
@@ -85,7 +86,7 @@ export function PersonalInfoPage() {
               disabled={!isValid}
               data-testid="button-continue"
             >
-              Continue to Checkout
+              Continue
             </Button>
           </div>
         </Card>
